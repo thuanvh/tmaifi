@@ -43,7 +43,7 @@ IplImage* drawlut(uchar* lut, const CvPoint* pointArray, int length, CvScalar co
     return histogrammeImg;
 }
 
-IplImage* linealise(IplImage* image, CvPoint* pointArray, int length){
+IplImage* linealise(IplImage* image, CvPoint * pointArray, int length){
     // trier les points
     pointArray = sortPoint(pointArray,length);
     // calculer lut
@@ -51,6 +51,9 @@ IplImage* linealise(IplImage* image, CvPoint* pointArray, int length){
     for(int i=0; i<length-1; i++){
         lut=linealise(lut,pointArray[i],pointArray[i+1]);
     }
+    IplImage* img = drawlut(lut, pointArray, length);
+    cvShowImage("Output Lut", img);
+
     // mettre a jour
     uchar* ptr=(uchar*)image->imageData;
     int size = image->imageSize;

@@ -78,20 +78,29 @@ int main(int argc, char** argv) {
 
         IplImage* imgSource = cvLoadImage(filePath, CV_LOAD_IMAGE_UNCHANGED);
         IplImage* histoImg = imageHistogramme(imgSource);
+        IplImage* imgModifie = cvCloneImage(imgSource);
+        imgModifie=linealise(imgModifie,pointArray,arrlength+2);
+        IplImage* histoImgModifie=imageHistogramme(imgModifie);
 
         // Ouvrir des fenetes
         if (isModeWindows) {
             cvShowImage("Output Source", imgSource);
-            cvShowImage("Output Red", histoImg);
-
+            cvShowImage("Output Histogramme Source", histoImg);
+            cvShowImage("Output Modifie", imgModifie);
+            cvShowImage("Output Histogramme Modifie", histoImgModifie);
             cvWaitKey(0);
         }
 
         cvSaveImage(getFilePathName(filePath, ".histogramme.jpg"), histoImg);
+        cvSaveImage(getFilePathName(filePath, ".modi.jpg"), imgModifie);
+        cvSaveImage(getFilePathName(filePath, ".modihisto.jpg"), histoImgModifie);
 
         // vider la memoire
         cvReleaseImage(&imgSource);
         cvReleaseImage(&histoImg);
+        cvReleaseImage(&imgModifie);
+        cvReleaseImage(&histoImgModifie);
+
 
     } catch (const char* e) {
         // error
