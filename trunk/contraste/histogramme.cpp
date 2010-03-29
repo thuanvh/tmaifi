@@ -6,20 +6,21 @@
 #include <string>
 #include <cstring>
 #include <stdio.h>
+
 /*
  * Generer une image histogramme a partir d'une image fournie
  */
-IplImage* imageHistogramme(IplImage* imageSource,CvScalar color){
-    uchar* ptr=NULL;
-    ptr=(uchar*)imageSource->imageData;
-    int size=imageSource->imageSize;
-    int i=0;
+IplImage* imageHistogramme(IplImage* imageSource, CvScalar color) {
+    uchar* ptr = NULL;
+    ptr = (uchar*) imageSource->imageData;
+    int size = imageSource->imageSize;
+    int i = 0;
 
-    int* grayArray=new int[256];
-    for(i=0; i<256; i++)
-        grayArray[i]=0;
+    int* grayArray = new int[256];
+    for (i = 0; i < 256; i++)
+        grayArray[i] = 0;
 
-    while(i<size){
+    while (i < size) {
         //std::cout<<*ptr<<"-"<<grayArray[*ptr]<<std::endl;
         //printf("%u - %u\n",*ptr,grayArray[*ptr]);
         grayArray[*ptr]++;
@@ -27,27 +28,27 @@ IplImage* imageHistogramme(IplImage* imageSource,CvScalar color){
         ptr++;
     }
 
-    int maxNumberOfPoint=0;// le nombre maximal de point dans histogramme
-    for(i=0; i<256; i++){
+    int maxNumberOfPoint = 0; // le nombre maximal de point dans histogramme
+    for (i = 0; i < 256; i++) {
         //printf("%u - %u : ",i,grayArray[i]);
-        if(maxNumberOfPoint<grayArray[i])
-            maxNumberOfPoint=grayArray[i];
+        if (maxNumberOfPoint < grayArray[i])
+            maxNumberOfPoint = grayArray[i];
     }
 
-    int imageWidth=256;
-    int imageHeight=200;
-    int deltaX=50;
-    int deltaY=10;
+    int imageWidth = 256;
+    int imageHeight = 200;
+    int deltaX = 50;
+    int deltaY = 10;
     // Creer une image de histogramme
-    IplImage* histogrammeImg = cvCreateImage(cvSize(imageWidth+2*deltaX,imageHeight+2*deltaY),IPL_DEPTH_8U,3);
+    IplImage* histogrammeImg = cvCreateImage(cvSize(imageWidth + 2 * deltaX, imageHeight + 2 * deltaY), IPL_DEPTH_8U, 3);
 
-    drawCoordinate(histogrammeImg,deltaX,deltaY,imageWidth,imageHeight,maxNumberOfPoint,CV_RGB(123,0,123));
+    drawCoordinate(histogrammeImg, deltaX, deltaY, imageWidth, imageHeight, maxNumberOfPoint, CV_RGB(123, 0, 123));
     // Dessiner histogramme sur image
-    double ratio=imageHeight/(double)maxNumberOfPoint;
-    for(i=0; i<256; i++){
-        int y=(int)(ratio*grayArray[i]);
-        cvLine(histogrammeImg,getCoordinate(i,0,deltaX,deltaY,imageHeight),
-                getCoordinate(i, y,deltaX,deltaY,imageHeight),color);
+    double ratio = imageHeight / (double) maxNumberOfPoint;
+    for (i = 0; i < 256; i++) {
+        int y = (int) (ratio * grayArray[i]);
+        cvLine(histogrammeImg, getCoordinate(i, 0, deltaX, deltaY, imageHeight),
+                getCoordinate(i, y, deltaX, deltaY, imageHeight), color);
     }
     return histogrammeImg;
 }
@@ -64,11 +65,11 @@ void drawCoordinate(IplImage* img, int deltaX, int deltaY, int width, int height
     CvFont font;
     cvInitFont(&font, CV_FONT_HERSHEY_PLAIN, 1, 0.5);
     char buffer [50];
-    double ratio=height/(double)maxY;
-    for (int i = 0; i <= 4; i ++) {
-        int y=i*maxY/4;
+    double ratio = height / (double) maxY;
+    for (int i = 0; i <= 4; i++) {
+        int y = i * maxY / 4;
         sprintf(buffer, "%d", y);
-        cvPutText(img, buffer, cvPoint(0, deltaY + height - y*ratio), &font, coordinateColor);
+        cvPutText(img, buffer, cvPoint(0, deltaY + height - y * ratio), &font, coordinateColor);
     }
 
 }

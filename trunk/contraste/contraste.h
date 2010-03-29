@@ -8,7 +8,7 @@
 
 #ifndef _CONTRASTE_H
 #define	_CONTRASTE_H
-int* linealise(int* lut, CvPoint point1, CvPoint point2);
+uchar* linealise(uchar* lut, const CvPoint point1, const CvPoint point2);
 IplImage* linealise(IplImage* image, const CvPoint* pointArray, int length);
 CvPoint* sortPoint(CvPoint* pointArray, int length);
 IplImage* drawlut(int* lut, const CvPoint* pointArray, int length, CvScalar color=CV_RGB(250,123,123));
