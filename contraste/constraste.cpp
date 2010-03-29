@@ -2,7 +2,7 @@
 #include "contraste.h"
 #include "histogramme.h"
 
-int* linealise(int* lut, CvPoint point1, CvPoint point2){
+uchar* linealise(uchar* lut, CvPoint point1, CvPoint point2){
     int x1,x2=0;
     if(point1.x < point2.x){
         x1=point1.x;
@@ -12,13 +12,13 @@ int* linealise(int* lut, CvPoint point1, CvPoint point2){
         x2=point1.x;
     }
     for(int x=x1; x<x2; x++){
-        int y=(point2.y - point1.y)(x-point1.x)/(point2.x-point1.x)+point1.y;
+        int y=(point2.y - point1.y)*(x-point1.x)/(point2.x-point1.x)+point1.y;
         lut[x]=y;
     }
     return lut;
 }
 
-IplImage* drawlut(int* lut, const CvPoint* pointArray, int length, CvScalar color){
+IplImage* drawlut(uchar* lut, const CvPoint* pointArray, int length, CvScalar color){
     int imageWidth = 256;
     int imageHeight = 256;
     int deltaX = 50;
@@ -43,9 +43,9 @@ IplImage* drawlut(int* lut, const CvPoint* pointArray, int length, CvScalar colo
     return histogrammeImg;
 }
 
-IplImage* linealise(IplImage* image, const CvPoint* pointArray, int length){
+IplImage* linealise(IplImage* image, CvPoint* pointArray, int length){
     // trier les points
-    pointArray = sortPoint(pointArray);
+    pointArray = sortPoint(pointArray,length);
     // calculer lut
     uchar* lut=new uchar[256];
     for(int i=0; i<length-1; i++){

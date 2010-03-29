@@ -14,7 +14,10 @@
 #include <stdio.h>
 
 #include "histogramme.h"
+#include "contraste.h"
 using namespace std;
+CvPoint* splitPointArray(const char* pointStrArray, int& arrayLength);
+
 /*
  * 
  */
@@ -27,12 +30,14 @@ int main(int argc, char** argv) {
         char* filePath = NULL;
         bool isModeWindows = false;
         char* pointStrArray = NULL;
+        int arrlength = 0;
+
         // Analyser des parametres entres
         for (int i = 0; i < argc; i++) {
             if (strcmp(argv[i], "-p") == 0) {
                 i++;
                 if (i < argc) {
-                    pointStrArray = atoi(argv[i]);
+                    pointStrArray = argv[i];
                 } else {
                     throw "Point is missing";
                 }
@@ -51,10 +56,24 @@ int main(int argc, char** argv) {
         if (filePath == NULL) {
             throw "File error";
         }
-        if (pointStrArray == NULL) {
-            throw "Point is missing";
-        } else {
-
+        // preparer des points trie 
+        CvPoint* array = NULL;
+        if (pointStrArray != NULL) {
+            array = splitPointArray(pointStrArray, arrlength);
+            array = sortPoint(array, arrlength);
+            for (int i = 0; i < arrlength; i++) {
+                std::cout << array[i].x << "-" << array[i].y << std::endl;
+            }
+        }
+        // ajouter deux point 0,0 et 255,255 a la liste de points
+        CvPoint* pointArray = new CvPoint[arrlength + 2];
+        pointArray[0] = cvPoint(0, 0);
+        pointArray[arrlength + 1] = cvPoint(255, 255);
+        for (int i = 1; i <= arrlength; i++) {
+            pointArray[i] = array[i - 1];
+        }
+        for (int i = 0; i < arrlength+2; i++) {
+            std::cout << pointArray[i].x << "-" << pointArray[i].y << std::endl;
         }
 
         IplImage* imgSource = cvLoadImage(filePath, CV_LOAD_IMAGE_UNCHANGED);
@@ -83,63 +102,42 @@ int main(int argc, char** argv) {
     return (EXIT_SUCCESS);
 }
 
-CvPoint* splitPointArray(const char* pointStrArray) {
+CvPoint* splitPointArray(const char* pointStrArray, int& arrayLength) {
     string strPoint(pointStrArray);
-    int searchPoint=0;
-    int pos=0;
-    int pointIndex=0;
+    int searchPoint = 0;
+    int pos = 0;
+    int pointIndex = 0;
     int numberPoint = 0;
-    for (int i = 0; i < strPoint.length; i++) {
-        if (pointStrArray[i] == ';' && i < strPoint.length - 1)
+    for (int i = 0; i < strPoint.length(); i++) {
+        if (pointStrArray[i] == ';' && i < strPoint.length() - 1)
             numberPoint++;
     }
     numberPoint++;
+    arrayLength = numberPoint;
     CvPoint* pointArray = new CvPoint[numberPoint];
-    while((pos=strPoint.find(';',searchPoint))>=0){
-        string pointstr=strPoint.substr(searchPoint,pos-searchPoint);
-        int posInPoint=pointstr.find(',',searchPoint);
-        if(posInPoint>=0){
-            string number1=strPoint.substr(searchPoint,posInPoint-searchPoint);
-            string number2=strPoint.substr(posInPoint+1,pos-posInPoint-1);
+    while (pointIndex < numberPoint) {
+        pos = strPoint.find(';', searchPoint);
+        if (pos < 0)
+            pos = strPoint.length();
+        //std::cout<<strPoint<<"="<<pos<<":"<<searchPoint<<std::endl;
+        string pointstr = strPoint.substr(searchPoint, pos - searchPoint);
+        //std::cout<<pointstr<<str::end;
+        int posInPoint = pointstr.find(',', 0);
+        if (posInPoint >= 0) {
+            string number1 = pointstr.substr(0, posInPoint);
+            string number2 = pointstr.substr(posInPoint + 1);
 
-            pointArray[pointIndex].x=atoi(number1.c_str());
-            pointArray[pointIndex].y=atoi(number2.c_str());
-
-        }else{
+            pointArray[pointIndex].x = atoi(number1.c_str());
+            pointArray[pointIndex].y = atoi(number2.c_str());
+            //std::cout<<searchPoint<<":"<<pos<<":"<<posInPoint<<" "<<pointArray[pointIndex].x<<","<<pointArray[pointIndex].y<<std::endl;
+            if (pointArray[pointIndex].x > 255 || pointArray[pointIndex].x < 0 || pointArray[pointIndex].y > 255 || pointArray[pointIndex].y < 0)
+                throw "Error: point input is invalid ";
+        } else {
             throw "Error in point array format.";
         }
-        searchPoint=pos+1;
+        searchPoint = pos + 1;
         pointIndex++;
     }
     return pointArray;
-//    int length = strlen(pointStrArray);
-//
-//    // nombre de point
-//    int numberPoint = 0;
-//    for (int i = 0; i < length; i++) {
-//        if (pointStrArray[i] == ';' && i < length - 1)
-//            numberPoint++;
-//    }
-//    numberPoint++;
-//
-//    int start = 0;
-//    int end=0;
-//    bool newPoint = true;
-//    int pointIndex=0;
-//    // split into array
-//    CvPoint* pointArray = new CvPoint[numberPoint];
-//    for (int i = 0; i < length; i++) {
-//        if(newPoint)
-//            pointArray[pointIndex]=cvPoint(0,0);
-//        if (pointStrArray[i] == ';' && i < length - 1) {
-//            strstr()
-//            newPoint = true;
-//            end=i;
-//            start=i+1;
-//            pointIndex++;
-//        } else {
-//            newPoint = false;
-//        }
-//    }
-    return pointArray;
+
 }
