@@ -12,5 +12,6 @@ IplImage* imageHistogramme(IplImage* imageSource,CvScalar color=CV_RGB(123,123,1
 void drawCoordinate(IplImage* img, int deltaX, int deltaY, int width, int height, int maxY, CvScalar coordinateColor);
 CvPoint getCoordinate(int x, int y, int deltaX, int deltaY, int height);
 const char* getFilePathName(const char* filepath, const char* newExtension);
+const char* getFilePathName(char** filepath,int length);
 #endif	/* _HISTOGRAMME_H */
 

@@ -61,9 +61,9 @@ int main(int argc, char** argv) {
         if (pointStrArray != NULL) {
             array = splitPointArray(pointStrArray, arrlength);
             array = sortPoint(array, arrlength);
-            for (int i = 0; i < arrlength; i++) {
-                std::cout << array[i].x << "-" << array[i].y << std::endl;
-            }
+//            for (int i = 0; i < arrlength; i++) {
+//                std::cout << array[i].x << "-" << array[i].y << std::endl;
+//            }
         }
         // ajouter deux point 0,0 et 255,255 a la liste de points
         CvPoint* pointArray = new CvPoint[arrlength + 2];
@@ -72,15 +72,24 @@ int main(int argc, char** argv) {
         for (int i = 1; i <= arrlength; i++) {
             pointArray[i] = array[i - 1];
         }
-        for (int i = 0; i < arrlength+2; i++) {
-            std::cout << pointArray[i].x << "-" << pointArray[i].y << std::endl;
-        }
+//        for (int i = 0; i < arrlength + 2; i++) {
+//            std::cout << pointArray[i].x << "-" << pointArray[i].y << std::endl;
+//        }
 
         IplImage* imgSource = cvLoadImage(filePath, CV_LOAD_IMAGE_UNCHANGED);
         IplImage* histoImg = imageHistogramme(imgSource);
         IplImage* imgModifie = cvCloneImage(imgSource);
-        imgModifie=linealise(imgModifie,pointArray,arrlength+2);
-        IplImage* histoImgModifie=imageHistogramme(imgModifie);
+        imgModifie = linealise(imgModifie, pointArray, arrlength + 2);
+        IplImage* histoImgModifie = imageHistogramme(imgModifie);
+
+        
+
+        cvSaveImage(getFilePathName(filePath, ".histogramme.jpg"), histoImg);
+        char* a[4]={filePath, ".modi.",pointStrArray,".jpg"};
+        cvSaveImage(getFilePathName(a,4), imgModifie);
+        char* b[4]={filePath, ".modihisto.",pointStrArray,".jpg"};
+        cvSaveImage(getFilePathName(b,4), histoImgModifie);
+
 
         // Ouvrir des fenetes
         if (isModeWindows) {
@@ -90,10 +99,6 @@ int main(int argc, char** argv) {
             cvShowImage("Output Histogramme Modifie", histoImgModifie);
             cvWaitKey(0);
         }
-
-        cvSaveImage(getFilePathName(filePath, ".histogramme.jpg"), histoImg);
-        cvSaveImage(getFilePathName(filePath, ".modi.jpg"), imgModifie);
-        cvSaveImage(getFilePathName(filePath, ".modihisto.jpg"), histoImgModifie);
 
         // vider la memoire
         cvReleaseImage(&imgSource);
@@ -118,14 +123,14 @@ CvPoint* splitPointArray(const char* pointStrArray, int& arrayLength) {
     int pointIndex = 0;
     int numberPoint = 0;
     for (int i = 0; i < strPoint.length(); i++) {
-        if (pointStrArray[i] == ';' && i < strPoint.length() - 1)
+        if (pointStrArray[i] == ':' && i < strPoint.length() - 1)
             numberPoint++;
     }
     numberPoint++;
     arrayLength = numberPoint;
     CvPoint* pointArray = new CvPoint[numberPoint];
     while (pointIndex < numberPoint) {
-        pos = strPoint.find(';', searchPoint);
+        pos = strPoint.find(':', searchPoint);
         if (pos < 0)
             pos = strPoint.length();
         //std::cout<<strPoint<<"="<<pos<<":"<<searchPoint<<std::endl;

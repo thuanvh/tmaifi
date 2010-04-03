@@ -38,7 +38,7 @@ IplImage* imageHistogramme(IplImage* imageSource, CvScalar color) {
     int imageWidth = 256;
     int imageHeight = 200;
     int deltaX = 50;
-    int deltaY = 10;
+    int deltaY = 30;
     // Creer une image de histogramme
     IplImage* histogrammeImg = cvCreateImage(cvSize(imageWidth + 2 * deltaX, imageHeight + 2 * deltaY), IPL_DEPTH_8U, 3);
 
@@ -70,6 +70,13 @@ void drawCoordinate(IplImage* img, int deltaX, int deltaY, int width, int height
         int y = i * maxY / 4;
         sprintf(buffer, "%d", y);
         cvPutText(img, buffer, cvPoint(0, deltaY + height - y * ratio), &font, coordinateColor);
+        cvLine(img, cvPoint(deltaX, deltaY + height - y * ratio), cvPoint(deltaX-5, deltaY + height - y * ratio), coordinateColor);
+    }
+    for(int i=50; i<255; i+=50){
+        int x=i;
+        sprintf(buffer, "%d",x);
+        cvPutText(img, buffer, cvPoint(x+deltaX, deltaY + height+20), &font, coordinateColor);
+        cvLine(img, cvPoint(x+deltaX,deltaY+height+5), cvPoint(x+deltaX,deltaY+height), coordinateColor);
     }
 
 }
@@ -89,4 +96,11 @@ const char* getFilePathName(const char* filepath, const char* newExtension) {
     std::string a(filepath);
     std::string b(newExtension);
     return (a + b).c_str();
+}
+const char* getFilePathName(char** filepath,int length) {
+    std::string a("");
+    for(int i=0; i<length; i++){
+        a+=filepath[i];
+    }
+    return a.c_str();
 }
