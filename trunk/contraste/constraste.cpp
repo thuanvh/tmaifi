@@ -1,8 +1,11 @@
 
 #include "contraste.h"
 #include "histogramme.h"
-
+#include <stdlib.h>
+#include <cstdio>
+#include <iostream>
 uchar* linealise(uchar* lut, CvPoint point1, CvPoint point2){
+    //std::cout<<point1<<","<<point2<<" "<<std::endl;
     int x1,x2=0;
     if(point1.x < point2.x){
         x1=point1.x;
@@ -11,9 +14,10 @@ uchar* linealise(uchar* lut, CvPoint point1, CvPoint point2){
         x1=point2.x;
         x2=point1.x;
     }
-    for(int x=x1; x<x2; x++){
+    for(int x=x1; x<=x2; x++){
         int y=(point2.y - point1.y)*(x-point1.x)/(point2.x-point1.x)+point1.y;
         lut[x]=y;
+        //std::cout<<x<<","<<y<<" ";
     }
     return lut;
 }
@@ -51,8 +55,8 @@ IplImage* linealise(IplImage* image, CvPoint * pointArray, int length){
     for(int i=0; i<length-1; i++){
         lut=linealise(lut,pointArray[i],pointArray[i+1]);
     }
-    IplImage* img = drawlut(lut, pointArray, length);
-    cvShowImage("Output Lut", img);
+//    IplImage* img = drawlut(lut, pointArray, length);
+//    cvShowImage("Output Lut", img);
 
     // mettre a jour
     uchar* ptr=(uchar*)image->imageData;
