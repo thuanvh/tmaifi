@@ -77,14 +77,19 @@ int main(int argc, char** argv) {
 //        }
 
         IplImage* imgSource = cvLoadImage(filePath, CV_LOAD_IMAGE_UNCHANGED);
+        if(imgSource==NULL){
+            throw "Image File Error";
+        }
+        std::cout<<"Load successfully";
         IplImage* histoImg = imageHistogramme(imgSource);
         IplImage* imgModifie = cvCloneImage(imgSource);
         imgModifie = linealise(imgModifie, pointArray, arrlength + 2);
         IplImage* histoImgModifie = imageHistogramme(imgModifie);
 
-        
 
-        cvSaveImage(getFilePathName(filePath, ".histogramme.jpg"), histoImg);
+
+
+        cvSaveImage(getFilePathName(filePath, ".histo.jpg"), histoImg);
         char* a[4]={filePath, ".modi.",pointStrArray,".jpg"};
         cvSaveImage(getFilePathName(a,4), imgModifie);
         char* b[4]={filePath, ".modihisto.",pointStrArray,".jpg"};

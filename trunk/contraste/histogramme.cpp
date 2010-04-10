@@ -95,11 +95,16 @@ CvPoint getCoordinate(int x, int y, int deltaX, int deltaY, int height) {
 const char* getFilePathName(const char* filepath, const char* newExtension) {
     std::string a(filepath);
     std::string b(newExtension);
-    return (a + b).c_str();
+    return (a.substr(0,15) + b).c_str();
 }
 const char* getFilePathName(char** filepath,int length) {
     std::string a("");
-    for(int i=0; i<length; i++){
+    if(length>0)
+    {
+        a+=filepath[0];
+        a=a.substr(0,15);
+    }
+    for(int i=1; i<length; i++){
         a+=filepath[i];
     }
     return a.c_str();
