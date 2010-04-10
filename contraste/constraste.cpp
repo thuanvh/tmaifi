@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <iostream>
+/*
+ * Linealiser des valeurs entre deux points
+ */
 uchar* linealise(uchar* lut, CvPoint point1, CvPoint point2){
     //std::cout<<point1<<","<<point2<<" "<<std::endl;
     int x1,x2=0;
@@ -21,7 +24,9 @@ uchar* linealise(uchar* lut, CvPoint point1, CvPoint point2){
     }
     return lut;
 }
-
+/*
+ * dessiner le diagramme de variable lut
+ */
 IplImage* drawlut(uchar* lut, const CvPoint* pointArray, int length, CvScalar color){
     int imageWidth = 256;
     int imageHeight = 256;
@@ -46,7 +51,9 @@ IplImage* drawlut(uchar* lut, const CvPoint* pointArray, int length, CvScalar co
     }
     return histogrammeImg;
 }
-
+/*
+ * Faire linealisation avec une image par une serie de points
+ */
 IplImage* linealise(IplImage* image, CvPoint * pointArray, int length){
     // trier les points
     pointArray = sortPoint(pointArray,length);
@@ -71,6 +78,9 @@ IplImage* linealise(IplImage* image, CvPoint * pointArray, int length){
     }
     return image;
 }
+/*
+ * ranger des points par l'ordre de x
+ */
 CvPoint* sortPoint(CvPoint* pointArray, int length){
     for(int i=0; i<length; i++){
         for(int j=i; j<length; j++){
