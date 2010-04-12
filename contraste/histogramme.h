@@ -9,6 +9,10 @@
 #ifndef _HISTOGRAMME_H
 #define	_HISTOGRAMME_H
 /*
+ * Generer une histogramme
+ */
+int* getHistogramme(IplImage* imageSource);
+/*
  * Generer une image histogramme a partir d'une image fournie
  */
 IplImage* imageHistogramme(IplImage* imageSource,CvScalar color=CV_RGB(123,123,123));

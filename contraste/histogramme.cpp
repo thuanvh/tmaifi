@@ -7,10 +7,7 @@
 #include <cstring>
 #include <stdio.h>
 
-/*
- * Generer une image histogramme a partir d'une image fournie
- */
-IplImage* imageHistogramme(IplImage* imageSource, CvScalar color) {
+int* getHistogramme(IplImage* imageSource){
     uchar* ptr = NULL;
     ptr = (uchar*) imageSource->imageData;
     int size = imageSource->imageSize;
@@ -27,7 +24,15 @@ IplImage* imageHistogramme(IplImage* imageSource, CvScalar color) {
         i++;
         ptr++;
     }
+    return grayArray;
+}
+/*
+ * Generer une image histogramme a partir d'une image fournie
+ */
+IplImage* imageHistogramme(IplImage* imageSource, CvScalar color) {
 
+    int* grayArray=getHistogramme(imageSource);
+    int i = 0;
     int maxNumberOfPoint = 0; // le nombre maximal de point dans histogramme
     for (i = 0; i < 256; i++) {
         //printf("%u - %u : ",i,grayArray[i]);
@@ -96,7 +101,8 @@ const char* getFilePathName(const char* filepath, const char* newExtension) {
     std::string a(filepath);
     std::string b(newExtension);
     // on n'obtient que quinze caracteres de le nom de fichier originaire
-    return (a.substr(0,15) + b).c_str();
+    //a=a.substr(0,15);
+    return (a + b).c_str();
 }
 /*
  * generer la chemin de fichier
@@ -108,7 +114,8 @@ const char* getFilePathName(char** filepath,int length) {
     {
         a+=filepath[0];
         // on n'obtient que quinze caracteres de le nom de fichier originaire
-        a=a.substr(0,15);
+        //a=a.substr(0,15);
+        
     }
     for(int i=1; i<length; i++){
         a+=filepath[i];

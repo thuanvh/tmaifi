@@ -31,10 +31,11 @@ int main(int argc, char** argv) {
         bool isModeWindows = false;
         char* pointStrArray = NULL;
         int arrlength = 0;
-
+        int typeOfTransformation=CONTRASTE_EGALISATION;
         // Analyser des parametres entres
         for (int i = 0; i < argc; i++) {
             if (strcmp(argv[i], "-p") == 0) {
+                typeOfTransformation=CONTRASTE_LINEALISATION;
                 i++;
                 if (i < argc) {
                     pointStrArray = argv[i];
@@ -56,8 +57,10 @@ int main(int argc, char** argv) {
         if (filePath == NULL) {
             throw "File error";
         }
+        //cout<<"array";
         // preparer des points trie 
         CvPoint* array = NULL;
+
         if (pointStrArray != NULL) {
             array = splitPointArray(pointStrArray, arrlength);
             array = sortPoint(array, arrlength);
@@ -80,20 +83,31 @@ int main(int argc, char** argv) {
         if(imgSource==NULL){
             throw "Image File Error";
         }
-        std::cout<<"Load successfully";
+        //std::cout<<"Load successfully";
         IplImage* histoImg = imageHistogramme(imgSource);
         IplImage* imgModifie = cvCloneImage(imgSource);
-        imgModifie = linealise(imgModifie, pointArray, arrlength + 2);
+        //cout<<"transformation";
+        if( typeOfTransformation == CONTRASTE_LINEALISATION )
+            imgModifie = linealise(imgModifie, pointArray, arrlength + 2);
+        else
+            imgModifie = egaliser(imgModifie);
         IplImage* histoImgModifie = imageHistogramme(imgModifie);
 
-
+        //cout<<"saving file";
 
 
         cvSaveImage(getFilePathName(filePath, ".histo.jpg"), histoImg);
-        char* a[4]={filePath, ".modi.",pointStrArray,".jpg"};
-        cvSaveImage(getFilePathName(a,4), imgModifie);
-        char* b[4]={filePath, ".modihisto.",pointStrArray,".jpg"};
-        cvSaveImage(getFilePathName(b,4), histoImgModifie);
+        if( typeOfTransformation == CONTRASTE_LINEALISATION ){
+            char* a[4]={filePath, ".modi.",pointStrArray,".jpg"};
+            cvSaveImage(getFilePathName(a,4), imgModifie);
+            char* b[4]={filePath, ".modihisto.",pointStrArray,".jpg"};
+            cvSaveImage(getFilePathName(b,4), histoImgModifie);
+        }else{
+            char* a[2]={filePath, ".modi.egal.jpg"};
+            cvSaveImage(getFilePathName(a,2), imgModifie);
+            char* b[2]={filePath, ".modihisto.egal.jpg"};
+            cvSaveImage(getFilePathName(b,2), histoImgModifie);
+        }
 
 
         // Ouvrir des fenetes
