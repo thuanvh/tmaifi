@@ -19,8 +19,8 @@
 
 void performFourierTransform(IplImage* imgSource, char* filePath, bool isModeWindows);
 void performFilter(IplImage* imgSource, char* filePath, bool isModeWindows, float ratio, bool low);
-void performFilter(IplImage* imgSource);
-
+//void performFilter(IplImage* imgSource);
+void performFilterSinusoidNoise(IplImage* imgSource,char* filePath, bool isModeWindows);
 /*
  * 
  */
@@ -49,8 +49,11 @@ int main(int argc, char** argv) {
         if (i < argc) {
           typeOfTransform = COMMAND_FILTER;
           filterLow = (strcmp(argv[i], "low") == 0);
+          if(strcmp(argv[i],"sin")==0){
+            typeOfTransform = COMMAND_NOISE_FILTER;
+          }
         } else {
-          throw "Ratio is missing";
+          throw "command is missing";
         }
         continue;
       }
@@ -83,7 +86,7 @@ int main(int argc, char** argv) {
         performFilter(imgSource, filePath, isModeWindows, ratio, filterLow);
         break;
       case COMMAND_NOISE_FILTER:
-
+        performFilterSinusoidNoise(imgSource, filePath, isModeWindows);
         break;
 
     }
@@ -103,34 +106,32 @@ int main(int argc, char** argv) {
   return (EXIT_SUCCESS);
 }
 
-void performFilter(IplImage* imgSource) {
-  IplImage* abc = myDFT(imgSource);
-  cvShowImage("Output Filter Source", abc);
-  cvWaitKey(0);
-  cvReleaseImage(&abc);
-}
+//void performFilter(IplImage* imgSource) {
+//  IplImage* abc = myDFT(imgSource);
+//  cvShowImage("Output Filter Source", abc);
+//  cvWaitKey(0);
+//  cvReleaseImage(&abc);
+//}
 
 void performFilter(IplImage* imgSource, char* filePath, bool isModeWindows, float ratio, bool low) {
   IplImage** dft = fourierTransform(imgSource);
   IplImage** idft = filterImage(dft, ratio, low);
-  cvSaveImage(getFilePathName(filePath, ".rl.jpg"), dft[0]);
-  cvSaveImage(getFilePathName(filePath, ".im.jpg"), dft[1]);
-//  cvSaveImage(getFilePathName(filePath, ".frabc.jpg"), dft[2]);
-  cvSaveImage(getFilePathName(filePath, ".ft.jpg"), dft[3]);
-  cvSaveImage(getFilePathName(filePath, ".FitInvrl.jpg"), idft[0]);
-  cvSaveImage(getFilePathName(filePath, ".FitInvim.jpg"), idft[1]);
+//  cvSaveImage(getFilePathName(filePath, ".rl.jpg"), dft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".im.jpg"), dft[1]);
+  cvSaveImage(getFilePathName(filePath, ".Fourier.jpg"), dft[3]);
+//  cvSaveImage(getFilePathName(filePath, ".FitInvrl.jpg"), idft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".FitInvim.jpg"), idft[1]);
   cvSaveImage(getFilePathName(filePath, ".FitInvft.jpg"), idft[3]);
   cvSaveImage(getFilePathName(filePath, ".FitInvImage.jpg"), idft[4]);
 
   // Ouvrir des fenetes
   if (isModeWindows) {
     cvShowImage("Output Filter Source", imgSource);
-    cvShowImage("Output Filter real image", dft[0]);
-    cvShowImage("Output Filter imagine image", dft[1]);
-//    cvShowImage("Output Filter imagine image FFTTTT", dft[2]);
+//    cvShowImage("Output Filter real image", dft[0]);
+//    cvShowImage("Output Filter imagine image", dft[1]);
     cvShowImage("Output Filter fourier image", dft[3]);
-    cvShowImage("Output Filter invert real image", idft[0]);
-    cvShowImage("Output Filter invert imagine image", idft[1]);
+//    cvShowImage("Output Filter invert real image", idft[0]);
+//    cvShowImage("Output Filter invert imagine image", idft[1]);
     cvShowImage("Output Filter invert fourier image", idft[3]);
     cvShowImage("Output Filter invert fourier image source", idft[4]);
     cvWaitKey(0);
@@ -156,24 +157,22 @@ void performFourierTransform(IplImage* imgSource, char* filePath, bool isModeWin
 
   IplImage** idft = fourierInverseTransform(dft[2]);
 
-  cvSaveImage(getFilePathName(filePath, ".FtReal.jpg"), dft[0]);
-  cvSaveImage(getFilePathName(filePath, ".FtImag.jpg"), dft[1]);
-//  cvSaveImage(getFilePathName(filePath, ".frabc.jpg"), dft[2]);
-  cvSaveImage(getFilePathName(filePath, ".FtFourier.jpg"), dft[3]);
-  cvSaveImage(getFilePathName(filePath, ".InvReal.jpg"), idft[0]);
-  cvSaveImage(getFilePathName(filePath, ".InvImag.jpg"), idft[1]);
+//  cvSaveImage(getFilePathName(filePath, ".FtReal.jpg"), dft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".FtImag.jpg"), dft[1]);
+  cvSaveImage(getFilePathName(filePath, ".Fourier.jpg"), dft[3]);
+//  cvSaveImage(getFilePathName(filePath, ".InvReal.jpg"), idft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".InvImag.jpg"), idft[1]);
   cvSaveImage(getFilePathName(filePath, ".InvFourier.jpg"), idft[3]);
   cvSaveImage(getFilePathName(filePath, ".InvSrc.jpg"), idft[4]);
 
   // Ouvrir des fenetes
   if (isModeWindows) {
     cvShowImage("Output Source", imgSource);
-    cvShowImage("Output real image", dft[0]);
-    cvShowImage("Output imagine image", dft[1]);
-//    cvShowImage("Output Filter imagine image FFTTTT", dft[2]);
+//    cvShowImage("Output real image", dft[0]);
+//    cvShowImage("Output imagine image", dft[1]);
     cvShowImage("Output fourier image", dft[3]);
-    cvShowImage("Output invert real image", idft[0]);
-    cvShowImage("Output invert imagine image", idft[1]);
+//    cvShowImage("Output invert real image", idft[0]);
+//    cvShowImage("Output invert imagine image", idft[1]);
     cvShowImage("Output invert fourier image", idft[3]);
     cvShowImage("Output invert fourier image Ivert", idft[4]);
     cvWaitKey(0);
@@ -192,5 +191,44 @@ void performFourierTransform(IplImage* imgSource, char* filePath, bool isModeWin
   cvReleaseImage(&idft[4]);
 
   delete dft;
-  //  delete idft;
+    delete idft;
+}
+
+void performFilterSinusoidNoise(IplImage* imgSource,char* filePath, bool isModeWindows){
+  IplImage** dft = fourierTransform(imgSource);
+  IplImage** idft = filterSinusoidNoise(dft);//filterImage(dft, ratio, low);
+//  cvSaveImage(getFilePathName(filePath, ".rl.jpg"), dft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".im.jpg"), dft[1]);
+  cvSaveImage(getFilePathName(filePath, ".Fourier.jpg"), dft[3]);
+//  cvSaveImage(getFilePathName(filePath, ".FitInvrl.jpg"), idft[0]);
+//  cvSaveImage(getFilePathName(filePath, ".FitInvim.jpg"), idft[1]);
+  cvSaveImage(getFilePathName(filePath, ".FitInvft.jpg"), idft[3]);
+  cvSaveImage(getFilePathName(filePath, ".FitInvImage.jpg"), idft[4]);
+
+  // Ouvrir des fenetes
+  if (isModeWindows) {
+    cvShowImage("Output Filter Source", imgSource);
+//    cvShowImage("Output Filter real image", dft[0]);
+//    cvShowImage("Output Filter imagine image", dft[1]);
+    cvShowImage("Output Filter fourier image", dft[3]);
+//    cvShowImage("Output Filter invert real image", idft[0]);
+//    cvShowImage("Output Filter invert imagine image", idft[1]);
+    cvShowImage("Output Filter invert fourier image", idft[3]);
+    cvShowImage("Output Filter invert fourier image source", idft[4]);
+    cvWaitKey(0);
+  }
+
+  // vider la memoire
+  cvReleaseImage(&imgSource);
+  cvReleaseImage(&dft[0]);
+  cvReleaseImage(&dft[1]);
+  cvReleaseImage(&dft[2]);
+  cvReleaseImage(&dft[3]);
+  cvReleaseImage(&idft[0]);
+  cvReleaseImage(&idft[1]);
+  cvReleaseImage(&idft[2]);
+  cvReleaseImage(&idft[3]);
+  cvReleaseImage(&idft[4]);
+  delete dft;
+  delete idft;
 }

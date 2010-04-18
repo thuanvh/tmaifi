@@ -25,6 +25,6 @@
 
 IplImage* circleFourierImage(IplImage* image, float ratio, bool low = COMMAND_FILTER_LOW);
 IplImage** filterImage(IplImage** imgSource, float ratio, bool low = COMMAND_FILTER_LOW);
-
+IplImage** filterSinusoidNoise(IplImage** imgFouriers);
 #endif	/* _FILTER_H */
 

@@ -139,7 +139,7 @@ void fourierVisibiliser(IplImage *reImg, IplImage* imImg, IplImage *dst) {
   //printf("\n Image size : %i x %i pixels\n", image_Re->width, image_Re->height);
 
   // Normalize image (0 - 255) to be observed as an u8 image
-  scale = 120 / (maxVal - minVal);
+  scale = 255 / (maxVal - minVal);
   shift = -minVal * scale;
   cvConvertScale(image_Re, dst, scale, shift);
   
@@ -148,75 +148,4 @@ void fourierVisibiliser(IplImage *reImg, IplImage* imImg, IplImage *dst) {
   cvReleaseImage(&image_Im);
 }
 
-IplImage *myDFT(IplImage *srcImg) {
-  IplImage* fftImg = 0;
-  IplImage* realImg = 0;
-  IplImage* imageImg = 0;
-  IplImage* prealImg = 0;
-  IplImage* pimageImg = 0;
-  IplImage* modulo = 0;
 
-  //for only 1 channel image
-  if (srcImg->nChannels > 1)
-    return NULL;
-  //for FFT
-  realImg = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 1);
-  imageImg = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 1);
-  fftImg = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 2);
-  prealImg = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 1);
-  pimageImg = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 1);
-  modulo = cvCreateImage(cvGetSize(srcImg), IPL_DEPTH_64F, 1);
-
-  cvConvertScale(srcImg, realImg, 1, 0); // uchar image to double image
-  cvZero(imageImg);
-
-  cvMerge(realImg, imageImg, NULL, NULL, fftImg);
-  cvDFT(fftImg, fftImg, CV_DXT_FORWARD);
-  cvSplit(fftImg, realImg, imageImg, NULL, NULL);
-  fourierVisibiliser(realImg,imageImg, modulo);
-  /*
-  cvPow(realImg, prealImg, 2); //prealImg=realImg^2
-  cvPow(imageImg, pimageImg, 2); //pimageImg=imageImg^2
-  cvAdd(prealImg, pimageImg, modulo); //modulo = prealImg+pimageImg
-  cvPow(modulo, modulo, 0.5); //modulo = sqrt(modulo)
-
-  // Compute log(1 + Mag)
-  cvAddS(modulo, cvScalar(1.0), prealImg); // 1 + Mag
-  cvLog(prealImg, modulo); // log(1 + Mag)
-  
-  //rearrange quadrant
-  double tmp13, tmp24;
-  int nRow = srcImg->height;
-  int nCol = srcImg->width;
-  int cy = nRow / 2; // image center
-  int cx = nCol / 2;
-  int i, j;
-
-  for (j = 0; j < cy; j++) {
-    for (i = 0; i < cx; i++) {
-      tmp13 = CV_IMAGE_ELEM(modulo, double, j, i);
-      CV_IMAGE_ELEM(modulo, double, j, i) = CV_IMAGE_ELEM(modulo, double, j + cy, i + cx);
-      CV_IMAGE_ELEM(modulo, double, j + cy, i + cx) = tmp13;
-
-      tmp24 = CV_IMAGE_ELEM(modulo, double, j, i + cx);
-      CV_IMAGE_ELEM(modulo, double, j, i + cx) = CV_IMAGE_ELEM(modulo, double, j + cy, i);
-      CV_IMAGE_ELEM(modulo, double, j + cy, i) = tmp24;
-    }
-  }
-
-  //normalize
-  CvPoint maxPoint, minPoint;
-  double max, min;
-  cvMinMaxLoc(modulo, &min, &max, &minPoint, &maxPoint);
-  double scale = 255.0 / (max - min);
-  double shift = min*scale;
-  cvConvertScale(modulo, modulo, scale, shift);
-  */
-  //clean up
-  cvReleaseImage(&fftImg);
-  cvReleaseImage(&realImg);
-  cvReleaseImage(&imageImg);
-  cvReleaseImage(&prealImg);
-  cvReleaseImage(&pimageImg);
-  return modulo;
-}
