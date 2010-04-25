@@ -22,8 +22,14 @@ const char* getFilePathName(const char* filepath, const char* newExtension);
  * generer la chemin de fichier
  *
  */
-const char* getFilePathName(char** filepath,int length);
-
-
+const char* getFilePathName(const char** filepath,int length);
+/*
+ * supprimer une serie d'image
+ */
+void releaseMemory(IplImage** images,int length);
+/*
+ * convertir une image a image 8U
+ */
+IplImage* convertToImage8U(IplImage* image);
 #endif	/* _UTILS_H */
 
