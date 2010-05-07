@@ -1,18 +1,15 @@
 
-
+#include "contourFacteur.h"
 #include <opencv/cxcore.h>
+#include <stdlib.h>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <stdio.h>
 
-struct Facteur {
-  int countEdgeDetected;
-  int countEdgeRef;
-  int countCorrect;
-  int countFauxPositif;
-  int countFauxNegatif;
-  int countTotal;
-  double P;
-  double TFP;
-  double TFN;
-};
+using namespace std;
 
 int getEdgeCount(IplImage* image) {
   int count = cvCountNonZero(image);
@@ -20,49 +17,47 @@ int getEdgeCount(IplImage* image) {
 }
 
 void compaire(uchar* a, uchar* b, int& count) {
-  if (a != 0)
-    if (a == b) {
+  if (*a != 0) {
+    //cout<<" "<<(int)*a;
+    if (*a == *b) {
+      //std::cout<<"oki";
       count++;
       *a = 0;
       *b = 0;
     }
+  }
 }
 
-int getFacteur(IplImage* imageCalcule, IplImage* imageRef) {
+Facteur getFacteur(IplImage* imageCalcule, IplImage* imageRef, int size) {
   IplImage* copyImageCalcule = cvCloneImage(imageCalcule);
   IplImage* copyImageRef = cvCloneImage(imageRef);
 
   uchar* ptr = (uchar*) copyImageCalcule->imageData;
   uchar* ptrRef = (uchar*) copyImageRef->imageData;
 
-  int i = 0;
-  int w = copyImageCalcule->width;
-  int h = copyImageCalcule->height;
+
+  const int w = copyImageCalcule->width;
+  const int h = copyImageCalcule->height;
 
   int countCorrect = 0;
-  for (int i = 0; i < w; i++) {
-    for (int j = 0; j < h; j++) {
+
+  int r = size / 2;
+  for (int i = 0; i < h; i++) {// rowindex
+    for (int j = 0; j < w; j++) {//colindex
       int delta = i * w + j;
       uchar* curptr = ptr + delta;
-      if (*ptr == 0) continue;
-      if (*ptr == *(ptrRef + delta)) {
-        compaire(ptr, ptrRef + delta, &countCorrect);
-      } else if (j > 0 && *ptr == *(ptrRef + delta - 1)) {
-        compaire(ptr, ptrRef + delta - 1, &countCorrect);
-      } else if (j < h - 1 && *ptr == *(ptrRef + delta + 1)) {
-        compaire(ptr, ptrRef + delta + 1, &countCorrect);
-      } else if (i > 0 && *ptr == *(ptrRef + delta - w)) {
-        compaire(ptr, ptrRef + delta - w, &countCorrect);
-      } else if (i > 0 && j > 0 && *ptr == *(ptrRef + delta - w - 1)) {
-        compaire(ptr, ptrRef + delta - w - 1, &countCorrect);
-      } else if (i > 0 && j < h - 1 && *ptr == *(ptrRef + delta - w + 1)) {
-        compaire(ptr, ptrRef + delta - w + 1, &countCorrect);
-      } else if (i < w - 1 && j > 0 && *ptr == *(ptrRef + delta + w - 1)) {
-        compaire(ptr, ptrRef + delta + w - 1, &countCorrect);
-      } else if (i < w - 1 && j < h - 1 && *ptr == *(ptrRef + delta + w + 1)) {
-        compaire(ptr, ptrRef + delta + w + 1, &countCorrect);
-      } else if (i < w - 1 && *ptr == *(ptrRef + delta + w)) {
-        compaire(ptr, ptrRef + delta + w, &countCorrect);
+      if (*curptr == 0) continue;
+
+      for (int k = -r; k <= r; k++) { // row index matrix
+        if (i + k >= 0 && i + k < h) {
+          for (int l = -r; l <= r; l++) { // col index matrix
+            if (j + l >= 0 && j + l < w) {
+//              if(i==0)
+//                printf("%d,%d,%d,%d \n", i, j, k, l);
+              compaire(curptr, ptrRef + delta + k * w + l, countCorrect);
+            }
+          }
+        }
       }
     }
   }
@@ -77,5 +72,8 @@ int getFacteur(IplImage* imageCalcule, IplImage* imageRef) {
   f.P = (double) countCorrect / f.countTotal;
   f.TFP = (double) f.countFauxPositif / f.countTotal;
   f.TFN = (double) f.countFauxNegatif / f.countTotal;
+
+  cvReleaseImage(&copyImageCalcule);
+  cvReleaseImage(&copyImageRef);
   return f;
 }
