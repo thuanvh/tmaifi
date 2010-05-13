@@ -31,32 +31,11 @@
 #define DUMMYTHETA 10000.0
 
 void rothwell(IplImage* imageSource, IplImage* dest, float sigma, float low, float alpha) {
-  //char *infilename=NULL;
-  //char outname[128];
-  //unsigned char *originalimage=NULL;
   int rows, cols, x, y, pos, kwidth, **dist = NULL;
   float **image = NULL, **smoothedimage = NULL, **dx = NULL,
           **dy = NULL, **grad = NULL, **thresh = NULL, **theta = NULL, **thin = NULL;
   rows = imageSource->height;
   cols = imageSource->width;
-
-  //   if(argc != 5){
-  //      fprintf(stderr, "\n\n<USAGE> Topology inputPGM sigma lowthresh alpha\n\n");
-  //      exit(1);
-  //   }
-
-  //   infilename = argv[1];
-  //   sigma = atof(argv[2]);
-  //   low = atof(argv[3]);
-  //   alpha = atof(argv[4]);
-
-  /****************************************************************************
-   * Read in the original image. This program used images in PGM format.
-   ****************************************************************************/
-  //   if(read_pgm_image(infilename, &originalimage, &rows, &cols)==NULL){
-  //      fprintf(stderr, "Error reading the PGM image %s.\n", infilename);
-  //      exit(1);
-  //   }
 
   /****************************************************************************
    * Copy the image into a 2-Dimensional array. This array will be indexed
@@ -92,15 +71,12 @@ void rothwell(IplImage* imageSource, IplImage* dest, float sigma, float low, flo
   for (y = 0, pos = 0; y < rows; y++) {
     for (x = 0; x < cols; x++, pos++) {
       if (thin[x][y] != 0.0)
-        dest->imageData[pos] = (unsigned char) 0;
-      else
         dest->imageData[pos] = (unsigned char) 255;
+      else
+        dest->imageData[pos] = (unsigned char) 0;
     }
   }
 
-  //   sprintf(outname, "%s_s_%.2f_l_%.1f_a_%.2f.pgm", infilename, sigma, low,
-  //      alpha);
-  //   write_pgm_image(outname, originalimage, rows, cols, "", 255);
 }
 
 /*******************************************************************************
@@ -151,8 +127,7 @@ void Thin_edges(float **_thin, float **_thresh, int cols, int rows, int kwidth) 
 
     /* To assist in setting the thresholds: */
     if (do_output) {
-      printf("Edgel strengths range from %f to %f\n", edgel_array[0].thin,
-              edgel_array[edgel_array_len - 1].thin);
+      //printf("Edgel strengths range from %f to %f\n", edgel_array[0].thin, edgel_array[edgel_array_len - 1].thin);
       do_output = 0;
     }
 

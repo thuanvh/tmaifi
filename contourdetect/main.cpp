@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
     int threshold2 = 200;
     int typeOfAlgo = 0;
     int aperture_size = 3;
-    float rw_sigma;
-    float rw_alpha;
+    float rw_sigma=0.3;
+    float rw_alpha=0.5;
     char* refFilePath = NULL;
     bool saveFile = false;
     // Analyser des parametres entres
@@ -87,10 +87,12 @@ int main(int argc, char** argv) {
         }
         // 2e seuil
         i++;
-        if (i < argc) {
+        if (i < argc-1) {
+          cout<<i<<argv[i]<<endl;
           if (argv[i][0] != '-') {
             threshold2 = atoi(argv[i]);
           } else {
+            //cout<<"seuil2";
             i--;
           }
         } else
@@ -149,6 +151,7 @@ int main(int argc, char** argv) {
       // fichier image
       if (i >= argc - 1) {
         filePath = argv[i];
+        //cout<<filePath;
       }
 
     }
@@ -296,7 +299,7 @@ int main(int argc, char** argv) {
     // error
     std::cerr << "Error:" << e << std::endl;
     std::cerr << std::endl << "Using:" << std::endl;
-    std::cerr << argv[0] << "contourdetect [-w] [-f sobel canny laplace] [-t 200 250] image" << std::endl;
+    std::cerr << argv[0] << "contourdetect [-w] [-s] [-f sobel canny laplace rothwell] [-t 200 250] image" << std::endl;
   }
   return (EXIT_SUCCESS);
 }
