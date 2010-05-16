@@ -18,7 +18,8 @@
 #include <string>
 #include <cstring>
 #include <stdio.h>
-
+#include "segmentAlgo.h"
+#include "segfile.h"
 
 #define CONTOUR_WATERSHED 1
 #define CONTOUR_MEANSHIFT 2
@@ -28,9 +29,9 @@
 
 #define STR_WATERSHED "watershed"
 #define STR_MEANSHIFT "meanshift"
-#define STR_PYRSEGMENTATION "pyrsegmentation"
-#define STR_PYRMEANSHIFTFILTERING "pyrmeanshiftfiltering"
-#define STR_KMEANS2 "kmean2"
+#define STR_PYRSEGMENTATION "pyr"
+#define STR_PYRMEANSHIFTFILTERING "pyrmeanshift"
+#define STR_KMEANS2 "kmeans2"
 using namespace std;
 
 /*
@@ -80,7 +81,7 @@ int main(int argc, char** argv) {
         if (i < argc) {
           refFilePath = argv[i];
         } else {
-          throw "File ref is missing";
+          throw "File seg ref is missing";
         }
         continue;
       }
@@ -178,19 +179,23 @@ int main(int argc, char** argv) {
     IplImage* imgSource = cvLoadImage(filePath, CV_LOAD_IMAGE_UNCHANGED);
     if (imgSource == NULL) {
       throw "Image File Error";
-    } else if (imgSource->nChannels > 1) {
-      // convert to gray
-      IplImage* a = cvCreateImage(cvGetSize(imgSource), IPL_DEPTH_8U, 1);
-      cvCvtColor(imgSource, a, CV_RGB2GRAY);
-      cvReleaseImage(&imgSource);
-      imgSource = a;
     }
+//    else if (imgSource->nChannels > 1) {
+//      // convert to gray
+//      IplImage* a = cvCreateImage(cvGetSize(imgSource), IPL_DEPTH_8U, 1);
+//      cvCvtColor(imgSource, a, CV_RGB2GRAY);
+//      cvReleaseImage(&imgSource);
+//      imgSource = a;
+//    }
 
     // load file reference
     IplImage* imgFileRef = NULL;
+    SegImage* segimage;
     if (refFilePath != NULL) {
-      imgFileRef = cvLoadImage(refFilePath, CV_LOAD_IMAGE_UNCHANGED);
-      cvXorS(imgFileRef, cvScalar(255), imgFileRef);
+
+      segimage=readSegFile(refFilePath);
+      imgFileRef = segimage->image; //cvLoadImage(refFilePath, CV_LOAD_IMAGE_UNCHANGED);
+      //cvXorS(imgFileRef, cvScalar(255), imgFileRef);
       if (imgFileRef == NULL) {
         throw "Image File Ref Error";
       }
@@ -198,19 +203,44 @@ int main(int argc, char** argv) {
 
 
     if (typeOfAlgo & CONTOUR_WATERSHED) {
-      //cvWatershed()
+      watershed(imgSource);
     }
     if (typeOfAlgo & CONTOUR_MEANSHIFT) {
       //cvMeanShift()
     }
     if (typeOfAlgo & CONTOUR_PYRSEGMENTATION) {
       //cvPyrSegmentation()
+      /*IplImage* pyrimageout = cvCreateImage(cvSize(imgSource->width, imgSource->height), IPL_DEPTH_8U, imgSource->nChannels);
+      pyrsegmentation(imgSource,pyrimageout);
+      if (isModeWindows)
+        cvShowImage("Output Rothwell", pyrimageout);
+      if (saveFile) {
+        char fileout [ FILENAME_MAX ];
+        sprintf(fileout, "%s.pyrmean.jpg", filePath);
+        cvSaveImage(fileout, pyrimageout);
+      }
+
+      cvReleaseImage(&pyrimageout);
+       */
+      pyrdemo(imgSource);
     }
     if (typeOfAlgo & CONTOUR_PYRMEANSHIFTFILTERING) {
       //cvPyrMeanShiftFiltering()
+      IplImage* pyrimageout = cvCreateImage(cvSize(imgSource->width, imgSource->height), IPL_DEPTH_8U, imgSource->nChannels);
+      pyrmeansegmentation(imgSource,pyrimageout);
+      if (isModeWindows)
+        cvShowImage("Output Rothwell", pyrimageout);
+      if (saveFile) {
+        char fileout [ FILENAME_MAX ];
+        sprintf(fileout, "%s.pyrmean.jpg", filePath);
+        cvSaveImage(fileout, pyrimageout);
+      }
+
+      cvReleaseImage(&pyrimageout);
     }
     if (typeOfAlgo & CONTOUR_KMEANS2) {
       //cvKMeans2()
+      kmeans2(argc,argv);
     }
     /*
     if (typeOfAlgo & CONTOUR_) {
@@ -237,8 +267,10 @@ int main(int argc, char** argv) {
     // Ouvrir des fenetes
     if (isModeWindows) {
       cvShowImage("Source", imgSource);
-      if(imgFileRef!=NULL)
+      if(imgFileRef!=NULL){
+        cvScale(imgFileRef,imgFileRef,255/segimage->segments);
         cvShowImage("Image Ref", imgFileRef);
+      }
       cvWaitKey(0);
     }
 
