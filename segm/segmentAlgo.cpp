@@ -114,4 +114,15 @@ void kmeans2(int argc, char** argv) {
   }
 }
 
-
+void meanshift(IplImage* image){
+  CvHistogram a;
+  cvCalcHist(&image,&a);
+  IplImage* imageprob=cvCloneImage(image);
+  IplImage* project=cvCloneImage(image);
+  cvCalcBackProject(image, project, &a);
+  int x=0;
+  int y=0;
+  int width=image->width;
+  int height=image->height;
+  //cvMeanShift(imageprob,cvRect(x,y,width,height),NULL,NULL);
+}

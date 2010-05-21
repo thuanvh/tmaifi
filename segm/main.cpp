@@ -19,7 +19,10 @@
 #include <cstring>
 #include <stdio.h>
 #include "segmentAlgo.h"
-#include "segfile.h"
+#include "imageSegment.h"
+#include "PyrMeanShiftSegmentationDemo.h"
+#include "pyrSegmentationDemo.h"
+#include "kmeansDemo.h"
 
 #define CONTOUR_WATERSHED 1
 #define CONTOUR_MEANSHIFT 2
@@ -222,25 +225,31 @@ int main(int argc, char** argv) {
 
       cvReleaseImage(&pyrimageout);
        */
-      pyrdemo(imgSource);
+      //pyrdemo(imgSource);
+      PyrSegmentationDemo psd;
+      psd.pyrdemo(imgSource);
     }
     if (typeOfAlgo & CONTOUR_PYRMEANSHIFTFILTERING) {
       //cvPyrMeanShiftFiltering()
-      IplImage* pyrimageout = cvCreateImage(cvSize(imgSource->width, imgSource->height), IPL_DEPTH_8U, imgSource->nChannels);
-      pyrmeansegmentation(imgSource,pyrimageout);
-      if (isModeWindows)
-        cvShowImage("Output Rothwell", pyrimageout);
-      if (saveFile) {
-        char fileout [ FILENAME_MAX ];
-        sprintf(fileout, "%s.pyrmean.jpg", filePath);
-        cvSaveImage(fileout, pyrimageout);
-      }
-
-      cvReleaseImage(&pyrimageout);
+//      IplImage* pyrimageout = cvCreateImage(cvSize(imgSource->width, imgSource->height), IPL_DEPTH_8U, imgSource->nChannels);
+//      pyrmeansegmentation(imgSource,pyrimageout);
+//      if (isModeWindows)
+//        cvShowImage("Output Rothwell", pyrimageout);
+//      if (saveFile) {
+//        char fileout [ FILENAME_MAX ];
+//        sprintf(fileout, "%s.pyrmean.jpg", filePath);
+//        cvSaveImage(fileout, pyrimageout);
+//      }
+//
+//      cvReleaseImage(&pyrimageout);
+      PyrMeanShiftSegmentationDemo pmss;
+      pmss.pyrmeanshiftdemo(imgSource);
     }
     if (typeOfAlgo & CONTOUR_KMEANS2) {
       //cvKMeans2()
-      kmeans2(argc,argv);
+      //kmeans2(argc,argv);
+      KmeansSegmentDemo kmean;
+      kmean.segmentation(imgSource);
     }
     /*
     if (typeOfAlgo & CONTOUR_) {
@@ -282,7 +291,7 @@ int main(int argc, char** argv) {
     // error
     std::cerr << "Error:" << e << std::endl;
     std::cerr << std::endl << "Using:" << std::endl;
-    std::cerr << argv[0] << "contourdetect [-w] [-s] [-f sobel canny laplace rothwell] [-t 200 250] image" << std::endl;
+    std::cerr << argv[0] << "seg [-w] [-s] [-f sobel canny laplace rothwell] [-t 200 250] image" << std::endl;
   }
   return (EXIT_SUCCESS);
 }

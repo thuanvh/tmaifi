@@ -21,14 +21,19 @@ using namespace std;
 
 class SegImage {
 public:
+    // information commun
     int width;
     int height;
     int segments;
+    // information pour segfile
     bool gray;
     bool invert;
     bool flipflop;
     IplImage* image;
     SegImage();
+    int** compareSegImage(SegImage* segImage);
+    void colorerSegImage(IplImage* imageSource, IplImage* imageDest);
+    void graySegImage(IplImage* imageDest);
 };
 
 SegImage* readSegFile(char* fileSeg);

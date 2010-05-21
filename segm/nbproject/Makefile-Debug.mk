@@ -31,7 +31,13 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/main.o
+	${OBJECTDIR}/kmeansDemo.o \
+	${OBJECTDIR}/pyrSegmentationDemo.o \
+	${OBJECTDIR}/segmentAlgo.o \
+	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/imageSegment.o \
+	${OBJECTDIR}/PyrMeanShiftSegmentationDemo.o \
+	${OBJECTDIR}/watershedDemo.o
 
 # C Compiler Flags
 CFLAGS=
@@ -51,16 +57,46 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	${MAKE}  -f nbproject/Makefile-Debug.mk dist/Debug/GNU-Linux-x86/segm
+	${MAKE}  -f nbproject/Makefile-Debug.mk ../test/segm
 
-dist/Debug/GNU-Linux-x86/segm: ${OBJECTFILES}
-	${MKDIR} -p dist/Debug/GNU-Linux-x86
-	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/segm ${OBJECTFILES} ${LDLIBSOPTIONS} 
+../test/segm: ${OBJECTFILES}
+	${MKDIR} -p ../test
+	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ../test/segm ${OBJECTFILES} ${LDLIBSOPTIONS} 
+
+${OBJECTDIR}/kmeansDemo.o: nbproject/Makefile-${CND_CONF}.mk kmeansDemo.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/kmeansDemo.o kmeansDemo.cpp
+
+${OBJECTDIR}/pyrSegmentationDemo.o: nbproject/Makefile-${CND_CONF}.mk pyrSegmentationDemo.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/pyrSegmentationDemo.o pyrSegmentationDemo.cpp
+
+${OBJECTDIR}/segmentAlgo.o: nbproject/Makefile-${CND_CONF}.mk segmentAlgo.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/segmentAlgo.o segmentAlgo.cpp
 
 ${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/imageSegment.o: nbproject/Makefile-${CND_CONF}.mk imageSegment.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/imageSegment.o imageSegment.cpp
+
+${OBJECTDIR}/PyrMeanShiftSegmentationDemo.o: nbproject/Makefile-${CND_CONF}.mk PyrMeanShiftSegmentationDemo.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/PyrMeanShiftSegmentationDemo.o PyrMeanShiftSegmentationDemo.cpp
+
+${OBJECTDIR}/watershedDemo.o: nbproject/Makefile-${CND_CONF}.mk watershedDemo.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/watershedDemo.o watershedDemo.cpp
 
 # Subprojects
 .build-subprojects:
@@ -68,7 +104,7 @@ ${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r build/Debug
-	${RM} dist/Debug/GNU-Linux-x86/segm
+	${RM} ../test/segm
 
 # Subprojects
 .clean-subprojects:

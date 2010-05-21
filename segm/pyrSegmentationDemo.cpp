@@ -3,28 +3,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "pyrSegmentationDemo.h"
+
 #define CV_NO_BACKWARD_COMPATIBILITY
+PyrSegmentationDemo* PyrSegmentationDemo::currentDemo;
+PyrSegmentationDemo::PyrSegmentationDemo(){
+  image[0] = image[1] = image0 = image1 = NULL;
+  level =4;
+  block_size = 1000;
+  filter = CV_GAUSSIAN_5x5;
+  PyrSegmentationDemo::currentDemo = this;
 
-IplImage* image[2] = {0, 0}, *image0 = 0, *image1 = 0;
-CvSize size;
-
-int w0, h0, i;
-int threshold1, threshold2;
-int l, level = 4;
-int sthreshold1, sthreshold2;
-int l_comp;
-int block_size = 1000;
-float parameter;
-double threshold;
-double rezult, min_rezult;
-CvFilter filter = CV_GAUSSIAN_5x5;
-CvConnectedComp *cur_comp, min_comp;
-CvSeq *comp;
-CvMemStorage *storage;
-
-CvPoint pt1, pt2;
-
-void ON_SEGMENT(int a) {
+}
+void PyrSegmentationDemo::ON_SEGMENT(int a){
+  PyrSegmentationDemo::currentDemo->segment();
+}
+void PyrSegmentationDemo::segment() {
   cvPyrSegmentation(image0, image1, storage, &comp,
           level, threshold1 + 1, threshold2 + 1);
 
@@ -47,7 +41,7 @@ void ON_SEGMENT(int a) {
   cvShowImage("Segmentation", image1);
 }
 
-int pyrdemo(IplImage* imageSource) {
+int PyrSegmentationDemo::pyrdemo(IplImage* imageSource) {
   //char* filename = argc == 2 ? argv[1] : (char*)"fruits.jpg";
 
   //if( (image[0] = cvLoadImage( filename, 1)) == 0 )

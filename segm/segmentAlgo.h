@@ -14,5 +14,6 @@ void pyrsegmentation(IplImage* src, IplImage* dst);
 void watershed(IplImage* filename);
 
 int pyrdemo(IplImage* imageSource);
+int pyrmeanshiftdemo(IplImage* imageSource);
 #endif	/* _WATERSHED_H */
 
