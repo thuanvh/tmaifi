@@ -159,27 +159,27 @@ void watershedContour(IplImage* imagesource) {
   cvCvtColor(img, marker_mask, CV_BGR2GRAY);
   cvCvtColor(marker_mask, img_gray2, CV_GRAY2BGR);
 
-  //  cvZero(marker_mask);
-  //  cvZero(wshed);
+  cvZero(marker_mask);
+  cvZero(wshed);
   cvShowImage("image", img);
   cvShowImage("watershed transform", wshed);
   cvSetMouseCallback("image", on_mouse, 0);
 
 
-  //CvMemStorage* storage = cvCreateMemStorage(0);
-  //CvSeq* contours = 0;
+  CvMemStorage* storage = cvCreateMemStorage(0);
+  CvSeq* contours = 0;
   CvMat* color_tab;
   int i, j, comp_count = 100;
-  //cvSaveImage( "wshed_mask.png", marker_mask );
-  //marker_mask = cvLoadImage( "wshed_mask.png", 0 );
+  cvSaveImage("wshed_mask.png", marker_mask);
+  marker_mask = cvLoadImage("wshed_mask.png", 0);
 
-  //  cvFindContours(marker_mask, storage, &contours, sizeof (CvContour),
-  //          CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-  //  cvZero(markers);
-  //  for (; contours != 0; contours = contours->h_next, comp_count++) {
-  //    cvDrawContours(markers, contours, cvScalarAll(comp_count + 1),
-  //            cvScalarAll(comp_count + 1), -1, -1, 8, cvPoint(0, 0));
-  //  }
+  cvFindContours(marker_mask, storage, &contours, sizeof (CvContour),
+          CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+  cvZero(markers);
+  for (; contours != 0; contours = contours->h_next, comp_count++) {
+    cvDrawContours(markers, contours, cvScalarAll(comp_count + 1),
+            cvScalarAll(comp_count + 1), -1, -1, 8, cvPoint(0, 0));
+  }
 
 
   IplImage* imgContour = cvCreateImage(cvSize(imgSource->width, imgSource->height), IPL_DEPTH_32F, 1);
@@ -272,15 +272,26 @@ void watershed(IplImage* imagesource) {
   int height = imagesource->height;
   int segid = 1;
   int i = 0;
+  int threshold = 0;
 
   cvZero(markers);
-  for (int i = 0; i < height - localsize; i += localsize) {
-    for (int j = 0; j < width - localsize; j += localsize) {
-      cvSetImageROI(imgGray, cvRect(j, i, localsize, localsize));
-      cvMinMaxLoc(imgGray, &min, &max, &minLoc, &maxLoc);
-      cvSetAt(markers, cvScalar(segid++), i + minLoc.y, j + minLoc.x);
-      cvResetImageROI(imgGray);
-    }
+  cvThreshold(imgGray, imgGray, threshold, 255, CV_THRESH_BINARY_INV);
+  //  for (int i = 0; i < height - localsize; i += localsize) {
+  //    for (int j = 0; j < width - localsize; j += localsize) {
+  //      cvSetImageROI(imgGray, cvRect(j, i, localsize, localsize));
+  //      cvMinMaxLoc(imgGray, &min, &max, &minLoc, &maxLoc);
+  //      cvSetAt(markers, cvScalar(segid++), i + minLoc.y, j + minLoc.x);
+  //      cvResetImageROI(imgGray);
+  //    }
+  //  }
+
+  CvMemStorage* storage = cvCreateMemStorage(0);
+  CvSeq* contours = 0;
+
+  cvFindContours(imgGray, storage, &contours, sizeof (CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+  cvZero(markers);
+  for (; contours != 0; contours = contours->h_next, segid++) {
+    cvDrawContours(markers, contours, cvScalarAll(segid + 1), cvScalarAll(segid + 1), -1, -1, 8, cvPoint(0, 0));
   }
 
   IplImage* imgm = cvCreateImage(cvGetSize(imagesource), IPL_DEPTH_8U, 1);

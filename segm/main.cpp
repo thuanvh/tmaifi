@@ -210,6 +210,7 @@ int main(int argc, char** argv) {
     }
     if (typeOfAlgo & CONTOUR_MEANSHIFT) {
       //cvMeanShift()
+      meanshift(imgSource);
     }
     if (typeOfAlgo & CONTOUR_PYRSEGMENTATION) {
       //cvPyrSegmentation()

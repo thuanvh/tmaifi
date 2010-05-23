@@ -6,6 +6,7 @@
 #include <cstring>
 #include <stdio.h>
 #include "PyrMeanShiftSegmentationDemo.h"
+#include "segmentAlgo.h"
 #define CV_NO_BACKWARD_COMPATIBILITY
 
 using namespace std;
@@ -20,7 +21,7 @@ PyrMeanShiftSegmentationDemo::PyrMeanShiftSegmentationDemo() {
 }
 
 void PyrMeanShiftSegmentationDemo::segment() {
-  cout<<sp<<":"<<sr<<endl;
+  cout << sp << ":" << sr << endl;
   cvPyrMeanShiftFiltering(image0, image1, sp, sr, level);
   /*l_comp = comp->total;
 
@@ -91,3 +92,30 @@ int PyrMeanShiftSegmentationDemo::pyrmeanshiftdemo(IplImage* imageSource) {
   return 0;
 }
 
+SegImage PyrMeanShiftSegmentationDemo::getImageSegment() {
+  SegImage segimage;
+  segimage.width = image1->width;
+  segimage.height = image1->height;
+  segimage.segments = l_comp = comp->total;
+  segimage.image = cvCreateImage(cvGetSize(image1), IPL_DEPTH_8U, 1);
+
+
+  int segcount = 0;
+  min_comp.value = cvScalarAll(0);
+  map<string, int> mapping;
+
+  for (int i = 0; i < segimage.height; i++) {
+    for (int j = 0; j < segimage.width; j++) {
+      uchar* outptr = &CV_IMAGE_ELEM(image1, uchar, i, j * 3);
+      CvScalar value = cvScalar(outptr[0], outptr[1], outptr[2]);
+      int cluster_idx = -1;
+      string strvalue = cvScalar2String(value);
+      cluster_idx = mapping[strvalue]; //clusters->data.i[i * imageSource->width + j];
+      if (cluster_idx == 0)
+        mapping[strvalue] = segcount++;
+      uchar* q = &CV_IMAGE_ELEM(segimage.image, uchar, i, j);
+      *q = (uchar) cluster_idx;
+    }
+  }
+  return segimage;
+}

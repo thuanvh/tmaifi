@@ -8,6 +8,9 @@
 #ifndef _PYRSEGMENTATIONDEMO_H
 #define	_PYRSEGMENTATIONDEMO_H
 
+#include "imageSegment.h"
+
+
 class PyrSegmentationDemo {
 private:
     IplImage* image[2], *image0, *image1;
@@ -26,14 +29,16 @@ private:
     CvConnectedComp *cur_comp, min_comp;
     CvSeq *comp;
     CvMemStorage *storage;
-
     CvPoint pt1, pt2;
+
 public:
     PyrSegmentationDemo();
     static PyrSegmentationDemo* currentDemo;
     static void ON_SEGMENT(int a);
     void segment();
     int pyrdemo(IplImage* imageSource);
+    SegImage getImageSegment();
+
 };
 #endif	/* _PYRSEGMENTATIONDEMO_H */
 

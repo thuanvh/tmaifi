@@ -4,7 +4,7 @@
  *
  * Created on May 16, 2010, 10:15 PM
  */
-
+#include "imageSegment.h"
 #ifndef _PYRMEANSHIFTSEGMENTATIONDEMO_H
 #define	_PYRMEANSHIFTSEGMENTATIONDEMO_H
 
@@ -37,6 +37,7 @@ public:
     void segment();
     static void ON_SEGMENT(int a);
     static PyrMeanShiftSegmentationDemo* currentDemo;
+    SegImage getImageSegment();
 };
 
 #endif	/* _PYRMEANSHIFTSEGMENTATIONDEMO_H */

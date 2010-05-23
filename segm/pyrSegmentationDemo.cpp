@@ -2,42 +2,30 @@
 #include <opencv/highgui.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <iostream>
 #include "pyrSegmentationDemo.h"
-
+#include "segmentAlgo.h"
+using namespace std;
 #define CV_NO_BACKWARD_COMPATIBILITY
 PyrSegmentationDemo* PyrSegmentationDemo::currentDemo;
-PyrSegmentationDemo::PyrSegmentationDemo(){
+
+PyrSegmentationDemo::PyrSegmentationDemo() {
   image[0] = image[1] = image0 = image1 = NULL;
-  level =4;
+  level = 4;
   block_size = 1000;
   filter = CV_GAUSSIAN_5x5;
   PyrSegmentationDemo::currentDemo = this;
 
 }
-void PyrSegmentationDemo::ON_SEGMENT(int a){
+
+void PyrSegmentationDemo::ON_SEGMENT(int a) {
   PyrSegmentationDemo::currentDemo->segment();
 }
+
 void PyrSegmentationDemo::segment() {
-  cvPyrSegmentation(image0, image1, storage, &comp,
-          level, threshold1 + 1, threshold2 + 1);
+  cvPyrSegmentation(image0, image1, storage, &comp, level, threshold1 + 1, threshold2 + 1);
 
-  /*l_comp = comp->total;
 
-  i = 0;
-  min_comp.value = cvScalarAll(0);
-  while(i<l_comp)
-  {
-      cur_comp = (CvConnectedComp*)cvGetSeqElem ( comp, i );
-      if(fabs(255- min_comp.value.val[0])>
-         fabs(255- cur_comp->value.val[0]) &&
-         fabs(min_comp.value.val[1])>
-         fabs(cur_comp->value.val[1]) &&
-         fabs(min_comp.value.val[2])>
-         fabs(cur_comp->value.val[2]) )
-         min_comp = *cur_comp;
-      i++;
-  }*/
   cvShowImage("Segmentation", image1);
 }
 
@@ -84,3 +72,44 @@ int PyrSegmentationDemo::pyrdemo(IplImage* imageSource) {
 
   return 0;
 }
+
+
+
+SegImage PyrSegmentationDemo::getImageSegment() {
+  SegImage segimage;
+  segimage.width = image1->width;
+  segimage.height = image1->height;
+  segimage.segments = l_comp = comp->total;
+  segimage.image = cvCreateImage(cvGetSize(image1), IPL_DEPTH_8U, 1);
+
+
+  int segid = 0;
+  min_comp.value = cvScalarAll(0);
+  map<string, int> mapping;
+  while (segid < l_comp) {
+    cur_comp = (CvConnectedComp*) cvGetSeqElem(comp, segid);
+    cout << (int) cur_comp->value.val[0] << "-" << (int) cur_comp->value.val[1] << "-" << (int) cur_comp->value.val[2] << endl;
+    //mymap.insert ( pair<char,int>('a',100) );
+
+    string a=cvScalar2String(cur_comp->value);
+
+    mapping.insert(pair<string, int>(a, segid));
+    //    if (fabs(255 - min_comp.value.val[0]) > fabs(255 - cur_comp->value.val[0]) &&
+    //            fabs(min_comp.value.val[1]) > fabs(cur_comp->value.val[1]) &&
+    //            fabs(min_comp.value.val[2]) > fabs(cur_comp->value.val[2]))
+    //      min_comp = *cur_comp;
+    segid++;
+
+  }
+  for (int i = 0; i < segimage.height; i++) {
+    for (int j = 0; j < segimage.width; j++) {
+      uchar* outptr = &CV_IMAGE_ELEM(image1, uchar, i, j * 3);
+      CvScalar value = cvScalar(outptr[0], outptr[1], outptr[2]);
+      int cluster_idx = mapping[cvScalar2String(value)]; //clusters->data.i[i * imageSource->width + j];
+      uchar* q = &CV_IMAGE_ELEM(segimage.image, uchar, i, j);
+      *q = (uchar) cluster_idx;
+    }
+  }
+  return segimage;
+}
+
