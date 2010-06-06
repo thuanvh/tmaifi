@@ -107,15 +107,16 @@ int main(int argc, char** argv) {
     int green = *(p++);
     int localsize = 3;
     //cvSmooth(imgSource, imgSource, CV_MEDIAN, localsize, localsize);
-    //cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(red + low, blue + low, green + low), cvScalar(delta + low, delta + low, delta + low), cvScalar(delta, delta, delta));
-    cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(0, 0, 0), cvScalar(delta + low, delta + low, delta + low), cvScalar(delta, delta, delta));
+    cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(red + low, blue + low, green + low), cvScalar(delta + low, delta + low, delta + low), cvScalar(delta, delta, delta));
+    //cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(0, 0, 0), cvScalar(delta + low, delta + low, delta + low), cvScalar(delta, delta, delta));
+
     //cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(255-red, blue, 255-green), cvScalar(delta, delta, delta), cvScalar(delta, delta, delta));
     //cvFloodFill(imgSource, cvPoint(0, 0), cvScalar(0, 0, 0), cvScalar(delta, delta, delta), cvScalar(delta, delta, delta));
     cvShowImage("imageBg", imgSource);
     //cvWaitKey(0);
     //return 0;
 
-    /*
+    
         IplImage* imageGaussian = cvCloneImage(imgSource);
         //
 
@@ -124,11 +125,11 @@ int main(int argc, char** argv) {
         //    imgSource = imageGaussian;
 
         IplImage* imageNew = cvCloneImage(imageGaussian);
-        imageNew = egaliserColor(imageGaussian);
-        cvShowImage("egaliser", imageNew);
+        //imageNew = egaliserColor(imageGaussian);
+        //cvShowImage("egaliser", imageNew);
         //    imgSource = imageNew;
 
-        SegImage* segImage = kmeansSegmentation(imageNew, 2);
+        SegImage* segImage = kmeansSegmentation(imageNew, 10);
         //SegImage* segImage = pyrSegmentation(imageNew, 10,10);
         IplImage* imageSegmentShow = cvCreateImage(cvGetSize(imgSource), 8, 3);
         IplImage* hybridImage = cvCreateImage(cvGetSize(imgSource), 8, 3);
@@ -194,16 +195,19 @@ int main(int argc, char** argv) {
 
     //Post segmentation
     //segImage->graySegImage(imgGray);
+    /*
     IplImage* imgGray = cvCreateImage(cvGetSize(imgSource), 8, 1);
-    //IplImage* imgGray = cvCreateImage(cvGetSize(imgSource), 8, 1);
-    //cvCvtColor(imgOrigine, imgGray, CV_RGB2GRAY); //(imgSource);
     cvCvtColor(imgSource, imgGray, CV_RGB2GRAY); //(imgSource);
     SegImage* segImage = new SegImage();
     segImage->image = imgGray;
+    */
     uchar* p00 = &CV_IMAGE_ELEM(segImage->image, uchar, 0, 0);
     IplImage* imgMask = cvCloneImage(segImage->image);
     if (*p00 != 0) {
-      cvThreshold(imgMask, imgMask, 0, 255, CV_THRESH_BINARY_INV);
+      cvThreshold(imgMask, imgMask, (*p00), 255, CV_THRESH_TOZERO_INV);
+      cvThreshold(imgMask, imgMask, (*p00)-1, 255, CV_THRESH_TOZERO);
+      cvThreshold(imgMask, imgMask, (*p00)-1, 255, CV_THRESH_BINARY);
+      cvNot(imgMask,imgMask);
     } else
       cvThreshold(imgMask, imgMask, 0, 255, CV_THRESH_BINARY);
     IplImage* imgTransform = cvCloneImage(imgMask);
@@ -220,12 +224,12 @@ int main(int argc, char** argv) {
     IplConvKernel* eleCust = cvCreateStructuringElementEx(erodesize, erodesize, 1, 1, CV_SHAPE_CUSTOM, cvArrayClose);
 
 
-    cvErode(imgTransform, imgTransform, eleCross, 2);
-    cvDilate(imgMask, imgTransform, eleCross, 5);
-    cvErode(imgTransform, imgTransform, eleCross, 7);
+    //cvErode(imgTransform, imgTransform, eleCross, 2);
+    cvDilate(imgMask, imgTransform, eleRect, 5);
+    cvErode(imgTransform, imgTransform, eleCross, 9);
     //cvErode(imgTransform, imgTransform, eleEllipse, 2);
     //cvMorphologyEx(imgTransform, imgTransform, imgTemp, eleCross, CV_MOP_OPEN);
-    //cvDilate(imgTransform, imgTransform, ele, 1);
+    cvDilate(imgTransform, imgTransform, eleCross, 1);
     //cvMorphologyEx(imgTransform,imgTransform,imgTemp,0,CV_MOP_CLOSE);
     //cvMorphologyEx(imgSource,imgErode,imgTemp,0,CV_MOP_GRADIENT);
     //cvMorphologyEx(imgSource,imgErode,imgTemp,0,CV_MOP_TOPHAT);
