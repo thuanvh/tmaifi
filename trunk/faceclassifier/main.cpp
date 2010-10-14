@@ -22,15 +22,15 @@ using namespace cv;
  */
 int main(int argc, char** argv) {
   try {
-    char* testImagePath= NULL;
-    char* histoDirPath=NULL;
-    char* testLabelPath=NULL;
-    char* trainingImagePath=NULL;
-    char* trainingLabelPath=NULL;
+    char* testImagePath = NULL;
+    char* histoDirPath = NULL;
+    char* testLabelPath = NULL;
+    char* trainingImagePath = NULL;
+    char* trainingLabelPath = NULL;
 
     bool isModeWindows = false;
 
-    int typeOfFunction = 0;
+    char* typeOfFunction = 0;
     int typeOfMethod = 0;
 
 
@@ -90,15 +90,16 @@ int main(int argc, char** argv) {
       if (strcmp(argv[i], "-cmd") == 0) {
 
         if (++i < argc) {
+          typeOfFunction = argv[i];
 
-          if (strcmp(argv[i], STR_LEARNING) == 0) {
-            typeOfFunction = FUNC_LEARNING;
-            continue;
-          }
-          if (strcmp(argv[i], STR_TEST) == 0) {
-            typeOfFunction = FUNC_TEST;
-            continue;
-          }
+          //          if (strcmp(argv[i], STR_LEARNING) == 0) {
+          //            typeOfFunction = FUNC_LEARNING;
+          //            continue;
+          //          }
+          //          if (strcmp(argv[i], STR_TEST) == 0) {
+          //            typeOfFunction = FUNC_TEST;
+          //            continue;
+          //          }
         } else {
           throw ERR_FUNC_MISSING;
         }
@@ -129,30 +130,35 @@ int main(int argc, char** argv) {
       }
 
     }
-
-    if (typeOfFunction == FUNC_LEARNING) {
-      if (trainingImagePath == NULL || trainingLabelPath==NULL) {
-        throw ERR_DIR_MISSING;
-      } else {
-        if(typeOfMethod==CMD_BAYES_PIXEL)
-          learningHisto(trainingImagePath,trainingLabelPath, histoDirPath);
-//        else if(typeOfMethod==CMD_MAHALANOBIS)
-//          learningMahalanobis(trainingImagePath,trainingLabelPath, histoDirPath);
-//        else if(typeOfMethod==CMD_BAYES_POINT)
-//          learningPoint(trainingImagePath,trainingLabelPath, histoDirPath);
-      }
-    } else if (typeOfFunction == FUNC_TEST) {
-      if (testImagePath == NULL || testLabelPath==NULL) {
-        throw ERR_FILE_MISSING;
-      } else {
-        if(typeOfMethod==CMD_BAYES_PIXEL)
-          TestingHisto(histoDirPath,testImagePath, testLabelPath);
-//        else if(typeOfMethod==CMD_MAHALANOBIS)
-//          TestingMahalanobis(histoDirPath,testImagePath, testLabelPath);
-//        else if(typeOfMethod==CMD_BAYES_POINT)
-//          TestingPoint(histoDirPath,testImagePath, testLabelPath);
-      }
+    if (strcmp(typeOfFunction, STR_LEARNING) == 0)
+      learningHisto(trainingImagePath, trainingLabelPath, histoDirPath, typeOfFunction);
+    else {
+      testingHisto(trainingImagePath, trainingLabelPath, histoDirPath, typeOfFunction);
     }
+
+    //    if (typeOfFunction == FUNC_LEARNING) {
+    //      if (trainingImagePath == NULL || trainingLabelPath==NULL) {
+    //        throw ERR_DIR_MISSING;
+    //      } else {
+    //        if(typeOfMethod==CMD_BAYES_PIXEL)
+    //          learningHisto(trainingImagePath,trainingLabelPath, histoDirPath,"learn");
+    ////        else if(typeOfMethod==CMD_MAHALANOBIS)
+    ////          learningMahalanobis(trainingImagePath,trainingLabelPath, histoDirPath);
+    ////        else if(typeOfMethod==CMD_BAYES_POINT)
+    ////          learningPoint(trainingImagePath,trainingLabelPath, histoDirPath);
+    //      }
+    //    } else if (typeOfFunction == FUNC_TEST) {
+    //      if (testImagePath == NULL || testLabelPath==NULL) {
+    //        throw ERR_FILE_MISSING;
+    //      } else {
+    //        if(typeOfMethod==CMD_BAYES_PIXEL)
+    //          TestingHisto(histoDirPath,testImagePath, testLabelPath,"test");
+    ////        else if(typeOfMethod==CMD_MAHALANOBIS)
+    ////          TestingMahalanobis(histoDirPath,testImagePath, testLabelPath);
+    ////        else if(typeOfMethod==CMD_BAYES_POINT)
+    ////          TestingPoint(histoDirPath,testImagePath, testLabelPath);
+    //      }
+    //    }
 
 
   } catch (const char* e) {
@@ -164,9 +170,9 @@ int main(int argc, char** argv) {
   return (EXIT_SUCCESS);
 
 
-//    QApplication a(argc, argv);
-//    DigitDetectorWindow w;
-//    w.show();
-//
-//    return a.exec();
+  //    QApplication a(argc, argv);
+  //    DigitDetectorWindow w;
+  //    w.show();
+  //
+  //    return a.exec();
 }
