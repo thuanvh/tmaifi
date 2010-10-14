@@ -41,6 +41,7 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
   ofdata << "@RELATION digit" << endl;
   ofdata << "@ATTRIBUTE distance_histo			integer" << endl;
   ofdata << "@ATTRIBUTE number_symetric_point 		integer" << endl;
+  ofdata << "@ATTRIBUTE number_symetric_point_neg 		integer" << endl;
   //  ofdata << "@ATTRIBUTE number_ending_point_q1 		integer" << endl;
   //  ofdata << "@ATTRIBUTE number_ending_point_q2 		integer" << endl;
   //  ofdata << "@ATTRIBUTE number_ending_point_q3 		integer" << endl;
@@ -162,17 +163,21 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
         }
       }
       int nb_sym_points = 0;
+      int nb_sym_points_neg = 0;
       for (int k = 0; k < height; k++) {
         for (int l = 0; l < width / 2; l++) {
           if (subregion[k][l] > 0 && subregion[k][width - l] > 0) {
             nb_sym_points++;
           }
+          if (subregion[k][l] != subregion[k][width - l] ) {
+            nb_sym_points_neg++;
+          }
         }
       }
 
       // print data file
-      ofdata << (int) max << "," << nb_sym_points << "," << label << endl;
-      cout << " max: " << (int) max << "," << nb_sym_points << "," << label << endl;
+      ofdata << (int) max << "," << nb_sym_points << "," << nb_sym_points_neg << "," << label << endl;
+      cout << " max: " << (int) max << "," << nb_sym_points << "," << nb_sym_points_neg << "," << label << endl;
       // print image file
       char file[255];
       Mat mat3;
