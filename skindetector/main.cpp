@@ -1,15 +1,3 @@
-/*
- * File:   main.cpp
- * Author: thuan
- *
- * Created on May 13, 2010, 1:24 AM
- */
-/*
- * File:   main.cpp
- * Author: thuan
- *
- * Created on April 26, 2010, 5:06 PM
- */
 
 #include <stdlib.h>
 #include <opencv/cv.h>
@@ -24,22 +12,22 @@
 using namespace std;
 using namespace cv;
 
+bool is_win_mode;
+int num_color=32;
 /*
  *
  */
 int main(int argc, char** argv) {
   try {
-    char* filePath = NULL;
-    bool isModeWindows = false;
-
-    int typeOfFunction = 0;
-    int aperture_size = 3;
-    float rw_sigma = 0.3;
-    float rw_alpha = 0.5;
+    int typeOfFunction = 0;    
     char* refFileDir = NULL;
     char* refFilePath = NULL;
+    char* refOutFilePath=NULL;
+    char* refRefFilePath=NULL;
     char* histoName = NULL;
-    bool isManual = false;
+    float threshold=1;
+    
+    
     // Analyser des parametres entres
     for (int i = 0; i < argc; i++) {
 
@@ -73,6 +61,52 @@ int main(int argc, char** argv) {
         }
         continue;
       }
+      // directory reference
+      if (strcmp(argv[i], "-testing-out-file") == 0) {
+        i++;
+        if (i < argc) {
+          refOutFilePath = argv[i];
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-testing-ref-file") == 0) {
+        i++;
+        if (i < argc) {
+          refRefFilePath = argv[i];
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-threshold") == 0) {
+        i++;
+        if (i < argc) {
+          threshold = atof(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-num-color") == 0) {
+        i++;
+        if (i < argc) {
+          num_color = atoi(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-win") == 0) {
+        is_win_mode=true;
+        continue;
+      }
+
       // type d'algo
       if (strcmp(argv[i], "-cmd") == 0) {
 
@@ -104,16 +138,14 @@ int main(int argc, char** argv) {
       if (refFilePath == NULL) {
         throw ERR_FILE_MISSING;
       } else {
-        Testing(refFilePath, histoName);
+        Testing(refFilePath, histoName,refOutFilePath,threshold,refRefFilePath);
       }
     }
-
-
   } catch (const char* e) {
     // error
     std::cerr << "Error:" << e << std::endl;
     std::cerr << std::endl << "Using:" << std::endl;
-    std::cerr << argv[0] << " -f [kmeans | watershed | pyr | pyrmeanshift] [-ref file.seg] [–-manual] image" << std::endl;
+    std::cerr << "skindetector -learn-dir « répertoire de l'apprentissage » -histoname « nom de histogramme » -testing-file « fichier de test » -testing-out-file « fichier sorti de test » -threshold « seuil » [–win] -cmd « learning | test » -num-color « nombre de couleur »" << std::endl;
   }
   return (EXIT_SUCCESS);
 }
