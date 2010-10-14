@@ -13,7 +13,7 @@
 
 using namespace std;
 using namespace cv;
-double totalpixel=0;
+long totalpixel = 0;
 
 /*
  * Apprendtissage a partir d'une serie d'image de peau
@@ -42,20 +42,21 @@ void Learning(const char* dirPath, const char* histoName) {
   //  }
   MatND histSkin; // histogram
   MatND histNoSkin; // histogram noskin
-  int HistSize = 32; // size of histogram
+  int HistSize = num_color; // size of histogram
   // let's quantize the a to 32 levels
   // and the b to 32 levels
   int abins = HistSize, bbins = HistSize;
   int histSize[] = {abins, bbins};
-  // hue varies from 0 to 179, see cvtColor
-  float aranges[] = {-256, 256};
-  float branges[] = {-256, 256};
+
+  float aranges[] = {0, 256};
+  float branges[] = {0, 256};
   const float* ranges[] = {aranges, branges};
 
   // we compute the histogram from the 0-th and 1-st channels
   int channels[] = {1, 2};
   for (int i = 0; i < files.size(); i++) {
     string filename = files.at(i);
+    string filenamecp = string(filename);
     int indexName = filename.rfind("noskin.");
     if (indexName < 0)
       continue;
@@ -67,9 +68,15 @@ void Learning(const char* dirPath, const char* histoName) {
     //    cout<<filePathNoSkin<<endl;
 
     string filenameSrc = filename.replace(indexName, 7, "");
+    string filenameSkin = filenamecp.replace(indexName, 7, "skin.");
+
+    cout << filenameSkin << endl;
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filenameSrc;
-    //    cout<<filePathSrc<<endl;
+    string filePathSkin = string(dirPath);
+    filePathSkin += "/" + filenameSkin;
+    cout << filePathSkin << endl;
+    cout << filePathSrc << endl;
     Mat src;
     if (!(src = imread(filePathSrc, 1)).data)
       continue;
@@ -77,76 +84,109 @@ void Learning(const char* dirPath, const char* histoName) {
     Mat noskin;
     if (!(noskin = imread(filePathNoSkin, 1)).data)
       continue;
+
+    Mat skin;
+    if (!(skin = imread(filePathSkin, 1)).data)
+      continue;
+
     Mat maskSkin;
     Mat maskNoSkin;
 
     Mat noskinGray;
+    Mat skinGray;
     cvtColor(noskin, noskinGray, CV_RGB2GRAY);
-    imshow("image noskin gray", noskinGray);
-    Mat maskGray;
+    cvtColor(skin, skinGray, CV_RGB2GRAY);
+    //    imshow("image noskin gray", noskinGray);
+    //    imshow("image skin gray", skinGray);
 
-    threshold(noskinGray, maskGray, 0, 255, THRESH_BINARY);
-    imshow("mask image noskin gray", maskGray);
-    {
-      for (int i = 0; i < noskinGray.rows; i++) {
-        for (int j = 0; j < noskinGray.cols; j++) {
-          maskGray.at<uchar > (i, j) = noskinGray.at<uchar > (i, j) > 0 ? 255 : 0;
-        }
-      }
-    }
-    imshow("mask image noskin gray manual", maskGray);
-
-    Mat noskinGray3;
-    cvtColor(noskinGray, noskinGray3, CV_GRAY2RGB);
-    imshow("image noskin gray 3 channels", noskinGray3);
-
-    threshold(noskinGray3, maskSkin, 0, 255, THRESH_BINARY);
-    threshold(noskinGray3, maskNoSkin, 0, 255, THRESH_BINARY_INV);
-    imshow("noskin", noskin);
-    imshow("image skin", maskSkin);
-    imshow("image noskin", maskNoSkin);
-
-
-    Mat srcSkin;
-    Mat srcNoSkin;
-    bitwise_and(src, maskSkin, srcSkin);
-    bitwise_and(src, maskNoSkin, srcNoSkin);
-    //namedWindow("H-S Histogram", 1);
-    imshow("source image skin", srcSkin);
-    imshow("source image noskin", srcNoSkin);
+    Mat maskGrayNoSkin;
+    Mat maskGraySkin;
+    threshold(noskinGray, maskGrayNoSkin, 0, 255, THRESH_BINARY);
+    threshold(skinGray, maskGraySkin, 0, 255, THRESH_BINARY);
+    //bitwise_not(maskGrayNoSkin, maskGraySkin);
+    //    imshow("mask image noskin gray", maskGrayNoSkin);
+    //    imshow("mask image skin gray", maskGraySkin);
     //    waitKey();
-    //convertScaleAbs(src,src,32/255,0);
-    cout << i << "rows:" << src.rows << " cols:" << src.cols << " numofPoint:" << src.cols * src.rows << endl;
-    totalpixel += src.cols * src.rows;
+    //    {
+    //      for (int i = 0; i < noskinGray.rows; i++) {
+    //        for (int j = 0; j < noskinGray.cols; j++) {
+    //          maskGray.at<uchar > (i, j) = noskinGray.at<uchar > (i, j) > 0 ? 255 : 0;
+    //        }
+    //      }
+    //    }
+    //    imshow("mask image noskin gray manual", maskGray);
+
+    //    Mat noskinGray3;
+    //    cvtColor(noskinGray, noskinGray3, CV_GRAY2RGB);
+    //    imshow("image noskin gray 3 channels", noskinGray3);
+    //
+    //    threshold(noskinGray3, maskSkin, 0, 255, THRESH_BINARY);
+    //    threshold(noskinGray3, maskNoSkin, 0, 255, THRESH_BINARY_INV);
+    //    imshow("noskin", noskin);
+    //    imshow("image skin", maskSkin);
+    //    imshow("image noskin", maskNoSkin);
+    //
+    //
+    //    Mat srcSkin;
+    //    Mat srcNoSkin;
+    //    bitwise_and(src, maskSkin, srcSkin);
+    //    bitwise_and(src, maskNoSkin, srcNoSkin);
+    //    //namedWindow("H-S Histogram", 1);
+    //    imshow("source image skin", srcSkin);
+    //    imshow("source image noskin", srcNoSkin);
+    //    //    waitKey();
+    //    //convertScaleAbs(src,src,32/255,0);
+    //    cout << i << "rows:" << src.rows << " cols:" << src.cols << " numofPoint:" << src.cols * src.rows << endl;
+    //    totalpixel += src.cols * src.rows;
     Mat labSkin;
     Mat labNoSkin;
 
     MatND histSkinEle;
     MatND histNoSkinEle;
-    histSkinEle.create(2,histSize,CV_32F);
-    histNoSkinEle.create(2,histSize,CV_32F);
-    histSkinEle.setTo(Scalar::all(0));
-    histNoSkinEle.setTo(Scalar::all(0));
+    //    histSkinEle.create(2, histSize, CV_32S);
+    //    histNoSkinEle.create(2, histSize, CV_32S);
+    //    histSkinEle.setTo(Scalar::all(0));
+    //    histNoSkinEle.setTo(Scalar::all(0));
 
-    cvtColor(srcSkin, labSkin, CV_BGR2Lab);
-    cvtColor(srcNoSkin, labNoSkin, CV_BGR2Lab);
+    cvtColor(skin, labSkin, CV_BGR2Lab);
+    cvtColor(noskin, labNoSkin, CV_BGR2Lab);
 
-    calcHist(&labNoSkin, 1, channels, Mat(), // do not use mask
-      histNoSkinEle, 2, histSize, ranges,
-      true, // the histogram is uniform
-      false);
+    //from 256 to 32
+    Mat dst = src.clone();
+    img256To32(dst, src);
+    //    convertScaleAbs(src,src,1/8,0);
+    //    convertScaleAbs(src,src,8,0);
+    imshow("image 32 bit", src);
 
+    Mat srclab;
+    cvtColor(src, srclab, CV_BGR2Lab);
 
-    calcHist(&labSkin, 1, channels, Mat(), // do not use mask
-      histSkinEle, 2, histSize, ranges,
-      true, // the histogram is uniform
-      false);
+    calcHist(&srclab, 1, channels, maskGrayNoSkin, histNoSkinEle, 2, histSize, ranges, true, false);
+    calcHist(&srclab, 1, channels, maskGraySkin, histSkinEle, 2, histSize, ranges, true, false);
 
-    displayHistogram(histNoSkinEle, NULL);
-    displayHistogram(histSkinEle, NULL);
+    //    calcHist(&labNoSkin, 1, channels, Mat(), // do not use mask
+    //      histNoSkinEle, 2, histSize, ranges,
+    //      true, // the histogram is uniform
+    //      false);
+    //    calcHist(&labSkin, 1, channels, Mat(), // do not use mask
+    //      histSkinEle, 2, histSize, ranges,
+    //      true, // the histogram is uniform
+    //      false);
+
+    int nbhistnoskin = histNo(histNoSkinEle);
+    int nbhistskin = histNo(histSkinEle);
+
+    cout << "Hist point number:" << nbhistnoskin << "+" << nbhistskin << "=" << nbhistnoskin + nbhistskin << endl;
+    totalpixel += nbhistnoskin + nbhistskin;
+
+    //    displayHistogram(histNoSkinEle, NULL);
+    //    displayHistogram(histSkinEle, NULL);
 
     add(histSkinEle, histSkin, histSkin);
     add(histNoSkinEle, histNoSkin, histNoSkin);
+
+    displayHistogram(histNoSkinEle, NULL);
+    displayHistogram(histSkinEle, NULL);
 
     double maxVal = 0;
     minMaxLoc(histSkin, 0, &maxVal, 0, 0);
@@ -155,7 +195,7 @@ void Learning(const char* dirPath, const char* histoName) {
     minMaxLoc(histNoSkin, 0, &maxVal, 0, 0);
     cout << "max:" << maxVal << endl;
 
-//    waitKey();
+    //    waitKey();
     //    break;
   }
 
@@ -168,11 +208,40 @@ void Learning(const char* dirPath, const char* histoName) {
   char filename[255];
   sprintf(filename, "%s.skin", histoName);
   SaveHistograme(histSkin, filename);
+
   sprintf(filename, "%s.noskin", histoName);
   SaveHistograme(histNoSkin, filename);
 
-  waitKey();
+  //#define GNUPLOT_MATRIX "splot '%s' matrix using (($1-32)*255/32):(($2-32)*255/32):3 title '%s' with pm3d"
+#define GNUPLOT_MATRIX "splot '%s' matrix using 1:2:3 title '%s' with pm3d"
+  //    gnuplot("set palette gray");
+  gnuplot("set pm3d explicit");
+
+
+  sprintf(filename, "%s.skin.splot", histoName);
+  SaveGnuPlotMatrix(histSkin, filename);
+  char plotcmd[255];
+  sprintf(plotcmd, GNUPLOT_MATRIX, filename, "Skin Histogram");
+  gnuplot(plotcmd);
+
+  sprintf(filename, "%s.noskin.splot", histoName);
+  SaveGnuPlotMatrix(histNoSkin, filename);
+  //  char plotcmd[255];
+  sprintf(plotcmd, GNUPLOT_MATRIX, filename, "No Skin Histogram");
+  gnuplot(plotcmd);
+
+  //  waitKey();
 }
+
+int histNo(const MatND& hist) {
+  int histno = 0;
+  for (int a = 0; a < hist.size[0]; a++)
+    for (int b = 0; b < hist.size[1]; b++) {
+      histno += hist.at<float> (a, b);
+    }
+  return histno;
+}
+long pixtotal = 0;
 
 void normalizeHistogram(MatND& hist) {
   // normalize histogram
@@ -188,11 +257,15 @@ void normalizeHistogram(MatND& hist) {
 
   //totalpixel += src.cols * src.rows;
 
-  cout<<totalpixel;
+  cout << totalpixel;
+
+  //hist.type();
   for (int a = 0; a < hist.size[0]; a++)
     for (int b = 0; b < hist.size[1]; b++) {
-      hist.at<double>(a, b) /= totalpixel;
+      pixtotal += hist.at<float>(a, b);
+      hist.at<float>(a, b) /= totalpixel;
     }
+  cout << " compare: " << pixtotal << "-" << totalpixel << "=" << pixtotal - totalpixel << endl;
 }
 
 void displayHistogram(const MatND& hist, const char* name) {
@@ -203,7 +276,8 @@ void displayHistogram(const MatND& hist, const char* name) {
   cout << endl;
   for (int a = 0; a < hist.size[0]; a++) {
     for (int b = 0; b < hist.size[1]; b++) {
-      double binVal = hist.at<double>(a, b);
+      float binVal = hist.at<float>(a, b);
+      //      if(binVal<0)
       cout << binVal << " ";
       //      total += binVal;
       int intensity = cvRound(binVal * 255);
@@ -218,10 +292,22 @@ void displayHistogram(const MatND& hist, const char* name) {
   //cout << "total point" << total << endl;
   //  namedWindow("Source", 1);
   //  imshow("Source", src);
-  if (name != NULL) {
-    namedWindow(name, 1);
-    imshow(name, histImg);
+  //  if (name != NULL) {
+  //    namedWindow(name, 1);
+  //    imshow(name, histImg);
+  //  }
+}
+
+void SaveGnuPlotMatrix(const MatND& hist, const char* name) {
+  ofstream ofs;
+  ofs.open(name);
+  for (int a = 0; a < hist.size[0]; a++) {
+    for (int b = 0; b < hist.size[1]; b++) {
+      ofs << hist.at<float>(a, b) << " ";
+    }
+    ofs << endl;
   }
+  ofs.close();
 }
 
 void SaveHistograme(const MatND& hist, const char* name) {
@@ -257,7 +343,7 @@ void LoadHistograme(MatND& hist, const char* name) {
 
   for (int a = 0; a < hist.size[0]; a++) {
     for (int b = 0; b < hist.size[1]; b++) {
-      float value = 0;
+      //      float value = 0;
       ifs >> hist.at<float>(a, b);
       //      cout << hist.at<float>(a, b);
     }
@@ -266,10 +352,20 @@ void LoadHistograme(MatND& hist, const char* name) {
 
 }
 
+float SumHistogram(const MatND& hist) {
+  float sum = 0;
+  for (int a = 0; a < hist.size[0]; a++) {
+    for (int b = 0; b < hist.size[1]; b++) {
+      sum += hist.at<float>(a, b);
+    }
+  }
+  return sum;
+}
+
 /*
  * Chercher le peau dans l'image
  */
-void Testing(const char* testPath, const char* histoName) {
+void Testing(const char* testPath, const char* histoName, const char* fileOut, float thres = 0.5, const char* refRefFilePath = NULL) {
 
   MatND histNoSkin;
   MatND histSkin;
@@ -277,8 +373,32 @@ void Testing(const char* testPath, const char* histoName) {
   LoadHistograme(histNoSkin, string(histoName) + ".noskin");
   LoadHistograme(histSkin, string(histoName) + ".skin");
 
-  displayHistogram(histNoSkin, "hist noskin");
-  displayHistogram(histSkin, "hist skin");
+  //  cout<<"negatif:"<<histNoSkin.at<float>(135, 141)<<endl;
+  //
+  //  displayHistogram(histNoSkin, "hist noskin");
+  //  displayHistogram(histSkin, "hist skin");
+  //
+  //  cout<<"negatif:"<<histNoSkin.at<float>(135, 141)<<endl;
+
+  Scalar p_skin = sum(histSkin);
+  cout << "p_skin:" << p_skin[0] << endl;
+  Scalar p_noskin = sum(histNoSkin);
+  cout << "p_noskin:" << p_noskin[0] << endl;
+  //  displayHistogram(histNoSkin, "hist noskin");
+
+  Mat ref;
+
+  int peauPixTotal = 0;
+  int peauPixCorrect = 0;
+  bool refcompare=false;
+  if (refRefFilePath != NULL) {
+
+    if ((!(ref = imread(refRefFilePath, 1)).data)) {
+      refcompare=false;
+    }else{
+      refcompare=true;
+    }
+  }
 
   Mat src;
   if (!(src = imread(testPath, 1)).data)
@@ -308,20 +428,50 @@ void Testing(const char* testPath, const char* histoName) {
 
   typedef Vec<uchar, 3 > VT;
   typedef Vec<int, 3 > VTLab;
+  MatIterator_<VT> itref;
+  if (refcompare) {
+    itref = ref.begin<VT > ();
+  }
   MatIterator_<VT> it = src.begin<VT > (),
     it_end = src.end<VT > ();
   MatIterator_<VT> itlab = labSkin.begin<VT > (),
     itlab_end = labSkin.end<VT > ();
+  //  cout<<"negatif:"<<histNoSkin.at<float>(135, 141)<<endl;
+  float K = thres;
   for (; it != it_end; ++it, ++itlab) {
     VTLab labval = *itlab;
     VT srcval = *it;
     int a = labval[1];
     int b = labval[2];
-    float noskin = histNoSkin.at<float>(a, b);
-    float skin = histSkin.at<float>(a, b);
-    if (noskin >= skin) {
+    a = a * histNoSkin.size[0] / 256;
+    b = b * histNoSkin.size[0] / 256;
+
+    float p_c_noskin = histNoSkin.at<float>(a, b);
+    float p_c_skin = histSkin.at<float>(a, b);
+    float threshold = K * p_noskin[0] / p_skin[0];
+    //    if(p_c_noskin<0)
+    //      cout<<a<<" "<<b<<endl;
+    ////    if(a<15 || a>20 ){
+    ////      cout<<a<<"-"<<b<<"end ab";
+    ////      cout << threshold << "\t" << threshold * p_c_noskin << "\t" << p_c_skin << "\t" << p_c_noskin <<"\t"<<(p_c_skin < threshold * p_c_noskin)<< endl;
+    ////    }
+
+    if (p_c_skin <= threshold * p_c_noskin) {
       *it = VT(0, 0, 0);
     }
+
+    if (refcompare) {
+      if ((*itref)[0] != 0 || (*itref)[1] != 0 || (*itref)[2] != 0) {
+        peauPixTotal++;
+        if ((*it)[0] == (*itref)[0] && (*it)[1] == (*itref)[1] && (*it)[2] == (*itref)[2]) {
+          peauPixCorrect++;
+        }
+      }
+      itref++;
+    }
+  }
+  if (refcompare) {
+    cout << "Percent correct:" << peauPixCorrect << "/" << peauPixTotal << "=" << ((float) peauPixCorrect) / peauPixTotal << endl;
   }
 
 
@@ -340,14 +490,43 @@ void Testing(const char* testPath, const char* histoName) {
   //      }
   //    }
   //  }
-  imshow("image skin", src);
-  waitKey();
+  if (is_win_mode) {
+    imshow("image skin", src);
+    waitKey();
+  }
+  if (fileOut != NULL) {
+
+    imwrite(fileOut, src);
+  }
+  src.release();
 }
 
-void HistogrammePeau(int a, int b) {
+void gnuplot(const char *gnucommand) {
 
+  char syscommand[1024];
+  sprintf(syscommand, "echo \"%s\" | gnuplot -persist", gnucommand);
+  system(syscommand);
 }
 
-void HistogrammeNonPeau(int a, int b) {
+void img256To32(const Mat& src, Mat& dst) {
+  typedef Vec<uchar, 3 > VT;
+  MatConstIterator_<VT> it = src.begin<VT > (),
+    it_end = src.end<VT > ();
+  MatIterator_<VT> itdest = dst.begin<VT > ();
+  for (; it != it_end; ++it, ++itdest) {
 
+    VT srcval = *it;
+    *itdest = VT(srcval[0] * num_color / 256, srcval[1] * num_color / 256, srcval[2] * num_color / 256);
+  }
+}
+
+void img32To256(const Mat& src, Mat& dst) {
+  typedef Vec<uchar, 3 > VT;
+  MatConstIterator_<VT> it = src.begin<VT > (),
+    it_end = src.end<VT > ();
+  MatIterator_<VT> itdest = dst.begin<VT > ();
+  for (; it != it_end; ++it, ++itdest) {
+    VT srcval = *it;
+    *itdest = VT(srcval[0]*256 / num_color, srcval[1]*256 / num_color, srcval[2]*256 / num_color);
+  }
 }

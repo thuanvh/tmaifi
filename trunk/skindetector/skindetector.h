@@ -32,16 +32,23 @@
 #define ERR_FILE_OPEN "Could not open file"
 #define ERR_FUNC_MISSING "Function parametre is missing."
 
+
 using namespace std;
 using namespace cv;
 
-void Learning(const char* dirPath,const char* histoName);
-void Testing(const char* testPath,const char* histoName);
+void Learning(const char* dirPath, const char* histoName);
+void Testing(const char* testPath, const char* histoName, const char* fileOut, float thres, const char* refRefFilePath);
 void normalizeHistogram(MatND& hist);
 void displayHistogram(const MatND& hist, const char* name);
 void SaveHistograme(const MatND& hist, string name);
 void LoadHistograme(MatND& hist, string name);
 void SaveHistograme(const MatND& hist, const char* name);
 void LoadHistograme(MatND& hist, const char* name);
+int histNo(const MatND& hist);
+void gnuplot(const char *gnucommand);
+void SaveGnuPlotMatrix(const MatND& hist, const char* name);
+void img256To32(const Mat& src, Mat& dst);
+extern bool is_win_mode;
+extern int num_color;
 #endif	/* SKINDETECTOR_H */
 
