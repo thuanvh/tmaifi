@@ -42,10 +42,10 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
   ofdata << "@ATTRIBUTE distance_histo			integer" << endl;
   ofdata << "@ATTRIBUTE number_symetric_point 		integer" << endl;
   ofdata << "@ATTRIBUTE number_symetric_point_neg 		integer" << endl;
-  //  ofdata << "@ATTRIBUTE number_ending_point_q1 		integer" << endl;
-  //  ofdata << "@ATTRIBUTE number_ending_point_q2 		integer" << endl;
-  //  ofdata << "@ATTRIBUTE number_ending_point_q3 		integer" << endl;
-  //  ofdata << "@ATTRIBUTE number_ending_point_q4 		integer" << endl;
+//  ofdata << "@ATTRIBUTE  nb_points_up integer" << endl;
+//  ofdata << "@ATTRIBUTE  nb_points_down integer" << endl;
+//  ofdata << "@ATTRIBUTE  nb_points_left integer" << endl;
+//  ofdata << "@ATTRIBUTE  nb_points_right integer" << endl;
   ofdata << "@ATTRIBUTE class 		{0,1}	" << endl;
   ofdata << "@DATA" << endl;
 
@@ -162,8 +162,13 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
           subregion[k][l] = (mat.at<uchar > (maxIndexRow + k, maxIndexCol + l) == 0) ? 1 : 0;
         }
       }
+      // number of point symmetric and asymmetric
       int nb_sym_points = 0;
       int nb_sym_points_neg = 0;
+      int nb_points_up=0;
+      int nb_points_down=0;
+      int nb_points_left=0;
+      int nb_points_right=0;
       for (int k = 0; k < height; k++) {
         for (int l = 0; l < width / 2; l++) {
           if (subregion[k][l] > 0 && subregion[k][width - l] > 0) {
@@ -174,10 +179,43 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
           }
         }
       }
+      for (int k = 0; k < height; k++) {
+        for (int l = 0; l < width ; l++) {
+          if (subregion[k][l] > 0){
+            if(k<height/2){
+              nb_points_up++;
+            }else{
+              nb_points_down++;
+            }
+            if(l<width/2){
+              nb_points_left++;
+            }else{
+              nb_points_right++;
+            }
+          }
+        }
+      }
 
       // print data file
-      ofdata << (int) max << "," << nb_sym_points << "," << nb_sym_points_neg << "," << label << endl;
-      cout << " max: " << (int) max << "," << nb_sym_points << "," << nb_sym_points_neg << "," << label << endl;
+      ofdata 
+        << (int) max
+        << "," << nb_sym_points
+        << "," << nb_sym_points_neg
+//        << "," << (nb_points_up - nb_points_down<0?-1:1)
+////        << "," << nb_points_down
+//        << "," << (nb_points_left - nb_points_right<0?-1:1)
+////        << "," << nb_points_right
+        << "," << label << endl;
+
+      cout
+        << " max: " << (int) max
+        << "," << nb_sym_points
+        << "," << nb_sym_points_neg
+        << "," << nb_points_up - nb_points_down
+//        << "," << nb_points_down
+        << "," << nb_points_left - nb_points_right
+//        << "," << nb_points_right
+        << "," << label << endl;
       // print image file
       char file[255];
       Mat mat3;
