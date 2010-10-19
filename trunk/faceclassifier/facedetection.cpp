@@ -42,10 +42,10 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
   ofdata << "@ATTRIBUTE distance_histo			integer" << endl;
   ofdata << "@ATTRIBUTE number_symetric_point 		integer" << endl;
   ofdata << "@ATTRIBUTE number_symetric_point_neg 		integer" << endl;
-//  ofdata << "@ATTRIBUTE  nb_points_up integer" << endl;
-//  ofdata << "@ATTRIBUTE  nb_points_down integer" << endl;
-//  ofdata << "@ATTRIBUTE  nb_points_left integer" << endl;
-//  ofdata << "@ATTRIBUTE  nb_points_right integer" << endl;
+  //  ofdata << "@ATTRIBUTE  nb_points_up integer" << endl;
+  //  ofdata << "@ATTRIBUTE  nb_points_down integer" << endl;
+  //  ofdata << "@ATTRIBUTE  nb_points_left integer" << endl;
+  //  ofdata << "@ATTRIBUTE  nb_points_right integer" << endl;
   ofdata << "@ATTRIBUTE class 		{0,1}	" << endl;
   ofdata << "@DATA" << endl;
 
@@ -165,31 +165,31 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
       // number of point symmetric and asymmetric
       int nb_sym_points = 0;
       int nb_sym_points_neg = 0;
-      int nb_points_up=0;
-      int nb_points_down=0;
-      int nb_points_left=0;
-      int nb_points_right=0;
+      int nb_points_up = 0;
+      int nb_points_down = 0;
+      int nb_points_left = 0;
+      int nb_points_right = 0;
       for (int k = 0; k < height; k++) {
         for (int l = 0; l < width / 2; l++) {
           if (subregion[k][l] > 0 && subregion[k][width - l] > 0) {
             nb_sym_points++;
           }
-          if (subregion[k][l] != subregion[k][width - l] ) {
+          if (subregion[k][l] != subregion[k][width - l]) {
             nb_sym_points_neg++;
           }
         }
       }
       for (int k = 0; k < height; k++) {
-        for (int l = 0; l < width ; l++) {
-          if (subregion[k][l] > 0){
-            if(k<height/2){
+        for (int l = 0; l < width; l++) {
+          if (subregion[k][l] > 0) {
+            if (k < height / 2) {
               nb_points_up++;
-            }else{
+            } else {
               nb_points_down++;
             }
-            if(l<width/2){
+            if (l < width / 2) {
               nb_points_left++;
-            }else{
+            } else {
               nb_points_right++;
             }
           }
@@ -197,14 +197,14 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
       }
 
       // print data file
-      ofdata 
+      ofdata
         << (int) max
         << "," << nb_sym_points
         << "," << nb_sym_points_neg
-//        << "," << (nb_points_up - nb_points_down<0?-1:1)
-////        << "," << nb_points_down
-//        << "," << (nb_points_left - nb_points_right<0?-1:1)
-////        << "," << nb_points_right
+        //        << "," << (nb_points_up - nb_points_down<0?-1:1)
+        ////        << "," << nb_points_down
+        //        << "," << (nb_points_left - nb_points_right<0?-1:1)
+        ////        << "," << nb_points_right
         << "," << label << endl;
 
       cout
@@ -212,15 +212,15 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
         << "," << nb_sym_points
         << "," << nb_sym_points_neg
         << "," << nb_points_up - nb_points_down
-//        << "," << nb_points_down
+        //        << "," << nb_points_down
         << "," << nb_points_left - nb_points_right
-//        << "," << nb_points_right
+        //        << "," << nb_points_right
         << "," << label << endl;
       // print image file
       char file[255];
       Mat mat3;
       cvtColor(mat, mat3, CV_GRAY2BGR);
-      rectangle(mat3, Rect(maxIndexCol, maxIndexRow, width, height), Scalar(255, 0, 0));
+      rectangle(mat3, Rect(maxIndexCol, maxIndexRow, width, height), Scalar(0, 0, 255));
       sprintf(file, "%d.%d.learn.jpg", learningtotal, label);
       imwrite(file, mat3);
       // show image
@@ -235,10 +235,48 @@ void extractAttributes(const char* faceFile, const char* faceLabelFile, const ch
 }
 
 void testingHisto(const char* trainingimage, const char* traininglabel, const char* outputDirPath, const char* command) {
-  int width = 30;
+  char sampleFaceHistoFile[255];
+  sprintf(sampleFaceHistoFile, "%s/1.histo", outputDirPath);
+  char outfile[255];
+  sprintf(outfile, "%s/%s.arff", outputDirPath, command);
+
+  int width = 35;
   int height = 35;
+  float totalMax = 0;
   int startRow = 20;
   int startCol = 15;
+
+  // histogram array
+  float** histos = new float*[IMAGE_HEIGHT];
+  for (int j = 0; j < IMAGE_HEIGHT; j++) {
+    histos[j] = new float[IMAGE_WIDTH]; //{0};
+    for (int k = 0; k < IMAGE_WIDTH; k++) {
+      histos[j][k] = 0;
+    }
+  }
+
+  // Load face region histogramme
+  //cout << "Load histos" << endl;
+  LoadHistograme(histos, sampleFaceHistoFile);
+
+  for (int i = 0; i < IMAGE_HEIGHT-height; i++) {
+    for (int j = 0; j < IMAGE_WIDTH-width; j++) {
+      float total = 0;
+      for (int k = 0; k < height; k++) {
+        for (int l = 0; l < width; l++) {
+          total += histos[i + k][j + l];
+        }
+      }
+      if (totalMax < total)
+      {
+        totalMax = total;
+        startRow = i;
+        startCol = j;
+      }
+    }
+  }
+
+  cout << "Max face zone:" << startRow << "-" << startCol << endl;
 
   Mat histImg;
   //imshow(histoname, histImg);
@@ -253,16 +291,13 @@ void testingHisto(const char* trainingimage, const char* traininglabel, const ch
       Rect(startCol*HISTO_SCALE,
       startRow*HISTO_SCALE,
       (width) * HISTO_SCALE,
-      (height) * HISTO_SCALE), Scalar(255, 0, 0));
+      (height) * HISTO_SCALE), Scalar(0, 0, 255));
     sprintf(file, "%s/histo1.facezone.png", outputDirPath);
     imwrite(file, histImg3);
     cout << "write " << file;
   }
 
-  char sampleFaceHistoFile[255];
-  sprintf(sampleFaceHistoFile, "%s/1.histo", outputDirPath);
-  char outfile[255];
-  sprintf(outfile, "%s/%s.arff", outputDirPath, command);
+
   extractAttributes(trainingimage, traininglabel, outfile, sampleFaceHistoFile, startRow, startCol, width, height);
 }
 
