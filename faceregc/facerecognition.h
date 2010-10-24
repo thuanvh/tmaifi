@@ -68,7 +68,8 @@ int naiveNearestNeighbor(const vector<float>& vec, int laplacian,
   const vector<KeyPoint>& model_keypoints,
   const vector<float>& model_descriptors, int start, int length) ;
 double compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, double best, int start1, int start2, int length);
-void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors);
-
+void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors, ostream& featurefile, bool createDict, ostream& dictFile);
+void saveToDict(const KeyPoint& kp, const vector<float>& descriptors, ostream& dictFile, int start, int size);
+void loadFromDict(vector<KeyPoint>& kplist, vector<float>& descriptors, istream& dictFile);
 #endif	/* FACERECOGNITION_H */
 

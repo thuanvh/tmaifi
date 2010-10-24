@@ -22,27 +22,92 @@ using namespace cv;
 #define IMAGE_HEIGHT 70
 #define NUM_DIGIT 2
 
-void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors) {
+void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors, ostream& featurefile, bool createDict, ostream& dictFile) {
   SURF surf;
   vector<KeyPoint> keypoints;
   vector<float> descriptors;
-
+  surf.hessianThreshold = 0.00001;
+  surf.nOctaveLayers = 4;
+  surf.nOctaves = 4;
+  surf.extended = 1;
   surf(img, Mat(), keypoints, descriptors);
+
   int size = surf.descriptorSize();
   vector<int> ptpairs;
+  //  cout<<"size:"<<size<<endl;
   findPairs(keypoints, descriptors, allKeyPoints, alldescriptors, ptpairs, size);
+  //  getchar();
+  if (createDict) {
+    for (int i = 0; i < ptpairs.size(); i += 2) {
+
+      if (ptpairs[i + 1] < 0) {
+        // add keypoint to dictionary
+        allKeyPoints.push_back(keypoints[ptpairs[i]]);
+        saveToDict(keypoints[ptpairs[i]], descriptors, dictFile, i / 2 * size, size);
+        for (int j = 0; j < size; j++) {
+          alldescriptors.push_back(descriptors[j + i / 2 * size]);
+        }
+        ptpairs[i + 1] = allKeyPoints.size() - 1;
+      }
+    }
+  }
+  // Save index to fichier
+  for (int i = 0; i < ptpairs.size(); i += 2) {
+    if (ptpairs[i + 1] >= 0)
+      featurefile << ptpairs[i + 1] << " ";
+  }
+}
+
+void saveToDict(const KeyPoint& kp, const vector<float>& descriptors, ostream& dictFile, int start, int size) {
+  dictFile << kp.angle << " ";
+  dictFile << kp.class_id << " ";
+  dictFile << kp.octave << " ";
+  dictFile << kp.pt.x << " ";
+  dictFile << kp.pt.y << " ";
+  dictFile << kp.response << " ";
+  dictFile << kp.size << " ";
+
+  for (int i = 0; i < size; i++) {
+    dictFile << descriptors[i + start] << " ";
+  }
+  dictFile << endl;
+}
+
+void loadFromDict(vector<KeyPoint>& kplist, vector<float>& descriptors, istream& dictFile) {
+  while (dictFile.good()) {
+    KeyPoint kp;
+    string line;
+    getline(dictFile, line);
+
+    stringstream ss(stringstream::in | stringstream::out);
+    ss << line;
+    ss >> kp.angle;
+    ss >> kp.class_id;
+    ss >> kp.octave;
+    ss >> kp.pt.x;
+    ss >> kp.pt.y;
+    ss >> kp.response;
+    ss >> kp.size;
+    while (ss.good()) {
+      float val;
+      ss >> val;
+      descriptors.push_back(val);
+    }
+    kplist.push_back(kp);
+  }
 }
 
 double compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, double best, int start1, int start2, int length) {
   double total_cost = 0;
   assert(length % 4 == 0);
   int i, j;
-  for (i = start1, j = start2; i < length; i += 4, j += 4) {
+  for (i = start1, j = start2; i < start1 + length; i += 4, j += 4) {
     double t0 = d1[i] - d2[j];
     double t1 = d1[i + 1] - d2[j + 1];
     double t2 = d1[i + 2] - d2[j + 2];
     double t3 = d1[i + 3] - d2[j + 3];
     total_cost += t0 * t0 + t1 * t1 + t2 * t2 + t3*t3;
+    //    cout << total_cost << " ";
     if (total_cost > best)
       break;
   }
@@ -63,7 +128,9 @@ int naiveNearestNeighbor(const vector<float>& vec, int laplacian,
 
     //    if (laplacian != kp->laplacian)
     //      continue;
+
     int start2 = i*length;
+    //    cout<<start1<<"-"<<start2<<" ";
     d = compareSURFDescriptors(vec, model_descriptors, dist2, start1, start2, length);
     if (d < dist1) {
       dist2 = dist1;
@@ -72,6 +139,8 @@ int naiveNearestNeighbor(const vector<float>& vec, int laplacian,
     } else if (d < dist2)
       dist2 = d;
   }
+  //  cout<<endl;
+  //  cout<<"dist12:"<<dist1<<"-"<<dist2<<endl;
   if (dist1 < 0.6 * dist2)
     return neighbor;
   return -1;
@@ -85,221 +154,75 @@ void findPairs(const vector<KeyPoint>& objectKeypoints, const vector<float>& obj
     const KeyPoint* kp = (const KeyPoint*) &objectKeypoints[i];
     int start1 = i*size;
     int nearest_neighbor = naiveNearestNeighbor(objectDescriptors, kp->response, imageKeypoints, imageDescriptors, start1, size);
-    if (nearest_neighbor >= 0) {
-      ptpairs.push_back(i);
-      ptpairs.push_back(nearest_neighbor);
-    }
+    //    if (nearest_neighbor >= 0) {
+    ptpairs.push_back(i);
+    ptpairs.push_back(nearest_neighbor);
+//    cout << i << "," << nearest_neighbor << " ";
+    //    }
   }
 }
 
-void extractAttributes(const char* faceFile, const char* faceLabelFile, const char* dataoutfile, const char* sampleFaceHistoFile, int startRow, int startCol, int width, int height) {
+void extractAttributes(const char* indexFile, int numberFields) {
 
   // read training image
   ifstream ifimage;
-  ifimage.open(faceFile, ios_base::in);
-  // read training label
-  ifstream iflabel;
-  iflabel.open(faceLabelFile, ios_base::in);
+  ifimage.open(indexFile, ios_base::in);
 
+  char arffFile[255];
+  sprintf(arffFile, "%s.arff", indexFile);
   ofstream ofdata;
-  ofdata.open(dataoutfile);
+  ofdata.open(arffFile);
 
-  cout << "width:" << width << "-" << "height" << height << endl;
+  //  cout << "width:" << width << "-" << "height" << height << endl;
 
   ofdata << "@RELATION digit" << endl;
-  ofdata << "@ATTRIBUTE distance_histo			integer" << endl;
-  ofdata << "@ATTRIBUTE number_symetric_point 		integer" << endl;
-  ofdata << "@ATTRIBUTE number_symetric_point_neg 		integer" << endl;
-  //  ofdata << "@ATTRIBUTE  nb_points_up integer" << endl;
-  //  ofdata << "@ATTRIBUTE  nb_points_down integer" << endl;
-  //  ofdata << "@ATTRIBUTE  nb_points_left integer" << endl;
-  //  ofdata << "@ATTRIBUTE  nb_points_right integer" << endl;
-  ofdata << "@ATTRIBUTE class 		{0,1}	" << endl;
+  for (int i = 0; i < numberFields; i++) {
+    ofdata << "@ATTRIBUTE surfPoint_" << i << "			integer" << endl;
+  }
+  ofdata << "@ATTRIBUTE class 		{";
+  for (int i = 1; i <= 40; i++) {
+    ofdata << "s" << i;
+    if (i < 40)
+      ofdata << ",";
+  }
+  ofdata << "}	" << endl;
   ofdata << "@DATA" << endl;
 
-  string imageline;
-  string labelvalue;
-
-  // histogram array
-  float** histos = new float*[IMAGE_HEIGHT];
-  for (int j = 0; j < IMAGE_HEIGHT; j++) {
-    histos[j] = new float[IMAGE_WIDTH]; //{0};
-    for (int k = 0; k < IMAGE_WIDTH; k++) {
-      histos[j][k] = 0;
+  while (ifimage.good()) {
+    string line;
+    getline(ifimage, line);
+    stringstream ss(stringstream::in | stringstream::out);
+    ss << line;
+    string filename;
+    ss >> filename;
+    if(filename.compare("")==0)
+      break;
+    string classname;
+    ss >> classname;
+    vector<int> vec;
+    while (ss.good()) {
+      int value;
+      ss >> value;
+      vec.push_back(value);
     }
-  }
-
-  // Load face region histogramme
-  cout << "Load histos" << endl;
-  LoadHistograme(histos, sampleFaceHistoFile);
-  cout << "End Load histos" << endl;
-
-  float min = 1;
-  float max = 0;
-  float** faceHisto = new float*[height];
-  for (int j = 0; j < height; j++) {
-    faceHisto[j] = new float[width]; //{0};
-    for (int k = 0; k < width; k++) {
-      faceHisto[j][k] = histos[j + startRow][k + startCol];
-      min = (faceHisto[j][k] < min) ? faceHisto[j][k] : min;
-      max = (faceHisto[j][k] > max) ? faceHisto[j][k] : max;
-    }
-  }
-  cout << "min: " << min << " max: " << max << endl;
-  // normalize
-
-  for (int j = 0; j < height; j++) {
-    for (int k = 0; k < width; k++) {
-      float x = faceHisto[j][k];
-      faceHisto[j][k] = (x - min)*1 / (max - min);
-      cout << faceHisto[j][k] << "\t";
-    }
-    cout << endl;
-  }
-
-
-  float** subregion = new float*[height];
-  for (int j = 0; j < height; j++) {
-    subregion[j] = new float[width]; //{0};
-    for (int k = 0; k < width; k++) {
-      subregion[j][k] = 0;
-    }
-  }
-
-  cout << "End load sub face histos" << endl;
-  //  getchar();
-  int learningImageNumber[NUM_DIGIT] = {0};
-  int learningtotal = 0;
-  while (iflabel.good()) {
-    getline(iflabel, labelvalue);
-    int label = atoi(labelvalue.c_str());
-    cout << ++learningtotal << "-" << label;
-    if (label >= 0 && label < NUM_DIGIT) {
-
-      Mat mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_8UC1);
-
-      learningImageNumber[label]++;
-      // Read image
-      for (int i = 0; i < IMAGE_HEIGHT; i++) {
-        getline(ifimage, imageline);
-        //        cout << imageline << endl;
-        for (int j = 0; j < IMAGE_WIDTH; j++) {
-          //          histos[label][i][j] += (imageline[j] == ' ') ? 0 : 1;
-          //          cout<<histos[label][i][j]<<" ";
-          //Scalar_<double> a=Scalar::all((imageline[j] == ' ') ? 255 : 0);
-          mat.at<uchar > (i, j) = (imageline[j] == ' ') ? 255 : 0;
-          //mat.setTo(a);
-        }
-        //        cout << endl;
-      }
-
-      //calculate the max value of prob
-      float max = 4000;
-      float maxIndexRow;
-      float maxIndexCol;
-      //      for (int i = 0; i < IMAGE_HEIGHT - height; i++) {
-      //        for (int j = 0; j < IMAGE_WIDTH - width; j++) {
-      for (int i = startRow - HISTO_DELTA; i < startRow + HISTO_DELTA; i++) {
-        for (int j = startCol - HISTO_DELTA; j < startCol + HISTO_DELTA; j++) {
-          //          cout << i << " " << j << " ";
-          //          getchar();
-          //          Mat subregion(mat, Rect(i, j, i + height, j + width));
-          for (int k = 0; k < height; k++) {
-            for (int l = 0; l < width; l++) {
-              subregion[k][l] = (mat.at<uchar > (i + k, j + l) == 0) ? 1 : 0;
-              //              cout<<subregion[k][l];
-            }
-            //            cout<<endl;
-          }
-          //          imshow("subreg",subregion);
-          //          waitKey();
-          // Calculer la distance Khi-2
-          float prob = calculProb(subregion, faceHisto, height, width);
-          cout << prob << " ";
-          //          getchar();
-          if (max > prob) {
-            max = prob;
-            maxIndexRow = i;
-            maxIndexCol = j;
-          }
+    for (int i = 0; i < numberFields; i++) {
+      bool one = false;
+      for (int j = 0; j < vec.size(); j++) {
+        if (i == vec[j]) {
+          ofdata << "1,";
+          one = true;
+          break;
         }
       }
-
-      for (int k = 0; k < height; k++) {
-        for (int l = 0; l < width; l++) {
-          subregion[k][l] = (mat.at<uchar > (maxIndexRow + k, maxIndexCol + l) == 0) ? 1 : 0;
-        }
+      if (!one) {
+        ofdata << "0,";
       }
-      // number of point symmetric and asymmetric
-      int nb_sym_points = 0;
-      int nb_sym_points_neg = 0;
-      int nb_points_up = 0;
-      int nb_points_down = 0;
-      int nb_points_left = 0;
-      int nb_points_right = 0;
-      for (int k = 0; k < height; k++) {
-        for (int l = 0; l < width / 2; l++) {
-          if (subregion[k][l] > 0 && subregion[k][width - l] > 0) {
-            nb_sym_points++;
-          }
-          if (subregion[k][l] != subregion[k][width - l]) {
-            nb_sym_points_neg++;
-          }
-        }
-      }
-      for (int k = 0; k < height; k++) {
-        for (int l = 0; l < width; l++) {
-          if (subregion[k][l] > 0) {
-            if (k < height / 2) {
-              nb_points_up++;
-            } else {
-              nb_points_down++;
-            }
-            if (l < width / 2) {
-              nb_points_left++;
-            } else {
-              nb_points_right++;
-            }
-          }
-        }
-      }
-
-      // print data file
-      ofdata
-        << (int) max
-        << "," << nb_sym_points
-        << "," << nb_sym_points_neg
-        //        << "," << (nb_points_up - nb_points_down<0?-1:1)
-        ////        << "," << nb_points_down
-        //        << "," << (nb_points_left - nb_points_right<0?-1:1)
-        ////        << "," << nb_points_right
-        << "," << label << endl;
-
-      cout
-        << " max: " << (int) max
-        << "," << nb_sym_points
-        << "," << nb_sym_points_neg
-        << "," << nb_points_up - nb_points_down
-        //        << "," << nb_points_down
-        << "," << nb_points_left - nb_points_right
-        //        << "," << nb_points_right
-        << "," << label << endl;
-      // print image file
-      char file[255];
-      Mat mat3;
-      cvtColor(mat, mat3, CV_GRAY2BGR);
-      rectangle(mat3, Rect(maxIndexCol, maxIndexRow, width, height), Scalar(0, 0, 255));
-      sprintf(file, "%d.%d.learn.jpg", learningtotal, label);
-      imwrite(file, mat3);
-      // show image
-      //      imshow("Learning Digit", mat);
-      //      waitKey();
-      //      mat.release();
     }
+    ofdata << classname << endl;
   }
   ofdata.close();
   ifimage.close();
-  iflabel.close();
+
 }
 
 void testing(const char* dirPath, const char* name) {
@@ -309,18 +232,26 @@ void testing(const char* dirPath, const char* name) {
   listFileStream.open(listFileStr);
 
   char outFileName[255];
-  sprintf(outFileName, "%s", name);
-  ifstream outfile;
+  sprintf(outFileName, "%s.test", name);
+  ofstream outfile;
   outfile.open(outFileName);
+
+  char inDictFileName[255];
+  sprintf(inDictFileName, "%s.dict", name);
+  ifstream indictfile;
+  indictfile.open(inDictFileName);
 
   vector<KeyPoint> allKeyPoints;
   vector<float> alldescriptors;
+  // load dictionary
+  loadFromDict(allKeyPoints, alldescriptors, indictfile);
 
   while (listFileStream.good()) {
     string filename;
     string classname;
     listFileStream >> filename;
     listFileStream >> classname;
+
 
 
     Mat src;
@@ -335,9 +266,15 @@ void testing(const char* dirPath, const char* name) {
 
     if (!(src = imread(filePathSrc, 0)).data)
       continue;
-
-    extractSUFT( src, allKeyPoints,  alldescriptors);
+    outfile << filename << " ";
+    outfile << classname << " ";
+    extractSUFT(src, allKeyPoints, alldescriptors, outfile, false, outfile);
+    outfile << endl;
   }
+  indictfile.close();
+  outfile.close();
+  listFileStream.close();
+  extractAttributes(outFileName, allKeyPoints.size());
 }
 
 void learning(const char* dirPath, const char* name) {
@@ -347,9 +284,14 @@ void learning(const char* dirPath, const char* name) {
   listFileStream.open(listFileStr);
 
   char outFileName[255];
-  sprintf(outFileName, "%s", name);
+  sprintf(outFileName, "%s.learn", name);
   ofstream outfile;
   outfile.open(outFileName);
+
+  char outDictFileName[255];
+  sprintf(outDictFileName, "%s.dict", name);
+  ofstream outdictfile;
+  outdictfile.open(outDictFileName);
 
   vector<KeyPoint> allKeyPoints;
   vector<float> alldescriptors;
@@ -373,12 +315,15 @@ void learning(const char* dirPath, const char* name) {
 
     if (!(src = imread(filePathSrc, 0)).data)
       continue;
-
-    extractSUFT( src, allKeyPoints,  alldescriptors);
+    outfile << filename << " ";
+    outfile << classname << " ";
+    extractSUFT(src, allKeyPoints, alldescriptors, outfile, true, outdictfile);
+    outfile << endl;
   }
-//  generateHisto(trainingimage, traininglabel, outputDirPath);
-//
-//  testingHisto(trainingimage, traininglabel, outputDirPath, command);
+  outdictfile.close();
+  outfile.close();
+  listFileStream.close();
+  extractAttributes(outFileName, allKeyPoints.size());
 }
 
 void generateHisto(const char* trainingimage, const char* traininglabel, const char* outputDirPath) {
