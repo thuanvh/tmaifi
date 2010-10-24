@@ -152,17 +152,17 @@ int main(int argc, char** argv) {
     }
 
     if (typeOfFunction == FUNC_LEARNING) {
-      if (refFileDir == NULL) {
-        throw ERR_DIR_MISSING;
-      } else {
+//      if (refFileDir == NULL) {
+//        throw ERR_DIR_MISSING;
+//      } else {
         learning(refFileDir, histoName);
-      }
+//      }
     } else if (typeOfFunction == FUNC_TEST) {
-      if (refFilePath == NULL) {
-        throw ERR_FILE_MISSING;
-      } else {
+//      if (refFilePath == NULL) {
+//        throw ERR_FILE_MISSING;
+//      } else {
         testing(refFileDir, histoName);
-      }
+//      }
     }
   } catch (const char* e) {
     // error
