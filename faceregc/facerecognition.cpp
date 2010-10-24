@@ -18,11 +18,37 @@
 using namespace std;
 using namespace cv;
 
-#define IMAGE_WIDTH 60
-#define IMAGE_HEIGHT 70
 #define NUM_DIGIT 2
+#define NUM_CLASS 40
 
-void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors, ostream& featurefile, bool createDict, ostream& dictFile) {
+void extractSUFTNoDict(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors,
+  ostream& featurefile) {
+  SURF surf;
+  vector<KeyPoint> keypoints;
+  vector<float> descriptors;
+  surf.hessianThreshold = 0.001;
+  surf.nOctaveLayers = 4;
+  surf.nOctaves = 4;
+  surf.extended = 2;
+  surf(img, Mat(), keypoints, descriptors);
+
+  int size = surf.descriptorSize();
+  vector<int> ptpairs;
+  //  cout<<"size:"<<size<<endl;
+  findPairs(keypoints, descriptors, allKeyPoints, alldescriptors, ptpairs, size);
+
+  // Save index to fichier
+  for (int i = 0; i < ptpairs.size(); i += 2) {
+    if (ptpairs[i + 1] >= 0) {
+      featurefile << ptpairs[i + 1] << " ";
+
+    }
+  }
+}
+
+void extractSUFTDict(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors,
+  vector<bool*>& allClassKey, int classKey,
+  ostream& featurefile, ostream& dictFile) {
   SURF surf;
   vector<KeyPoint> keypoints;
   vector<float> descriptors;
@@ -37,24 +63,32 @@ void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& 
   //  cout<<"size:"<<size<<endl;
   findPairs(keypoints, descriptors, allKeyPoints, alldescriptors, ptpairs, size);
   //  getchar();
-  if (createDict) {
-    for (int i = 0; i < ptpairs.size(); i += 2) {
+  //  if (createDict) {
+  for (int i = 0; i < ptpairs.size(); i += 2) {
 
-      if (ptpairs[i + 1] < 0) {
-        // add keypoint to dictionary
-        allKeyPoints.push_back(keypoints[ptpairs[i]]);
-        saveToDict(keypoints[ptpairs[i]], descriptors, dictFile, i / 2 * size, size);
-        for (int j = 0; j < size; j++) {
-          alldescriptors.push_back(descriptors[j + i / 2 * size]);
-        }
-        ptpairs[i + 1] = allKeyPoints.size() - 1;
+    if (ptpairs[i + 1] < 0) {
+      // add keypoint to dictionary
+      allKeyPoints.push_back(keypoints[ptpairs[i]]);
+      saveToDict(keypoints[ptpairs[i]], descriptors, dictFile, i / 2 * size, size);
+      bool* a = new bool[NUM_CLASS];
+      for (int k = 0; k < NUM_CLASS; k++) {
+        a[k] = false;
       }
+      allClassKey.push_back(a);
+      for (int j = 0; j < size; j++) {
+        alldescriptors.push_back(descriptors[j + i / 2 * size]);
+      }
+      ptpairs[i + 1] = allKeyPoints.size() - 1;
+
     }
   }
+  //  }
   // Save index to fichier
   for (int i = 0; i < ptpairs.size(); i += 2) {
-    if (ptpairs[i + 1] >= 0)
+    if (ptpairs[i + 1] >= 0) {
       featurefile << ptpairs[i + 1] << " ";
+      allClassKey[ptpairs[i + 1]][classKey] = true;
+    }
   }
 }
 
@@ -141,7 +175,7 @@ int naiveNearestNeighbor(const vector<float>& vec, int laplacian,
   }
   //  cout<<endl;
   //  cout<<"dist12:"<<dist1<<"-"<<dist2<<endl;
-  if (dist1 < 0.6 * dist2)
+  if (dist1 < 0.8 * dist2)
     return neighbor;
   return -1;
 }
@@ -157,16 +191,19 @@ void findPairs(const vector<KeyPoint>& objectKeypoints, const vector<float>& obj
     //    if (nearest_neighbor >= 0) {
     ptpairs.push_back(i);
     ptpairs.push_back(nearest_neighbor);
-//    cout << i << "," << nearest_neighbor << " ";
+    //    cout << i << "," << nearest_neighbor << " ";
     //    }
   }
 }
 
-void extractAttributes(const char* indexFile, int numberFields) {
+void extractAttributes(const char* indexFile, const char* classKeyLookUpFile) {
 
   // read training image
   ifstream ifimage;
   ifimage.open(indexFile, ios_base::in);
+
+  vector<bool*> classKeyLookUp;
+  loadDictLookup(classKeyLookUp, classKeyLookUpFile);
 
   char arffFile[255];
   sprintf(arffFile, "%s.arff", indexFile);
@@ -176,11 +213,11 @@ void extractAttributes(const char* indexFile, int numberFields) {
   //  cout << "width:" << width << "-" << "height" << height << endl;
 
   ofdata << "@RELATION digit" << endl;
-  for (int i = 0; i < numberFields; i++) {
-    ofdata << "@ATTRIBUTE surfPoint_" << i << "			integer" << endl;
+  for (int i = 0; i < NUM_CLASS; i++) {
+    ofdata << "@ATTRIBUTE nb_surfPoint_" << i << "			integer" << endl;
   }
   ofdata << "@ATTRIBUTE class 		{";
-  for (int i = 1; i <= 40; i++) {
+  for (int i = 1; i <= NUM_CLASS; i++) {
     ofdata << "s" << i;
     if (i < 40)
       ofdata << ",";
@@ -195,29 +232,36 @@ void extractAttributes(const char* indexFile, int numberFields) {
     ss << line;
     string filename;
     ss >> filename;
-    if(filename.compare("")==0)
+    if (filename.compare("") == 0)
       break;
     string classname;
     ss >> classname;
-    vector<int> vec;
+    //vector<int> vec;
+    int list[NUM_CLASS] = {0};
     while (ss.good()) {
       int value;
       ss >> value;
-      vec.push_back(value);
-    }
-    for (int i = 0; i < numberFields; i++) {
-      bool one = false;
-      for (int j = 0; j < vec.size(); j++) {
-        if (i == vec[j]) {
-          ofdata << "1,";
-          one = true;
-          break;
-        }
-      }
-      if (!one) {
-        ofdata << "0,";
+      //vec.push_back(value);
+      for (int i = 0; i < NUM_CLASS; i++) {
+        list[i] += (classKeyLookUp[value][i] ? 1 : 0);
       }
     }
+    for (int i = 0; i < NUM_CLASS; i++) {
+      ofdata << list[i] << ",";
+    }
+    //    for (int i = 0; i < numberFields; i++) {
+    //      bool one = false;
+    //      for (int j = 0; j < vec.size(); j++) {
+    //        if (i == vec[j]) {
+    //          ofdata << "1,";
+    //          one = true;
+    //          break;
+    //        }
+    //      }
+    //      if (!one) {
+    //        ofdata << "0,";
+    //      }
+    //    }
     ofdata << classname << endl;
   }
   ofdata.close();
@@ -243,6 +287,8 @@ void testing(const char* dirPath, const char* name) {
 
   vector<KeyPoint> allKeyPoints;
   vector<float> alldescriptors;
+
+  vector<bool* > allClassKey;
   // load dictionary
   loadFromDict(allKeyPoints, alldescriptors, indictfile);
 
@@ -252,13 +298,13 @@ void testing(const char* dirPath, const char* name) {
     listFileStream >> filename;
     listFileStream >> classname;
 
-
+    if (filename.compare("") == 0)
+      break;
+//    cout << filename;
+    int classKey = atoi(classname.substr(1).c_str()) - 1;
 
     Mat src;
 
-    if (filename == "")
-      continue;
-    bool debug = false;
 
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filename;
@@ -268,13 +314,48 @@ void testing(const char* dirPath, const char* name) {
       continue;
     outfile << filename << " ";
     outfile << classname << " ";
-    extractSUFT(src, allKeyPoints, alldescriptors, outfile, false, outfile);
+//    cout << "begin extract" << classKey << endl;
+    extractSUFTNoDict(src, allKeyPoints, alldescriptors, outfile);
+//    cout << "end extract" << endl;
+//    getchar();
     outfile << endl;
   }
   indictfile.close();
   outfile.close();
   listFileStream.close();
-  extractAttributes(outFileName, allKeyPoints.size());
+  //  extractAttributes(outFileName, allKeyPoints.size());
+  char classKeyLookUpFile[255];
+  sprintf(classKeyLookUpFile, "%s.dictlookup", name);
+
+  extractAttributes(outFileName, classKeyLookUpFile);
+}
+
+void saveDictLookup(const vector<bool*>& dictlookup, const char* filename) {
+  ofstream dictlookupFile;
+  dictlookupFile.open(filename);
+  for (int i = 0; i < dictlookup.size(); i++) {
+    for (int j = 0; j < NUM_CLASS; j++) {
+      dictlookupFile << (dictlookup[i][j] ? "1" : "0") << " ";
+    }
+    dictlookupFile << endl;
+  }
+  dictlookupFile.close();
+}
+
+void loadDictLookup(vector<bool*>& dictlookup, const char* filename) {
+  ifstream dictlookupFile;
+  dictlookupFile.open(filename);
+  while (dictlookupFile.good()) {
+    bool* rec = new bool[NUM_CLASS];
+    for (int j = 0; j < NUM_CLASS; j++) {
+      int value;
+      dictlookupFile >> value;
+      rec[j] = (value == 0 ? false : true);
+      //dictlookupFile << (dictlookup[i] ? "1", "0") << " ";
+    }
+    dictlookup.push_back(rec);
+  }
+  dictlookupFile.close();
 }
 
 void learning(const char* dirPath, const char* name) {
@@ -295,19 +376,17 @@ void learning(const char* dirPath, const char* name) {
 
   vector<KeyPoint> allKeyPoints;
   vector<float> alldescriptors;
-
+  vector<bool* > allClassKey;
   while (listFileStream.good()) {
     string filename;
     string classname;
     listFileStream >> filename;
     listFileStream >> classname;
-
+    if (filename.compare("") == 0)
+      break;
+    int classKey = atoi(classname.substr(1).c_str()) - 1;
 
     Mat src;
-
-    if (filename == "")
-      continue;
-    bool debug = false;
 
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filename;
@@ -317,201 +396,19 @@ void learning(const char* dirPath, const char* name) {
       continue;
     outfile << filename << " ";
     outfile << classname << " ";
-    extractSUFT(src, allKeyPoints, alldescriptors, outfile, true, outdictfile);
+    extractSUFTDict(src, allKeyPoints, alldescriptors, allClassKey, classKey, outfile, outdictfile);
     outfile << endl;
   }
   outdictfile.close();
   outfile.close();
   listFileStream.close();
-  extractAttributes(outFileName, allKeyPoints.size());
-}
 
-void generateHisto(const char* trainingimage, const char* traininglabel, const char* outputDirPath) {
-  // read training image
-  ifstream ifimage;
-  ifimage.open(trainingimage, ios_base::in);
-  // read training label
-  ifstream iflabel;
-  iflabel.open(traininglabel, ios_base::in);
+  char classKeyLookUpFile[255];
+  sprintf(classKeyLookUpFile, "%s.dictlookup", name);
+  saveDictLookup(allClassKey, classKeyLookUpFile);
 
-  string imageline;
-  string labelvalue;
-
-  // histogram array
-  float*** histos = new float**[NUM_DIGIT];
-  //  float histos[NUM_DIGIT][IMAGE_HEIGHT][IMAGE_WIDTH];
-
-  for (int i = 0; i < NUM_DIGIT; i++) {
-    histos[i] = new float*[IMAGE_HEIGHT];
-    for (int j = 0; j < IMAGE_HEIGHT; j++) {
-      histos[i][j] = new float[IMAGE_WIDTH]; //{0};
-      for (int k = 0; k < IMAGE_WIDTH; k++) {
-        histos[i][j][k] = 0;
-      }
-    }
-  }
-  int learningImageNumber[NUM_DIGIT] = {0};
-  int learningtotal = 0;
-  while (iflabel.good()) {
-    getline(iflabel, labelvalue);
-    int label = atoi(labelvalue.c_str());
-    cout << ++learningtotal << "-" << label << endl;
-    if (label >= 0 && label < NUM_DIGIT) {
-      //      Mat mat;
-      //      mat.create(IMAGE_WIDTH, IMAGE_HEIGHT, CV_8U);
-      Mat mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_8UC1);
-
-      //      float** img;
-      //      img = histos[label];
-
-      learningImageNumber[label]++;
-      // Read image
-      for (int i = 0; i < IMAGE_HEIGHT; i++) {
-        getline(ifimage, imageline);
-        //        cout << imageline << endl;
-        for (int j = 0; j < IMAGE_WIDTH; j++) {
-          histos[label][i][j] += (imageline[j] == ' ') ? 0 : 1;
-          //          cout<<histos[label][i][j]<<" ";
-          //Scalar_<double> a=Scalar::all((imageline[j] == ' ') ? 255 : 0);
-          mat.at<uchar > (i, j) = (imageline[j] == ' ') ? 255 : 0;
-          //mat.setTo(a);
-        }
-        //        cout << endl;
-      }
-
-      char file[255];
-      sprintf(file, "%d.%d.jpg", learningtotal, label);
-      imwrite(file, mat);
-      // show image
-      //      imshow("Learning Digit", mat);
-      //      waitKey();
-      //      mat.release();
-    }
-  }
-
-
-  // normalize histogram
-  for (int histIndex = 0; histIndex < NUM_DIGIT; histIndex++) {
-    for (int i = 0; i < IMAGE_HEIGHT; i++) {
-      for (int j = 0; j < IMAGE_WIDTH; j++) {
-        histos[histIndex][i][j] /= (float) learningImageNumber[histIndex];
-      }
-    }
-  }
-  // save histogram
-  for (int histIndex = 0; histIndex < NUM_DIGIT; histIndex++) {
-    char fileout[255];
-    sprintf(fileout, "%s/%d.histo", outputDirPath, histIndex);
-    //string a = string(outputDirPath) + "/" + histIndex + ".histo";
-    SaveHistograme(histos[histIndex], fileout);
-  }
-  // show histogram
-  for (int histIndex = 0; histIndex < NUM_DIGIT; histIndex++) {
-    char name[255];
-    sprintf(name, "histo%d", histIndex);
-    showHistogram(histos[histIndex], name, outputDirPath);
-  }
-
-  ifimage.close();
-  iflabel.close();
-}
-
-void showHistogram(float** hist, const char* histoname, const char* outputDirPath) {
-  int scale = HISTO_SCALE;
-  Mat histImg = Mat::zeros(IMAGE_HEIGHT * scale, IMAGE_WIDTH * scale, CV_8UC1);
-  //  int total = 0;
-  cout << endl;
-  for (int h = 0; h < IMAGE_HEIGHT; h++) {
-    for (int w = 0; w < IMAGE_WIDTH; w++) {
-      float binVal = hist[h][w];
-
-      //      total += binVal;
-      int intensity = cvRound(binVal * 255);
-      cout << intensity << "\t";
-      rectangle(histImg, Point(w*scale, h * scale),
-        Point((w + 1) * scale - 1, (h + 1) * scale - 1),
-        Scalar::all(intensity),
-        CV_FILLED);
-    }
-    cout << endl;
-  }
-  cout << endl;
-  //cout << "total point" << total << endl;
-  //  namedWindow("Source", 1);
-  //  imshow("Source", src);
-
-  //namedWindow(itoa(label), 1);
-  imshow(histoname, histImg);
-  char file[255];
-  sprintf(file, "%s/%s.png", outputDirPath, histoname);
-  imwrite(file, histImg);
-  //  waitKey();
-  histImg.release();
-}
-
-void SaveHistograme(float** hist, char* name) {
-  ofstream ofs;
-  ofs.open(name);
-  for (int a = 0; a < IMAGE_HEIGHT; a++) {
-    for (int b = 0; b < IMAGE_WIDTH; b++) {
-      ofs << hist[a][b] << " ";
-    }
-    ofs << endl;
-  }
-  ofs.close();
-}
-
-void LoadHistograme(float** hist, const char* name) {
-  ifstream ifs;
-  ifs.open(name);
-
-  for (int a = 0; a < IMAGE_HEIGHT; a++) {
-    for (int b = 0; b < IMAGE_WIDTH; b++) {
-      float value = 0;
-      ifs >> hist[a][b];
-      //cout << hist[a][b];
-    }
-    //cout << endl;
-  }
-  ifs.close();
-
-}
-
-float calculProb(int** img, float** hist) {
-  float prob = 1;
-  for (int i = 0; i < IMAGE_HEIGHT; i++) {
-    for (int j = 0; j < IMAGE_WIDTH; j++) {
-      if (img[i][j] == 1) {
-        prob *= (hist[i][j] + 1);
-      }
-    }
-  }
-  return prob;
-}
-
-float calculProb(const Mat& img, float** hist) {
-  float prob = 0;
-  for (int i = 0; i < img.rows; i++) {
-    for (int j = 0; j < img.cols; j++) {
-      if (img.at<uchar > (i, j) == 0) {
-        prob += hist[i][j];
-      }
-    }
-  }
-  return prob;
-}
-
-float calculProb(float** img, float** hist, int height, int width) {
-  float prob = 0;
-  for (int i = 0; i < height; i++) {
-    for (int j = 0; j < width; j++) {
-      int imgval = (img[i][j] == 0) ? 0 : 1;
-      if (imgval != 0 || hist[i][j] != 0) {
-        prob += pow(imgval - hist[i][j], 2) / (imgval + hist[i][j]);
-      }
-    }
-  }
-  return prob;
+  //  extractAttributes(outFileName, classKeyLookUpFile, allKeyPoints.size());
+  extractAttributes(outFileName, classKeyLookUpFile);
 }
 
 void freememory(float** img, int height, int width) {

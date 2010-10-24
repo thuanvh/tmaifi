@@ -18,7 +18,7 @@ int num_color = 32;
 /*
  *
  */
-int main(int argc, char** argv) {
+int main1(int argc, char** argv) {
   try {
     int typeOfFunction = 0;
     char* refFileDir = NULL;
