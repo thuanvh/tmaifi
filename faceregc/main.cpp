@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -5,124 +6,143 @@
 #include <string>
 #include <cstring>
 #include <stdio.h>
-#include "facedetection.h"
 
-/*
- * File:   main.cpp
- * Author: thuan
- *
- * Created on May 13, 2010, 1:24 AM
- */
+#include "facerecognition.h"
 
 using namespace std;
 using namespace cv;
+
+bool is_win_mode;
+int num_color = 32;
 
 /*
  *
  */
 int main(int argc, char** argv) {
   try {
-    char* testImagePath = NULL;
-    char* histoDirPath = NULL;
-    char* testLabelPath = NULL;
-    char* trainingImagePath = NULL;
-    char* trainingLabelPath = NULL;
-
-    bool isModeWindows = false;
-
-    char* typeOfFunction = 0;
-    int typeOfMethod = 0;
-
+    int typeOfFunction = 0;
+    char* refFileDir = NULL;
+    char* refFilePath = NULL;
+    char* refOutFilePath = NULL;
+    char* refRefFilePath = NULL;
+    char* histoName = NULL;
+    float threshold = 1;
+    int crossTestPercent = 60;
+    int numberNeighbor = 10;
 
     // Analyser des parametres entres
     for (int i = 0; i < argc; i++) {
 
       // directory reference
-      if (strcmp(argv[i], "-learn-image") == 0) {
+      if (strcmp(argv[i], "-learn-dir") == 0) {
         i++;
         if (i < argc) {
-          trainingImagePath = argv[i];
-        } else {
-          throw ERR_DIR_MISSING;
-        }
-        continue;
-      }
-      if (strcmp(argv[i], "-learn-label") == 0) {
-        i++;
-        if (i < argc) {
-          trainingLabelPath = argv[i];
+          refFileDir = argv[i];
         } else {
           throw ERR_DIR_MISSING;
         }
         continue;
       }
       // load histogram
-      if (strcmp(argv[i], "-histodir") == 0) {
+      if (strcmp(argv[i], "-name") == 0) {
         i++;
         if (i < argc) {
-          histoDirPath = argv[i];
+          histoName = argv[i];
         } else {
           throw ERR_FILE_MISSING;
         }
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-test-image") == 0) {
+      if (strcmp(argv[i], "-testing-file") == 0) {
         i++;
         if (i < argc) {
-          testImagePath = argv[i];
+          refFilePath = argv[i];
         } else {
           throw ERR_FILE_MISSING;
         }
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-test-label") == 0) {
+      if (strcmp(argv[i], "-testing-out-file") == 0) {
         i++;
         if (i < argc) {
-          testLabelPath = argv[i];
+          refOutFilePath = argv[i];
         } else {
           throw ERR_FILE_MISSING;
         }
         continue;
       }
+      // directory reference
+      if (strcmp(argv[i], "-testing-ref-file") == 0) {
+        i++;
+        if (i < argc) {
+          refRefFilePath = argv[i];
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-threshold") == 0) {
+        i++;
+        if (i < argc) {
+          threshold = atof(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-num-color") == 0) {
+        i++;
+        if (i < argc) {
+          num_color = atoi(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-cross-test-percent") == 0) {
+        i++;
+        if (i < argc) {
+          crossTestPercent = atoi(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-num-neighbor") == 0) {
+        i++;
+        if (i < argc) {
+          numberNeighbor = atoi(argv[i]);
+        } else {
+          throw ERR_FILE_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-win") == 0) {
+        is_win_mode = true;
+        continue;
+      }
+
       // type d'algo
       if (strcmp(argv[i], "-cmd") == 0) {
 
         if (++i < argc) {
-          typeOfFunction = argv[i];
 
-          //          if (strcmp(argv[i], STR_LEARNING) == 0) {
-          //            typeOfFunction = FUNC_LEARNING;
-          //            continue;
-          //          }
-          //          if (strcmp(argv[i], STR_TEST) == 0) {
-          //            typeOfFunction = FUNC_TEST;
-          //            continue;
-          //          }
-        } else {
-          throw ERR_FUNC_MISSING;
-        }
-        continue;
-      }
-
-      // type d'algo
-      if (strcmp(argv[i], "-method") == 0) {
-
-        if (++i < argc) {
-
-          if (strcmp(argv[i], STR_CMD_MAHALANOBIS) == 0) {
-            typeOfMethod = CMD_MAHALANOBIS;
+          if (strcmp(argv[i], STR_LEARNING) == 0) {
+            typeOfFunction = FUNC_LEARNING;
             continue;
           }
-          if (strcmp(argv[i], STR_CMD_BAYES_PIXEL) == 0) {
-            typeOfMethod = CMD_BAYES_PIXEL;
+          if (strcmp(argv[i], STR_TEST) == 0) {
+            typeOfFunction = FUNC_TEST;
             continue;
           }
-          if (strcmp(argv[i], STR_CMD_BAYES_POINT) == 0) {
-            typeOfMethod = CMD_BAYES_POINT;
-            continue;
-          }
+
         } else {
           throw ERR_FUNC_MISSING;
         }
@@ -130,49 +150,25 @@ int main(int argc, char** argv) {
       }
 
     }
-    if (strcmp(typeOfFunction, STR_LEARNING) == 0)
-      learningHisto(trainingImagePath, trainingLabelPath, histoDirPath, typeOfFunction);
-    else {
-      testingHisto(trainingImagePath, trainingLabelPath, histoDirPath, typeOfFunction);
+
+    if (typeOfFunction == FUNC_LEARNING) {
+      if (refFileDir == NULL) {
+        throw ERR_DIR_MISSING;
+      } else {
+        learning(refFileDir, histoName);
+      }
+    } else if (typeOfFunction == FUNC_TEST) {
+      if (refFilePath == NULL) {
+        throw ERR_FILE_MISSING;
+      } else {
+        testing(refFileDir, histoName);
+      }
     }
-
-    //    if (typeOfFunction == FUNC_LEARNING) {
-    //      if (trainingImagePath == NULL || trainingLabelPath==NULL) {
-    //        throw ERR_DIR_MISSING;
-    //      } else {
-    //        if(typeOfMethod==CMD_BAYES_PIXEL)
-    //          learningHisto(trainingImagePath,trainingLabelPath, histoDirPath,"learn");
-    ////        else if(typeOfMethod==CMD_MAHALANOBIS)
-    ////          learningMahalanobis(trainingImagePath,trainingLabelPath, histoDirPath);
-    ////        else if(typeOfMethod==CMD_BAYES_POINT)
-    ////          learningPoint(trainingImagePath,trainingLabelPath, histoDirPath);
-    //      }
-    //    } else if (typeOfFunction == FUNC_TEST) {
-    //      if (testImagePath == NULL || testLabelPath==NULL) {
-    //        throw ERR_FILE_MISSING;
-    //      } else {
-    //        if(typeOfMethod==CMD_BAYES_PIXEL)
-    //          TestingHisto(histoDirPath,testImagePath, testLabelPath,"test");
-    ////        else if(typeOfMethod==CMD_MAHALANOBIS)
-    ////          TestingMahalanobis(histoDirPath,testImagePath, testLabelPath);
-    ////        else if(typeOfMethod==CMD_BAYES_POINT)
-    ////          TestingPoint(histoDirPath,testImagePath, testLabelPath);
-    //      }
-    //    }
-
-
   } catch (const char* e) {
     // error
     std::cerr << "Error:" << e << std::endl;
     std::cerr << std::endl << "Using:" << std::endl;
-    std::cerr << argv[0] << " -learn-image 'fichier image d'apprentissage' -learn-label 'fichier label d'apprentissage' -cmd [learning | test] -histodir 'repertoire de sortie' -method bayes-point" << std::endl;
+    std::cerr << "texture -learn-dir « répertoire de l'apprentissage » -histoname « nom de histogramme » -testing-file « fichier de test » -testing-out-file « fichier sorti de test » -threshold « seuil » [–win] -cmd « learning | test » -num-color « nombre de couleur »" << std::endl;
   }
   return (EXIT_SUCCESS);
-
-
-  //    QApplication a(argc, argv);
-  //    DigitDetectorWindow w;
-  //    w.show();
-  //
-  //    return a.exec();
 }

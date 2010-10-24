@@ -55,11 +55,11 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-Debug.mk dist/Debug/GNU-Linux-x86/faceregc
+	"${MAKE}"  -f nbproject/Makefile-Debug.mk ../test/faceregc
 
-dist/Debug/GNU-Linux-x86/faceregc: ${OBJECTFILES}
-	${MKDIR} -p dist/Debug/GNU-Linux-x86
-	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/faceregc ${OBJECTFILES} ${LDLIBSOPTIONS} 
+../test/faceregc: ${OBJECTFILES}
+	${MKDIR} -p ../test
+	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ../test/faceregc ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
@@ -77,7 +77,7 @@ ${OBJECTDIR}/facerecognition.o: facerecognition.cpp
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r build/Debug
-	${RM} dist/Debug/GNU-Linux-x86/faceregc
+	${RM} ../test/faceregc
 
 # Subprojects
 .clean-subprojects:
