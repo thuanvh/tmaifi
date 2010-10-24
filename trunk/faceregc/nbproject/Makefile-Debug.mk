@@ -33,6 +33,7 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/OnlineFaceRec.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/facerecognition.o
 
@@ -60,6 +61,11 @@ LDLIBSOPTIONS=
 ../test/faceregc: ${OBJECTFILES}
 	${MKDIR} -p ../test
 	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ../test/faceregc ${OBJECTFILES} ${LDLIBSOPTIONS} 
+
+${OBJECTDIR}/OnlineFaceRec.o: OnlineFaceRec.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/OnlineFaceRec.o OnlineFaceRec.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}

@@ -71,5 +71,7 @@ double compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, 
 void extractSUFT(const Mat& img, vector<KeyPoint>& allKeyPoints, vector<float>& alldescriptors, ostream& featurefile, bool createDict, ostream& dictFile);
 void saveToDict(const KeyPoint& kp, const vector<float>& descriptors, ostream& dictFile, int start, int size);
 void loadFromDict(vector<KeyPoint>& kplist, vector<float>& descriptors, istream& dictFile);
+void loadDictLookup(vector<bool*>& dictlookup, const char* filename);
+void saveDictLookup(const vector<bool*>& dictlookup, const char* filename);
 #endif	/* FACERECOGNITION_H */
 

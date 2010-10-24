@@ -16,6 +16,7 @@
                    displayName="Source Files"
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
+      <itemPath>OnlineFaceRec.cpp</itemPath>
       <itemPath>facerecognition.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
