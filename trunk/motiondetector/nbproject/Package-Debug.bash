@@ -11,7 +11,7 @@ CND_CONF=Debug
 CND_DISTDIR=dist
 NBTMPDIR=build/${CND_CONF}/${CND_PLATFORM}/tmp-packaging
 TMPDIRNAME=tmp-packaging
-OUTPUT_PATH=${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/motiondetector
+OUTPUT_PATH=../test/motiondetector
 OUTPUT_BASENAME=motiondetector
 PACKAGE_TOP_DIR=motiondetector/
 

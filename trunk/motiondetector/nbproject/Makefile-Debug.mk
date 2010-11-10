@@ -33,7 +33,8 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/main.o
+	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/motiondetector.o
 
 
 # C Compiler Flags
@@ -54,16 +55,21 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-Debug.mk dist/Debug/GNU-Linux-x86/motiondetector
+	"${MAKE}"  -f nbproject/Makefile-Debug.mk ../test/motiondetector
 
-dist/Debug/GNU-Linux-x86/motiondetector: ${OBJECTFILES}
-	${MKDIR} -p dist/Debug/GNU-Linux-x86
-	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/motiondetector ${OBJECTFILES} ${LDLIBSOPTIONS} 
+../test/motiondetector: ${OBJECTFILES}
+	${MKDIR} -p ../test
+	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ../test/motiondetector ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/motiondetector.o: motiondetector.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/motiondetector.o motiondetector.cpp
 
 # Subprojects
 .build-subprojects:
@@ -71,7 +77,7 @@ ${OBJECTDIR}/main.o: main.cpp
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r build/Debug
-	${RM} dist/Debug/GNU-Linux-x86/motiondetector
+	${RM} ../test/motiondetector
 
 # Subprojects
 .clean-subprojects:
