@@ -22,8 +22,8 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
   if (!cap.isOpened()) // check if we succeeded
     return;
   cout << "end open" << endl;
-//  cap.set(CV_CAP_PROP_FPS, fps);
-//  cap.set(CV_CAP_PROP_CONVERT_RGB, 1);
+  //  cap.set(CV_CAP_PROP_FPS, fps);
+  //  cap.set(CV_CAP_PROP_CONVERT_RGB, 1);
   Mat backImage;
   namedWindow("edges", 1);
   vector<Mat*> matqueue;
@@ -37,6 +37,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
 
   int time = -1;
   Mat* frame = NULL;
+  Mat imgsubtract;
   while (true) {
     {
       //      cap.set(CV_CAP_PROP_POS_MSEC, time);
@@ -59,9 +60,10 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
         diff.create(height, width, CV_8UC1);
         Mat img1;
         Mat img2;
-        cvtColor(*matqueue[0], img1, CV_RGB2GRAY);
-        cvtColor(*matqueue[1], img2, CV_RGB2GRAY);
+        cvtColor(*frame, img1, CV_RGB2GRAY);
+        cvtColor(backImage, img2, CV_RGB2GRAY);
         compare(img1, img2, diff, (int) CMP_EQ);
+        //        compare(*frame, backImage, diff, (int) CMP_EQ);
         imshow("diff", diff);
       }
       if (matqueue.size() > queuesize) {
@@ -69,36 +71,50 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
         delete matqueue.front();
         matqueue.erase(matqueue.begin());
       }
-      //      imshow("video", *frame);
+      imshow("video", *frame);
 
     }
 
 
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        for (int i = 0; i < matqueue.size(); i++) {
-          Mat* frmImage = matqueue[i];
-          pixelArray[i] = frmImage->at<uchar > (row, col);
-        }
-        sort(pixelArray, pixelArray + matqueue.size());
-        for (int i = 0; i < matqueue.size(); i++) {
-          //          cout << pixelArray[i] << " ";
-        }
-        //        cout << pixelArray[matqueue.size() / 2] << endl;
-        backImage.at<uchar > (row, col) = pixelArray[matqueue.size() / 2];
+    //    for (int row = 0; row < height; row++) {
+    //      for (int col = 0; col < width; col++) {
+    int cap = backImage.dataend - backImage.datastart;
+//    cout << "size:" << cap << endl;
+    for (int ptrIndex = 0; ptrIndex < cap; ptrIndex++) {
+      //        for (int k = 0; k < 3; k++) {
+      for (int i = 0; i < matqueue.size(); i++) {
+        Mat* frmImage = matqueue[i];
+        uchar frmImagePtr = *(frmImage->data + ptrIndex);
+
+        pixelArray[i] = frmImagePtr;
+
+
       }
+      sort(pixelArray, pixelArray + matqueue.size());
+      //        for (int i = 0; i < matqueue.size(); i++) {
+      //          cout << pixelArray[i] << " ";
+      //        }
+      //        cout << endl;
+      //        cout << pixelArray[matqueue.size() / 2] << endl;
+      uchar* backImagePtr = (backImage.data + ptrIndex);
+      *backImagePtr = pixelArray[matqueue.size() / 2];
+      //        }
+      //      }
     }
 
 
 
-    for (int i = 0; i < matqueue.size(); i++) {
-      char frameNo[255];
-      sprintf(frameNo, "frame%d", i);
-      imshow(frameNo, *matqueue[i]);
-      cout << matqueue[i] << "-";
-    }
+    //    for (int i = 0; i < matqueue.size(); i++) {
+    //      char frameNo[255];
+    //      sprintf(frameNo, "frame%d", i);
+    //      imshow(frameNo, *matqueue[i]);
+    //      cout << matqueue[i] << "-";
+    //    }
     imshow("background", backImage);
-    waitKey();
+    absdiff(*frame, backImage, imgsubtract);
+    //      subtract(*frame, backImage, imgsubtract);
+    imshow("diff", imgsubtract);
+//    waitKey();
     if (waitKey(30) >= 0) break;
   }
 }
