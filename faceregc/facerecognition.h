@@ -73,5 +73,6 @@ void saveToDict(const KeyPoint& kp, const vector<float>& descriptors, ostream& d
 void loadFromDict(vector<KeyPoint>& kplist, vector<float>& descriptors, istream& dictFile);
 void loadDictLookup(vector<bool*>& dictlookup, const char* filename);
 void saveDictLookup(const vector<bool*>& dictlookup, const char* filename);
+
 #endif	/* FACERECOGNITION_H */
 

@@ -5,7 +5,21 @@
                    displayName="Header Files"
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
+      <itemPath>alglibinternal.h</itemPath>
+      <itemPath>alglibmisc.h</itemPath>
+      <itemPath>ap.h</itemPath>
+      <itemPath>dataanalysis.h</itemPath>
+      <itemPath>diffequations.h</itemPath>
       <itemPath>facerecognition.h</itemPath>
+      <itemPath>integration.h</itemPath>
+      <itemPath>interpolation.h</itemPath>
+      <itemPath>linalg.h</itemPath>
+      <itemPath>optimization.h</itemPath>
+      <itemPath>solvers.h</itemPath>
+      <itemPath>specialfunctions.h</itemPath>
+      <itemPath>statistics.h</itemPath>
+      <itemPath>stdafx.h</itemPath>
+      <itemPath>texture.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -17,8 +31,22 @@
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
       <itemPath>OnlineFaceRec.cpp</itemPath>
+      <itemPath>alglibinternal.cpp</itemPath>
+      <itemPath>alglibmisc.cpp</itemPath>
+      <itemPath>ap.cpp</itemPath>
+      <itemPath>dataanalysis.cpp</itemPath>
+      <itemPath>diffequations.cpp</itemPath>
       <itemPath>facerecognition.cpp</itemPath>
+      <itemPath>integration.cpp</itemPath>
+      <itemPath>interpolation.cpp</itemPath>
+      <itemPath>linalg.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
+      <itemPath>optimization.cpp</itemPath>
+      <itemPath>solvers.cpp</itemPath>
+      <itemPath>specialfunctions.cpp</itemPath>
+      <itemPath>statistics.cpp</itemPath>
+      <itemPath>texture.cpp</itemPath>
+      <itemPath>texturemain.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
