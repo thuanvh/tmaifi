@@ -27,19 +27,19 @@ int main(int argc, char** argv) {
     char* refOutFilePath = NULL;
     char* refRefFilePath = NULL;
     char* histoName = NULL;
-    float threshold = 1;
-//    int crossTestPercent = 60;
+    double colorWeight = 0.2;
+    //    int crossTestPercent = 60;
     int numberReturn = 10;
-//    int segmblocksize = 32;
-//    int numberGroup = 2;
+    //    int segmblocksize = 32;
+    //    int numberGroup = 2;
     int num_color = 32;
-    int gris_texture=24;
+    int gris_texture = 24;
 
     // Analyser des parametres entres
     for (int i = 0; i < argc; i++) {
 
       // directory reference
-      if (strcmp(argv[i], "-learn-dir") == 0) {
+      if (strcmp(argv[i], "-dir") == 0) {
         i++;
         if (i < argc) {
           refFileDir = argv[i];
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-testing-file") == 0) {
+      if (strcmp(argv[i], "-test-file") == 0) {
         i++;
         if (i < argc) {
           refFilePath = argv[i];
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-learning-file") == 0) {
+      if (strcmp(argv[i], "-att-file") == 0) {
         i++;
         if (i < argc) {
           refOutFilePath = argv[i];
@@ -89,10 +89,10 @@ int main(int argc, char** argv) {
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-threshold") == 0) {
+      if (strcmp(argv[i], "-p") == 0) {
         i++;
         if (i < argc) {
-          threshold = atof(argv[i]);
+          colorWeight = atof(argv[i]);
         } else {
           throw ERR_FILE_MISSING;
         }
@@ -120,8 +120,8 @@ int main(int argc, char** argv) {
       }
 
       // nombre de valuer return
-           
-      
+
+
       if (strcmp(argv[i], "-n") == 0) {
         i++;
         if (i < argc) {
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
         }
         continue;
       }
-      
+
 
       // type d'algo
       if (strcmp(argv[i], "-cmd") == 0) {
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
             typeOfFunction = FUNC_SEARCH;
             continue;
           }
-          
+
         } else {
           throw ERR_FUNC_MISSING;
         }
@@ -161,11 +161,11 @@ int main(int argc, char** argv) {
     }
 
     if (typeOfFunction == FUNC_EXTRACT) {
-      extract(refFileDir, histoName, num_color);
+      extract(refFileDir, histoName, gris_texture, num_color);
 
     } else if (typeOfFunction == FUNC_SEARCH) {
 
-      search(refOutFilePath, refFilePath, numberReturn);
+      search(refOutFilePath, refFilePath, numberReturn, colorWeight, refRefFilePath);
 
     }
   } catch (const char* e) {
@@ -177,17 +177,16 @@ int main(int argc, char** argv) {
 }
 
 void printHelp() {
-
   cout << std::endl << "Using:" << std::endl;
-  cout << "texture -learn-dir « répertoire de l'apprentissage » ";
+  cout << "imagechercher -dir « répertoire de l'apprentissage » ";
   cout << "-name « nom de sample » ";
   cout << "-testing-file « fichier de test » ";
   cout << "-learning-file « fichier sorti de test » ";
-//  cout << "-segment-file « fichier de segmentation » ";
-//  cout << "-segment-block-size « size of segment block » ";
+  //  cout << "-segment-file « fichier de segmentation » ";
+  //  cout << "-segment-block-size « size of segment block » ";
   cout << "-t « niveau de gris » ";
   cout << "-m « nombre de couleur » ";
-//  cout << "-cross-test-percent « percent » ";
+  //  cout << "-cross-test-percent « percent » ";
   cout << "-n « number of neighbor  » ";
   cout << "-cmd « extract | search » ";
   cout << std::endl;

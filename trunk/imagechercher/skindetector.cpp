@@ -241,31 +241,14 @@ int histNo(const MatND& hist) {
     }
   return histno;
 }
-long pixtotal = 0;
+//long pixtotal = 0;
 
-void normalizeHistogram(MatND& hist) {
-  // normalize histogram
-  //  double maxVal = 0;
-  //  minMaxLoc(hist, 0, &maxVal, 0, 0);
-  //  //  normalize(hist,1);
-  //  for (int a = 0; a < hist.size[0]; a++)
-  //    for (int b = 0; b < hist.size[1]; b++) {
-  //      hist.at<double>(a, b) /= maxVal;
-  //    }
-
-  //norm(hist);
-
-  //totalpixel += src.cols * src.rows;
-
-  cout << totalpixel;
-
-  //hist.type();
+void normalizeHistogram(MatND& hist, int totalpixel) {
   for (int a = 0; a < hist.size[0]; a++)
     for (int b = 0; b < hist.size[1]; b++) {
-      pixtotal += hist.at<float>(a, b);
       hist.at<float>(a, b) /= totalpixel;
     }
-  cout << " compare: " << pixtotal << "-" << totalpixel << "=" << pixtotal - totalpixel << endl;
+
 }
 
 void displayHistogram(const MatND& hist, const char* name) {
@@ -390,13 +373,13 @@ void Testing(const char* testPath, const char* histoName, const char* fileOut, f
 
   int peauPixTotal = 0;
   int peauPixCorrect = 0;
-  bool refcompare=false;
+  bool refcompare = false;
   if (refRefFilePath != NULL) {
 
     if ((!(ref = imread(refRefFilePath, 1)).data)) {
-      refcompare=false;
-    }else{
-      refcompare=true;
+      refcompare = false;
+    } else {
+      refcompare = true;
     }
   }
 
@@ -508,7 +491,7 @@ void gnuplot(const char *gnucommand) {
   system(syscommand);
 }
 
-void img256To32(const Mat& src, Mat& dst) {
+void img256To32(const Mat& src, Mat& dst, int num_color) {
   typedef Vec<uchar, 3 > VT;
   MatConstIterator_<VT> it = src.begin<VT > (),
     it_end = src.end<VT > ();

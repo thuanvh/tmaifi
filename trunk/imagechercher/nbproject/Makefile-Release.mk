@@ -34,7 +34,6 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/skindetector.o \
 	${OBJECTDIR}/assignmentoptimal.o \
 	${OBJECTDIR}/texture.o
 
@@ -67,11 +66,6 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
-
-${OBJECTDIR}/skindetector.o: skindetector.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/skindetector.o skindetector.cpp
 
 ${OBJECTDIR}/assignmentoptimal.o: assignmentoptimal.cpp 
 	${MKDIR} -p ${OBJECTDIR}

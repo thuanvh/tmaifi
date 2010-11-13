@@ -33,15 +33,16 @@
 #define ERR_FUNC_MISSING "Function parametre is missing."
 
 #define NUM_MATRIX 8
+#define NUM_MATRIX_ATT 7
 
 using namespace std;
 using namespace cv;
 
-void extraitFeatureVector(const char* dirPath, const char* name,int graySize);
+//void extraitFeatureVector(const char* dirPath, const char* name, int graySize);
 void reduireNiveauDeGris(Mat& image, int size);
 void freeMatrix(double*** concurrenceArray, int graySize);
-void calculerMatrixCooccurence(const Mat& image, double*** concurrenceArray,int graySize);
-void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<double>& vvalue) ;
+void calculerMatrixCooccurence(const Mat& image, double*** concurrenceArray, int graySize);
+void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<double>& vvalue);
 
 double para_angular_second_moment(double** mat, int size);
 double para_constrast(double** mat, int size);
@@ -63,17 +64,20 @@ double para_sum_entropy(double** mat, int size);
 double para_difference_variance(double** mat, int size);
 double para_difference_entropy(double** mat, int size);
 double para_sum_of_squares__variance(double** mat, int size, double mean);
-double para_mean(double** mat,int size);
+double para_mean(double** mat, int size);
 
-void extract(const char* dirPath, const char* name,int graySize);
-void search(const char* fileLearn, const char* fileTest, int k);
-void crossTesting(const char* filename, int percent,int k);
+void extract(const char* dirPath, const char* name, int graySize, int colorSize);
+void search(const char* fileLearn, const char* fileTest, int k, double colorWeight, const char* fileRef);
+void extractTexture(const Mat & src, int graySize, double*** concurrenceArray, ostream& outfile);
+void crossTesting(const char* filename, int percent, int k);
+void extractHistoColor(const Mat & src, int colorSize, ostream& outfile);
 void printMatrix(double** dirPath, int size);
-double getTextureVectorDistance(const vector<double>& learningVector,const vector<double>& testingVector);
+double getTextureVectorDistance(const double* learningVector, const double* testingVector, int textureSize);
+double getColorHistoDistance(const double* learningVector, const double* testingVector, int colorSize);
 void segmenter(const char* fileImage, const char* name, int graySize, int numberNeighbor, int segmblocksize);
 void segmenterCAH(const char* fileImage, const char* name, int graySize, int numberGroup, int segmblocksize);
 void setZero(double*** concurrenceArray, int graySize);
-void freeVector(vector<int>** vector, int size) ;
+void freeVector(vector<int>** vector, int size);
 void freeMatrix(double** matrix, int size);
 double test_hung();
 #endif	/* TEXTURE_H */
