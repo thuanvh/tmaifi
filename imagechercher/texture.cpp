@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <algorithm>
 #include "assignmentoptimal.h"
 using namespace cv;
 using namespace std;
@@ -24,7 +24,7 @@ using namespace std;
 /*
  * Apprendtissage a partir d'une serie d'image de peau
  */
-void extraitFeatureVector(const char* dirPath, const char* name, int graySize) {
+void extract(const char* dirPath, const char* name, int graySize, int colorSize) {
 
   //  // load list of file in dir
   //  DIR *dp;
@@ -43,10 +43,22 @@ void extraitFeatureVector(const char* dirPath, const char* name, int graySize) {
   //    perror(ERR_DIR_OPEN);
 
   // read list of file and its class
-  ifstream listFileStream;
-  char listFileStr[255];
-  sprintf(listFileStr, "%s/listfile.txt", dirPath);
-  listFileStream.open(listFileStr);
+  DIR *dp;
+  struct dirent *ep;
+  vector<string> files;
+
+  dp = opendir(dirPath);
+  if (dp != NULL) {
+    while (ep = readdir(dp)) {
+      //      puts(ep->d_name);
+      files.push_back((string) ep->d_name);
+    }
+
+    (void) closedir(dp);
+  } else
+    perror(ERR_DIR_OPEN);
+
+  sort(files.begin(), files.end());
 
   char outFileName[255];
   sprintf(outFileName, "%s", name);
@@ -65,79 +77,149 @@ void extraitFeatureVector(const char* dirPath, const char* name, int graySize) {
       }
     }
   }
-  while (listFileStream.good()) {
-    string filename;
-    string classname;
-    listFileStream >> filename;
-    listFileStream >> classname;
-    //    files.push_back(filename);
-    //    classes.push_back(classname);
 
+  outfile << dirPath << " " << name << " " << graySize << " " << colorSize << " " << NUM_MATRIX_ATT * NUM_MATRIX << " " << colorSize * colorSize << endl;
+
+  for (int i = 0; i < files.size(); i++) {
+    string filename = files.at(i);
     Mat src;
-    // calculer list of feature vector
-    //    for (int fileindex = 0; fileindex < files.size(); fileindex++) {
-    //      string filename = files.at(fileindex);
+
     if (filename == "")
       continue;
     bool debug = false;
-    //    if (classname.compare("weave")==0 || classname.compare("wood")==0)
-    //      continue;
-    //    if (filename.compare("weave_000_06.pgm") == 0) {
-    //      debug = true;
-    //    }
+
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filename;
     cout << filePathSrc << endl;
 
-    if (!(src = imread(filePathSrc, 0)).data)
+    if (!(src = imread(filePathSrc, 1)).data)
       continue;
 
-    cout << "size=" << graySize << endl;
-    reduireNiveauDeGris(src, graySize);
-    if (debug) {
-      cout << "end niveau de gris" << endl;
-      getchar();
-    }
+    outfile << filename << " ";
 
-    setZero(concurrenceArray, graySize);
-
-    if (debug) {
-      cout << "begin calcul matrix" << endl;
-      for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-        printMatrix(concurrenceArray[matrixIndex], graySize);
-      }
-      getchar();
-    }
-    try {
-      //    double*** matrices = calculerMatrixCooccurence(src, size);
-      calculerMatrixCooccurence(src, concurrenceArray, graySize);
-    } catch (...) {
-      continue;
-    }
-    if (debug) {
-      cout << "end calcul matrix" << endl;
-      getchar();
-    }
-    //    cout << "begin extract" << endl;
-    cout << filename << " " << classname << " ";
-    outfile << filename << " " << classname << " ";
-
-
-    for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-      //      printMatrix(concurrenceArray[matrixIndex], size);
-      vector<double> vvalue;
-      extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, &outfile, vvalue);
-      //      getchar();
-    }
+    extractTexture(src, graySize, concurrenceArray, outfile);
+    extractHistoColor(src, colorSize, outfile);
 
     outfile << endl;
-    //    cout << "end extract" << endl;
-    //    }
+
   }
-  listFileStream.close();
+
   cout << "free memory" << endl;
   freeMatrix(concurrenceArray, graySize);
   outfile.close();
+}
+
+void normalizeHistogram(MatND& hist, int totalpixel) {
+  for (int a = 0; a < hist.size[0]; a++)
+    for (int b = 0; b < hist.size[1]; b++) {
+      hist.at<float>(a, b) /= totalpixel;
+    }
+
+}
+
+int histNo(const MatND& hist) {
+  int histno = 0;
+  for (int a = 0; a < hist.size[0]; a++)
+    for (int b = 0; b < hist.size[1]; b++) {
+      histno += hist.at<float> (a, b);
+    }
+  return histno;
+}
+
+void SaveMatrix(const MatND& hist, ostream& outfile) {
+
+  for (int a = 0; a < hist.size[0]; a++) {
+    for (int b = 0; b < hist.size[1]; b++) {
+      outfile << hist.at<float>(a, b) << " ";
+      //      cout << hist.at<float>(a, b) << " ";
+    }
+  }
+  //  getchar();
+}
+
+void resizeImageColor(const Mat& src, Mat& dst, int num_color) {
+  typedef Vec<uchar, 3 > VT;
+  MatConstIterator_<VT> it = src.begin<VT > (),
+    it_end = src.end<VT > ();
+  MatIterator_<VT> itdest = dst.begin<VT > ();
+  double scale = (double) num_color / 256;
+  for (; it != it_end; ++it, ++itdest) {
+
+    VT srcval = *it;
+    *itdest = VT(srcval[0] * scale, srcval[1] * scale, srcval[2] * scale);
+  }
+}
+
+void extractHistoColor(const Mat & src, int colorSize, ostream& outfile) {
+  MatND hist; // histogram red
+
+
+
+  int histSize[] = {colorSize, colorSize};
+
+  float aranges[] = {0, 256};
+  float branges[] = {0, 256};
+
+  const float* ranges[] = {aranges, branges};
+
+  // we compute the histogram from the 0-th and 1-st channels
+  int channels[] = {1, 2};
+  //from 256 to 32
+  Mat dst = src.clone();
+  resizeImageColor(src, dst, colorSize);
+  //  cout<<colorSize<<endl;
+  //  imshow("image 256 bit", src);
+  //  imshow("image 32 bit", dst);
+  //  waitKey();
+  Mat srclab;
+  cvtColor(dst, srclab, CV_BGR2Lab);
+
+  calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
+
+  int nbhist = histNo(hist);
+  //  cout << "nb hist" << nbhist << endl;
+  normalizeHistogram(hist, nbhist);
+  SaveMatrix(hist, outfile);
+
+}
+
+void extractTexture(const Mat & src, int graySize, double*** concurrenceArray, ostream& outfile) {
+  //  cout << "size=" << graySize << endl;
+  Mat srcgray;
+  cvtColor(src, srcgray, CV_RGB2GRAY);
+  reduireNiveauDeGris(srcgray, graySize);
+  //  if (debug) {
+  //    cout << "end niveau de gris" << endl;
+  //    getchar();
+  //  }
+
+  setZero(concurrenceArray, graySize);
+
+  //  if (debug) {
+  //  cout << "begin calcul matrix" << endl;
+  //    for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
+  //      printMatrix(concurrenceArray[matrixIndex], graySize);
+  //    }
+  //    getchar();
+  //  }
+
+  //    double*** matrices = calculerMatrixCooccurence(src, size);
+  calculerMatrixCooccurence(srcgray, concurrenceArray, graySize);
+
+  //  if (debug) {
+  //  cout << "end calcul matrix" << endl;
+  //    getchar();
+  //  }
+
+
+
+
+  for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
+    //      printMatrix(concurrenceArray[matrixIndex], size);
+    vector<double> vvalue;
+    extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, &outfile, vvalue);
+    //      getchar();
+  }
 }
 
 void printVector(const vector<double>& vector) {
@@ -157,9 +239,9 @@ void printMatrix(double** dirPath, int size) {
   cout << endl;
 }
 
-void extract(const char* dirPath, const char* name, int graySize) {
-  extraitFeatureVector(dirPath, name, graySize);
-}
+//void extract(const char* dirPath, const char* name, int graySize, int colorSize) {
+//  extraitFeatureVector(dirPath, name, graySize);
+//}
 
 void separateCrossTesting(const char* filename, const char* fileLearn, const char* fileTest, int percent) {
 
@@ -184,17 +266,21 @@ void separateCrossTesting(const char* filename, const char* fileLearn, const cha
   ifFile.close();
 }
 
+void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor, const double* textureArray,
+  const double* colorHistoArray, int textureArraySize, int colorHistoSize, vector<double*>& distanceVector,
+  vector<string*>& fileResultVector, double colorWeight) {
 
 
-string classifier(const char* fileLearn, int numberNeighbor, const vector<double>& testingVector, double* distance = NULL, double* percent = NULL) {
-  vector<double> distanceVector;
-  vector<string> classVector;
-
-  double maxKDistance = 1000;
+  double maxKDistance = 1e6;
   double maxKIndex = 0;
 
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
+
+  string firstline;
+  getline(ifFileLearn, firstline);
+
+
   while (ifFileLearn.good()) {
     // load learning vector
     string learnline;
@@ -202,50 +288,60 @@ string classifier(const char* fileLearn, int numberNeighbor, const vector<double
 
     stringstream sslearn(learnline);
     string learnfilename;
-    string learnclassname;
+    //    string learnclassname;
     sslearn >> learnfilename;
-    sslearn >> learnclassname;
+    //    sslearn >> learnclassname;
     if (learnfilename.compare("") == 0)
       break;
-    vector<double> learningVector;
-    //      cout << learnfilename << " " << learnclassname << endl;
-    //      getchar();
-    double learnvalue;
-    while (sslearn >> learnvalue) {
-      learningVector.push_back(learnvalue);
+    if (learnfilename.compare(filesearch) == 0)
+      continue;
+
+    double* textureEle = new double[textureArraySize];
+    double* colorHistoEle = new double[colorHistoSize];
+    for (int i = 0; i < textureArraySize; i++) {
+      sslearn >> textureArraySize;
+    }
+    for (int i = 0; i < colorHistoSize; i++) {
+      sslearn >> colorHistoSize;
     }
 
     // calculate distance between 2 vector
-    double dist = getTextureVectorDistance(learningVector, testingVector);
+    double texturedist = getTextureVectorDistance(textureEle, textureArray, textureArraySize);
+    double colorHistoDist = getColorHistoDistance(colorHistoEle, colorHistoArray, colorHistoSize);
+
+    double dist = (1 - colorWeight) * texturedist + colorWeight*colorHistoDist;
+    cout << learnfilename << " texture:" << texturedist << " " << "color:" << colorHistoDist << " total:" << dist << endl;
 
     //      cout << "distance:" << dist << endl;
     if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
-      //        cout << dist << "<" << maxKDistance << endl;
-      //        cout << "change k=" << k << endl;
+      //      cout << dist << "<" << maxKDistance << endl;
+      //              cout << "change k=" << k << endl;
 
       if (distanceVector.size() == 0 || maxKDistance < dist) {
-        //          cout << "init to end" << endl;
-        distanceVector.push_back(dist);
-        classVector.push_back(learnclassname);
+        //        cout << "init to end" << endl;
+        distanceVector.push_back(new double(dist));
+        fileResultVector.push_back(new string(learnfilename));
         maxKDistance = dist;
         continue;
       }
-      vector<double>::iterator itdistance = distanceVector.begin();
-      vector<string>::iterator itclass = classVector.begin();
-      //        cout << "begin for" << (itdistance < distanceVector.end()) << endl;
+      vector<double*>::iterator itdistance = distanceVector.begin();
+      vector<string*>::iterator itclass = fileResultVector.begin();
+      //      cout << "begin for" << (itdistance < distanceVector.end()) << endl;
       for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {
-        //          cout << "itdistance" << endl;
-        if ((*itdistance) > dist) {
-          //            cout << "insert" << endl;
-          distanceVector.insert(itdistance, dist);
-          classVector.insert(itclass, learnclassname);
+        //        cout << "itdistance" << endl;
+        if ((**itdistance) > dist) {
+          //          cout << "insert" << endl;
+          double* a = new double;
+          *a = dist;
+          distanceVector.insert(itdistance, a);
+          fileResultVector.insert(itclass, new string(learnfilename));
           break;
         }
       }
       if (distanceVector.size() >= numberNeighbor) {
         distanceVector.pop_back();
-        classVector.pop_back();
-        maxKDistance = *(distanceVector.end());
+        fileResultVector.pop_back();
+        maxKDistance = **(distanceVector.end());
       }
       //        if (itdistance > distanceVector.end()) {
       //          distanceVector.push_back(dist);
@@ -257,28 +353,7 @@ string classifier(const char* fileLearn, int numberNeighbor, const vector<double
     }
     //      cout << "end" << endl;
   }
-  // count class
-  map<string, int> classCount;
-  int maxCount = 0;
-  string maxClass;
-  if (distance != NULL) *distance = 1000;
-  for (int i = 0; i < classVector.size(); i++) {
-    classCount[classVector[i]] = classCount[classVector[i]] + 1;
-    if (maxCount < classCount[classVector[i]]) {
-      maxClass = classVector[i];
-      maxCount = classCount[classVector[i]];
-      if (distance != NULL) {
-        if (distanceVector[i]<*distance) {
-          *distance = distanceVector[i];
-        }
-      }
-    }
-    //    cout << classVector[i] << " " << distanceVector[i] << " ";
-  }
-  map<string, int>::iterator it;
 
-  if (percent != NULL)
-    *percent = maxCount / (double) numberNeighbor;
 
   // show content:
   //  for (it = classCount.begin(); it != classCount.end(); it++)
@@ -286,394 +361,136 @@ string classifier(const char* fileLearn, int numberNeighbor, const vector<double
   //
   //  cout << endl;
   ifFileLearn.close();
-  return maxClass;
+  //  return maxClass;
 }
 
-void search(const char* fileLearn, const char* fileTest, int k) {
-  ifstream ifFileTest;
-  ifFileTest.open(fileTest);
-  int rightClass = 0;
-  int falseClass = 0;
-  while (ifFileTest.good()) {
+int filename2Id(string filename) {
+  string name = string(filename);
+  int indexName = name.rfind(".");
+  if (indexName < 0)
+    return -1;
+  string pref = name.substr(0, indexName);
+  int id = atoi(pref.c_str());
+  cout << id << " ";
+  return id;
+}
+
+void evalueSearch(const char* fileRef, const char* fileTest, vector<string*>& resultFileVector, int& trueTotal) {
+  ifstream ifFileRef;
+  ifFileRef.open(fileRef);
+  vector<int> classIndex;
+  while (ifFileRef.good()) {
+    int value;
+    ifFileRef >> value;
+    classIndex.push_back(value);
+  }
+
+  int fileIndex = filename2Id(fileTest);
+  int min, max;
+  for (int i = 0; i < classIndex.size() - 1; i++) {
+    if (classIndex[i + 1] > fileIndex) {
+      min = classIndex[i];
+      max = classIndex[i + 1] - 1;
+      break;
+    }
+  }
+
+  //  cout << "min-max" << min << " " << max << endl;
+  for (int i = 0; i < resultFileVector.size(); i++) {
+    int id = filename2Id(*resultFileVector[i]);
+    if (id >= min && id <= max) {
+      trueTotal++;
+    }
+  }
+}
+
+void search(const char* fileLearn, const char* fileTest, int k, double colorWeight, const char* fileRef) {
+  ifstream ifFileLearn;
+  ifFileLearn.open(fileLearn);
+
+  string firstline;
+  getline(ifFileLearn, firstline);
+  stringstream ssfirst(stringstream::in | stringstream::out);
+  ssfirst << firstline;
+  int texture_att_size = 0;
+  int color_histo_size = 0;
+  string dirPath;
+  string name;
+  int graySize, colorSize;
+  ssfirst >> dirPath;
+  ssfirst >> name;
+  ssfirst >> graySize;
+  ssfirst >> colorSize;
+  ssfirst >> texture_att_size;
+  ssfirst >> color_histo_size;
+
+  double* textureArray = new double[texture_att_size];
+  double* colorHistArray = new double[color_histo_size];
+
+  while (ifFileLearn.good()) {
     // load testing vector
     string testline;
-    getline(ifFileTest, testline);
+    getline(ifFileLearn, testline);
     //    cout << testline << endl;
 
     stringstream sstest(stringstream::in | stringstream::out);
     sstest << testline;
     //    cout << "end init" << endl;
     string testfilename;
-    string testclassname;
+    //    string testclassname;
     sstest >> testfilename;
     if (testfilename.compare("") == 0) {
       break;
     }
-
-    sstest >> testclassname;
-    cout << testfilename << " " << testclassname << endl;
-
-    vector<double> testingVector;
-
-    double testvalue;
-    while (sstest.good()) {
-      //      cout<<" digit"<<endl;
-      sstest >> testvalue;
-      testingVector.push_back(testvalue);
-      //      cout << testvalue;
+    if (testfilename.compare(fileTest) == 0) {
+      continue;
     }
 
-    string maxClass = classifier(fileLearn, k, testingVector);
-
-    cout << maxClass << " vs " << testclassname << endl;
-    if (maxClass.compare(testclassname) == 0) {
-      rightClass++;
-    } else {
-      falseClass++;
+    for (int i = 0; i < texture_att_size; i++) {
+      sstest >> textureArray[i];
+//      cout <<textureArray[i]<<" ";
     }
-
-  }
-  cout << "Result: Right:" << rightClass << " False:" << falseClass << " Percent:" << ((float) rightClass / (rightClass + falseClass)) << endl;
-  ifFileTest.close();
-}
-
-void segmenterCAH(const char* fileImage, const char* name, int graySize, int numberGroup, int segmblocksize) {
-  // load file
-  Mat img;
-  if (!(img = imread(fileImage, 0)).data)
-    return;
-  reduireNiveauDeGris(img, graySize);
-
-  Mat segmentImage = img.clone();
-  segmentImage.setTo(Scalar(0, 0, 0));
-
-  double*** concurrenceArray = new double**[NUM_MATRIX];
-  for (int i = 0; i < NUM_MATRIX; i++) {
-    concurrenceArray[i] = new double*[graySize];
-    for (int j = 0; j < graySize; j++) {
-      concurrenceArray[i][j] = new double[graySize];
-      for (int k = 0; k < graySize; k++) {
-        concurrenceArray[i][j][k] = 0;
-      }
-    }
-  }
-
-  int row = img.rows / segmblocksize;
-  int col = img.cols / segmblocksize;
-  vector<double>*** vvalueTotal = new vector<double>**[row];
-  for (int i = 0; i < row; i++) {
-    vvalueTotal[i] = new vector<double>*[col];
-    for (int j = 0; j < col; j++) {
-      vvalueTotal[i][j] = NULL;
-    }
-  }
-  Mat region;
-  int halfsize = segmblocksize / 2;
-
-  vector<double>* vvalue;
-  for (int j = 0; j < img.rows; j += segmblocksize) {
-    for (int k = 0; k < img.cols; k += segmblocksize) {
-      //      cout << j << " - " << k;
-      getRectSubPix(img, Size(segmblocksize, segmblocksize), Point2f(j + halfsize, k + halfsize), region);
-      //        imshow("region", region);
-
-      //      Mat trackImg = img.clone();
-      //      rectangle(trackImg, Point(i, j), Point(i + segmblocksize, j + segmblocksize), Scalar(255, 0, 0));
-      //        imshow("track image", trackImg);
-
-      // get vector value of region
-      //      Mat segmentSubRegion;
-      //      getRectSubPix(segmentImage, Size(segmblocksize, segmblocksize), Point2f(j + halfsize, k + halfsize), segmentSubRegion);
-      //        double max;
-      //        minMaxLoc(segmentSubRegion, NULL, &max);
-      //        if (max != 0) {
-      //          cout << "no ";
-      //          continue;
-      //        }
-      setZero(concurrenceArray, graySize);
-
-      calculerMatrixCooccurence(region, concurrenceArray, graySize);
-
-      vvalue = new vector<double>();
-
-      for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-        extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, NULL, *vvalue);
-      }
-      //      cout << j / segmblocksize << "-" << k / segmblocksize << endl;
-      vvalueTotal[j / segmblocksize][k / segmblocksize] = vvalue;
-    }
-  }
-  //  getchar();
-  int nbsur = row * col;
-  vector<int>** vectorGroup = new vector<int>*[nbsur];
-  double** distanceMatrix = new double*[nbsur];
-  for (int i = 0; i < nbsur; i++) {
-    distanceMatrix[i] = new double[nbsur];
-    vectorGroup[i] = new vector<int>;
-    for (int j = 0; j < nbsur; j++)
-      distanceMatrix[i][j] = 0;
-  }
-  int distanceRow = 0;
-  int distanceCol = 0;
-  // calculer matrix of distance
-  for (int i = 0; i < row; i++) {
-    for (int j = 0; j < col; j++) {
-//      cout << i << "-" << j << ": ";
-      //      getchar();
-      vector<double>* vvalue = vvalueTotal[i][j];
-      //      printVector(*vvalue);
-      int k = i, l = (j + 1) % col;
-      if (l == 0) k = i + 1;
-      distanceCol = distanceRow + 1;
-      for (; k < row; k++, l = 0) {
-        for (; l < col; l++) {
-          //          cout << k << ":" << l << " ";
-          vector<double>* vvalue2 = vvalueTotal[k][l];
-          //          printVector(*vvalue2);
-          double distance = getTextureVectorDistance(*vvalue, *vvalue2);
-          //          cout << "a;ljfpoqiuwepoiquriop ";
-          //          if(j==1)getchar();
-          distanceMatrix[distanceRow][distanceCol] = distance;
-          distanceMatrix[distanceCol][distanceRow] = distance;
-          distanceCol++;
-          //          cout << distance << " ";
-          //          if(j==1)getchar();
-        }
-      }
-
-      //      getchar();
-      //            cout << endl;
-      vectorGroup[distanceRow]->push_back(i);
-      vectorGroup[distanceRow]->push_back(j);
-      distanceRow++;
-
-      //      cout << "end all" << endl;
-    }
-  }
-//  cout << "end calcul distance" << endl;
-//  getchar();
-  int groupNumber = nbsur;
-
-  while (groupNumber > numberGroup) {
-//    cout << "Group: " << groupNumber<<endl;
-//    for (int i = 0; i < groupNumber; i++) {
-//      for (int j = 0; j < groupNumber; j++) {
-//        cout << distanceMatrix[i][j] << "\t";
-//      }
-//      cout << endl;
-//    }
-//
-//    for (int i = 0; i < groupNumber; i++) {
-//      cout << "G[" << i << "]=";
-//      for (int list = 0; list < vectorGroup[i]->size(); list += 2) {
-//        int x = (*vectorGroup[i])[list];
-//        int y = (*vectorGroup[i])[list + 1];
-//        cout << "(" << x << "," << y << ")";
-//      }
-//      cout << endl;
-//    }
-    // find value minimal
-    double minValue = 1e6;
-    int minRow = 0;
-    int minCol = 0;
-    for (int i = 0; i < groupNumber; i++) {
-      for (int j = 0; j < groupNumber; j++) {
-        if (i == j) continue;
-        if (minValue > distanceMatrix[i][j]) {
-          minValue = distanceMatrix[i][j];
-          minRow = i;
-          minCol = j;
-        }
-      }
-    }
-//    cout << "min:" << minValue << " at " << minRow << "," << minCol << endl;
-    // create new matrix
-//    cout << "create new matrix" << endl;
-    double** newMatrix = new double*[groupNumber - 1];
-    vector<int>** newVectorGroup = new vector<int>*[groupNumber - 1];
-    for (int i = 0; i < groupNumber - 1; i++) {
-      newMatrix[i] = new double[groupNumber - 1];
-      newVectorGroup[i] = new vector<int>;
-      for (int j = 0; j < groupNumber - 1; j++) {
-        newMatrix[i][j] = 0;
-      }
-    }
-    // assign to new matrix
-//    cout << "assign to new matrix" << endl;
-    //    getchar();
-    int newRow = 0, newCol = 0;
-    for (int i = 0; i < groupNumber; i++, newRow++) {
-      if (i == minRow || i == minCol) {
-        newRow--;
-        continue;
-      }
-      newCol = 0;
-      for (int j = 0; j < groupNumber; j++, newCol++) {
-        if (j == minCol || j == minRow) {
-          newCol--;
-          continue;
-        }
-        //        cout<<newRow<<"-"<<newCol<<" ";
-        newMatrix[newRow][newCol] = distanceMatrix[i][j];
-      }
-    }
-//    cout << "calcule new group distance" << endl;
-    //    getchar();
-    for (int i = 0, newRow = 0; i < groupNumber; i++, newRow++) {
-      if (i == minRow || i == minCol) {
-        newRow--;
-        continue;
-      }
-      newMatrix[newRow][groupNumber - 2] =
-        (distanceMatrix[i][minRow] > distanceMatrix[i][minCol] ? distanceMatrix[i][minRow] : distanceMatrix[i][minCol]);
-      newMatrix[groupNumber - 2][newRow] = newMatrix[newRow][groupNumber - 2];
-      for (int k = 0; k < vectorGroup[i]->size(); k++) {
-        newVectorGroup[newRow]->push_back((*vectorGroup[i])[k]);
-      }
-    }
-
-//    cout << "calcule new vectorgroup" << endl;
-    //    getchar();
-    for (int i = 0; i < vectorGroup[minRow]->size(); i++) {
-      newVectorGroup[groupNumber - 2]->push_back((*vectorGroup[minRow])[i]);
-    }
-    for (int i = 0; i < vectorGroup[minCol]->size(); i++) {
-      newVectorGroup[groupNumber - 2]->push_back((*vectorGroup[minCol])[i]);
-    }
-
-//    cout << "free memory" << endl;
-    freeMatrix(distanceMatrix, groupNumber);
-    distanceMatrix = newMatrix;
-    freeVector(vectorGroup, groupNumber);
-    vectorGroup = newVectorGroup;
-
-    groupNumber--;
-    
-  }
-
-  for (int i = 0; i < groupNumber; i++) {
-    cout << "G[" << i << "]=";
-    for (int list = 0; list < vectorGroup[i]->size(); list += 2) {
-      int x = (*vectorGroup[i])[list];
-      int y = (*vectorGroup[i])[list + 1];
-      cout << "(" << x << "," << y << ")";
-      rectangle(segmentImage, Rect(x*segmblocksize, y*segmblocksize, segmblocksize, segmblocksize), Scalar(i), CV_FILLED);
-    }
-  }
-  cout<<endl;
-//  for(int i=0; i<segmentImage.rows; i++){
-//    for(int j=0; j<segmentImage.cols; j++){
-//      cout<<(int)segmentImage.at<uchar>(i,j);
-//    }
 //    cout<<endl;
-//  }
-  Mat matzero = segmentImage.clone();
-  matzero.setTo(Scalar(0));
-  scaleAdd(segmentImage, 255 / groupNumber, matzero, segmentImage);
-  //  imshow("source image", img);
-//  imshow("segment image", segmentImage);
-//  waitKey();
-  char fileOutName[255];
-  sprintf(fileOutName, "out/%s.segmentCAH.%d.%d.%d.jpg", fileImage, graySize, numberGroup, segmblocksize);
-  cout << fileOutName << endl;
+    for (int i = 0; i < color_histo_size; i++) {
+      sstest >> colorHistArray[i];
+//      cout <<colorHistArray[i]<<" ";
 
-  imwrite(fileOutName, segmentImage);
-  segmentImage.release();
-  img.release();
-  freeMatrix(concurrenceArray, graySize);
-  freeMatrix(distanceMatrix, groupNumber);
-
-  freeVector(vectorGroup, groupNumber);
-}
-
-void segmenter(const char* fileImage, const char* name, int graySize, int numberNeighbor, int segmblocksize) {
-#define NUM_OF_SCALE 1
-  int size[NUM_OF_SCALE] = {segmblocksize};
-  // load file
-  Mat img;
-  if (!(img = imread(fileImage, 0)).data)
-    return;
-  reduireNiveauDeGris(img, graySize);
-
-  Mat segmentImage = img.clone();
-  segmentImage.setTo(Scalar(0, 0, 0));
-
-  double*** concurrenceArray = new double**[NUM_MATRIX];
-  for (int i = 0; i < NUM_MATRIX; i++) {
-    concurrenceArray[i] = new double*[graySize];
-    for (int j = 0; j < graySize; j++) {
-      concurrenceArray[i][j] = new double[graySize];
-      for (int k = 0; k < graySize; k++) {
-        concurrenceArray[i][j][k] = 0;
-      }
     }
+//    cout<<endl;
+//    getchar();
+    break;
+  }
+  ifFileLearn.close();
+  cout << "end get texture and color att" << endl;
+  // Search
+  vector<double*> distanceVector;
+  vector<string*> fileResultVector;
+  dosearch(fileTest, fileLearn, k, textureArray,
+    colorHistArray, texture_att_size, color_histo_size, distanceVector, fileResultVector, colorWeight);
+
+  cout << "end search" << endl;
+  // Print out the result
+  for (int i = 0; i < k || i < distanceVector.size(); i++) {
+    cout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
 
-  map<string, int> classMap;
-  // diviser
-  for (int i = 0; i < NUM_OF_SCALE; i++) {
-    Mat region;
-    int halfsize = size[i] / 2;
-    for (int j = 0; j < img.rows; j += size[i]) {
-      for (int k = 0; k < img.cols; k += size[i]) {
-        cout << j << " - " << k << endl;
-        getRectSubPix(img, Size(size[i], size[i]), Point2f(j + halfsize, k + halfsize), region);
-        //        imshow("region", region);
-
-        //        Mat trackImg = img.clone();
-        //        rectangle(trackImg, Point(i, j), Point(i + size[i], j + size[i]), Scalar(255, 0, 0));
-        //        imshow("track image", trackImg);
-
-        // get vector value of region
-        //        Mat segmentSubRegion;
-        //        getRectSubPix(segmentImage, Size(size[i], size[i]), Point2f(j + halfsize, k + halfsize), segmentSubRegion);
-        //        double max;
-        //        minMaxLoc(segmentSubRegion, NULL, &max);
-        //        if (max != 0) {
-        //          cout << "no ";
-        //          continue;
-        //        }
-        setZero(concurrenceArray, graySize);
-
-        calculerMatrixCooccurence(region, concurrenceArray, graySize);
-
-        vector<double> vvalue;
-
-        for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-          extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, NULL, vvalue);
-        }
-        double percent;
-        double distance;
-        string classname = classifier(name, numberNeighbor, vvalue, &distance, &percent);
-        cout << "distance:" << distance << " percent:" << percent << endl;
-        //        if (percent < 0.5)
-        //          continue;
-        if (classMap[classname] == 0) {
-          classMap[classname] = classMap.size() + 1;
-        }
-
-        rectangle(segmentImage, Rect(j, k, size[i], size[i]), Scalar(classMap[classname]), CV_FILLED);
-        cout << "class: " << classMap[classname] << " " << classname << endl;
-
-        //        getchar();
-        //        waitKey();
-      }
-    }
+  if (fileRef != NULL) {
+    int trueTotal = 0;
+    evalueSearch(fileRef, fileTest, fileResultVector, trueTotal);
+    cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
   }
-  Mat matzero = segmentImage.clone();
-  matzero.setTo(Scalar(0));
-  scaleAdd(segmentImage, 255 / classMap.size(), matzero, segmentImage);
-  //  imshow("source image", img);
-  //  imshow("segment image", segmentImage);
-  //  waitKey();
-  char fileOutName[255];
-  sprintf(fileOutName, "out/%s.segment.%d.%d.%d.jpg", fileImage, graySize, numberNeighbor, segmblocksize);
-  cout << fileOutName << endl;
 
-  imwrite(fileOutName, segmentImage);
-  segmentImage.release();
-  img.release();
-  freeMatrix(concurrenceArray, graySize);
+  ofstream htmlout;
+  char filehtml[255];
+  sprintf(filehtml, "%s.%d.%d.%d.%d.html", fileTest, k, graySize, colorSize, (int) (colorWeight * 100));
+  htmlout.open(filehtml);
+  htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
+  htmlout << "result:</br>" << endl;
+  for (int i = 0; i < k || i < distanceVector.size(); i++) {
+    htmlout << "<image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 />";
+    htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
+  }
+
 }
 
 double getVectorDistance(double* v1, double* v2, int size) {
@@ -697,8 +514,22 @@ double getVectorDistance(double* v1, double* v2, int size) {
   return distance;
 }
 
-double getTextureVectorDistance(const vector<double>& learningVector, const vector<double>& testingVector) {
-  int numberPara = learningVector.size() / NUM_MATRIX;
+double getColorHistoDistance(const double* learningVector, const double* testingVector, int colorSize) {
+  double distance;
+    for (int i; i < colorSize; i++) {
+      distance += abs(learningVector[i] - testingVector[i]);
+    }
+
+//  for (int i; i < colorSize; i++) {
+//    if (learningVector[i] + testingVector[i] != 0) {
+//      distance += pow(learningVector[i] - testingVector[i], 2) / (learningVector[i] + testingVector[i]);
+//    }
+//  }
+  return distance;
+}
+
+double getTextureVectorDistance(const double* learningVector, const double* testingVector, int textureSize) {
+  int numberPara = NUM_MATRIX_ATT;
   double distanceMatching = 0;
   double distance[NUM_MATRIX][NUM_MATRIX];
 
@@ -721,37 +552,7 @@ double getTextureVectorDistance(const vector<double>& learningVector, const vect
   //  double cost;
 
   assignmentoptimal(assignment, &distanceMatching, (double*) distance, NUM_MATRIX, NUM_MATRIX);
-  //  cout << "end assignment" << endl;
-  //  for (int i = 0; i < NUM_MATRIX; i++) {
-  //    cout << i << "+" << assignment[i] << " ";
-  //  }
-  //  cout<<endl<<distanceMatching<<endl;
-  //  test_hung();
-  //  int intDistance[NUM_MATRIX][NUM_MATRIX];
-  //  for (int i = 0; i < NUM_MATRIX; i++) {
-  //    for (int j = 0; j < NUM_MATRIX; j++) {
-  //      intDistance[i][j] = (int) (distance[i][j]*10000);
-  //      cout<<intDistance[i][j]<<" ";
-  //    }
-  //    cout<<endl;
-  //  }
 
-  //
-  //  hungarian_t prob;
-  //  hungarian_init(&prob, (double*) distance, NUM_MATRIX, NUM_MATRIX, HUNGARIAN_MIN);
-  //  hungarian_print_rating(&prob);
-  //  hungarian_solve(&prob);
-  //  hungarian_print_assignment(&prob);
-  //  for (int i = 0; i < prob.m; i++) {
-  //    distanceMatching += distance[i][prob.a[i]];
-  //  }
-  //  //  getchar();
-  //
-  //  //  printf("\nfeasible? %s\n",
-  //  //         (hungarian_check_feasibility(&prob)) ? "yes" : "no");
-  //  //  printf("benefit: %d\n\n", hungarian_benefit(&prob));
-  //
-  //  hungarian_fini(&prob);
   delete [] v1;
   delete [] v2;
   //  cout << "end assignment " << distanceMatching << endl;
@@ -764,9 +565,9 @@ void reduireNiveauDeGris(Mat& image, int size) {
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
       image.at<uchar > (i, j) = (uchar) (a * image.at<uchar > (i, j));
-      //      cout<<(int)image.at<uchar > (i, j)<<" ";
+      //            cout<<(int)image.at<uchar > (i, j)<<" ";
     }
-    //    cout<<endl;
+    //        cout<<endl;
   }
   //  getchar();
 }
@@ -815,31 +616,22 @@ void calculerMatrixCooccurence(const Mat& image, double*** concurrenceArray, int
   int deltaY[NUM_MATRIX] = {0, 1, 1, 1, 0, 2, 2, 2};
   int numberOfPair[NUM_MATRIX] = {0};
 
-  //  // initialize list of matrix
-  //  double*** concurrenceArray = new double**[NUM_MATRIX];
-  //  for (int i = 0; i < NUM_MATRIX; i++) {
-  //    concurrenceArray[i] = new double*[graySize];
-  //    for (int j = 0; j < graySize; j++) {
-  //      concurrenceArray[i][j] = new double[graySize];
-  //      for (int k = 0; k < graySize; k++) {
-  //        concurrenceArray[i][j][k] = 0;
-  //      }
-  //    }
-  //  }
 
-  //  cout << "begin start" << endl;
   // calculer matrix of concurrence
+  //  cout << "begin calculer matrix of concurrence" << endl;
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
       for (int k = 0; k < NUM_MATRIX; k++) {
+        //        cout << k << " ";
+        //        getchar();
         int ia = i + deltaY[k];
         int ja = j + deltaX[k];
         if (ia < image.rows && ja < image.cols) {
           int g1 = image.at<uchar > (i, j);
           int g2 = image.at<uchar > (ia, ja);
-          //          cout<<g1<<"-"<<g2<<" ";
+          //          cout << g1 << "-" << g2 << " ";getchar();
           concurrenceArray[k][g1][g2]++;
-          //          cout<<concurrenceArray[k][g1][g2]<<" ";
+          //          cout << concurrenceArray[k][g1][g2] << " ";getchar();
           numberOfPair[k]++;
         }
       }
