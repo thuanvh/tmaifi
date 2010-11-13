@@ -33,9 +33,23 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/optimization.o \
+	${OBJECTDIR}/integration.o \
+	${OBJECTDIR}/specialfunctions.o \
 	${OBJECTDIR}/OnlineFaceRec.o \
 	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/facerecognition.o
+	${OBJECTDIR}/ap.o \
+	${OBJECTDIR}/alglibinternal.o \
+	${OBJECTDIR}/dataanalysis.o \
+	${OBJECTDIR}/interpolation.o \
+	${OBJECTDIR}/facerecognition.o \
+	${OBJECTDIR}/texturemain.o \
+	${OBJECTDIR}/solvers.o \
+	${OBJECTDIR}/alglibmisc.o \
+	${OBJECTDIR}/diffequations.o \
+	${OBJECTDIR}/linalg.o \
+	${OBJECTDIR}/texture.o \
+	${OBJECTDIR}/statistics.o
 
 
 # C Compiler Flags
@@ -62,6 +76,21 @@ LDLIBSOPTIONS=
 	${MKDIR} -p ../test
 	${LINK.cc} -lcxcore -lcv -lhighgui -lcvaux -lml -o ../test/faceregc ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
+${OBJECTDIR}/optimization.o: optimization.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/optimization.o optimization.cpp
+
+${OBJECTDIR}/integration.o: integration.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/integration.o integration.cpp
+
+${OBJECTDIR}/specialfunctions.o: specialfunctions.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/specialfunctions.o specialfunctions.cpp
+
 ${OBJECTDIR}/OnlineFaceRec.o: OnlineFaceRec.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
@@ -72,10 +101,65 @@ ${OBJECTDIR}/main.o: main.cpp
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
 
+${OBJECTDIR}/ap.o: ap.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/ap.o ap.cpp
+
+${OBJECTDIR}/alglibinternal.o: alglibinternal.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/alglibinternal.o alglibinternal.cpp
+
+${OBJECTDIR}/dataanalysis.o: dataanalysis.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/dataanalysis.o dataanalysis.cpp
+
+${OBJECTDIR}/interpolation.o: interpolation.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/interpolation.o interpolation.cpp
+
 ${OBJECTDIR}/facerecognition.o: facerecognition.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/facerecognition.o facerecognition.cpp
+
+${OBJECTDIR}/texturemain.o: texturemain.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/texturemain.o texturemain.cpp
+
+${OBJECTDIR}/solvers.o: solvers.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/solvers.o solvers.cpp
+
+${OBJECTDIR}/alglibmisc.o: alglibmisc.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/alglibmisc.o alglibmisc.cpp
+
+${OBJECTDIR}/diffequations.o: diffequations.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/diffequations.o diffequations.cpp
+
+${OBJECTDIR}/linalg.o: linalg.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/linalg.o linalg.cpp
+
+${OBJECTDIR}/texture.o: texture.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/texture.o texture.cpp
+
+${OBJECTDIR}/statistics.o: statistics.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/statistics.o statistics.cpp
 
 # Subprojects
 .build-subprojects:

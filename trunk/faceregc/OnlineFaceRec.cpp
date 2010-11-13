@@ -1,31 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////////////
-// OnlineFaceRec.cpp, by Shervin Emami (www.shervinemami.co.cc) on 2nd June 2010.
-// Online Face Recognition from a camera using Eigenfaces.
-//////////////////////////////////////////////////////////////////////////////////////
-//
-// Some parts are based on the code example by Robin Hewitt (2007) at:
-// "http://www.cognotics.com/opencv/servo_2007_series/part_5/index.html"
-//
-// Command-line Usage (for offline mode, without a webcam):
-//
-// First, you need some face images. I used the ORL face database.
-// You can download it for free at
-//    www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
-//
-// List the training and test face images you want to use in the
-// input files train.txt and test.txt. (Example input files are provided
-// in the download.) To use these input files exactly as provided, unzip
-// the ORL face database, and place train.txt, test.txt, and eigenface.exe
-// at the root of the unzipped database.
-//
-// To run the learning phase of eigenface, enter in the command prompt:
-//    OnlineFaceRec train <train_file>
-// To run the recognition phase, enter:
-//    OnlineFaceRec test <test_file>
-// To run online recognition from a camera, enter:
-//    OnlineFaceRec
-//
-//////////////////////////////////////////////////////////////////////////////////////
+
 
 #include <stdio.h>
 //#include <conio.h>		// For _kbhit()
@@ -38,10 +11,33 @@
 #include <opencv/highgui.h>
 #include <iostream>
 #include <fstream>
+//#include "ap.h"
+//#include "dataanalysis.h"
+//#include "dataanalysis.h"
+//#include "alglibinternal.h"
+//#include "linalg.h"
+//#include "statistics.h"
+//#include "alglibmisc.h"
+//#include "specialfunctions.h"
+//#include "solvers.h"
+//#include "optimization.h"
+//#include "diffequations.h"
+//#include "fasttransforms.h"
+//#include "integration.h"
+//#include "interpolation.h"
+
+#undef LDA
+#define NUMBER_EIGENS nEigens
+
 using namespace std;
 
-// Haar Cascade file, used for Face Detection.
-const char *faceCascadeFilename = "haarcascade_frontalface_alt.xml";
+#ifdef LDA
+using namespace alglib;
+using namespace alglib_impl;
+#endif
+const char *faceCascadeFilename = "face.xml";
+
+
 
 int SAVE_EIGENFACE_IMAGES = 1; // Set to 0 if you dont want images of the Eigenvectors saved to files (for debugging).
 //#define USE_MAHALANOBIS_DISTANCE	// You might get better recognition accuracy if you enable this.
@@ -64,7 +60,10 @@ CvMat * eigenValMat = 0; // eigenvalues
 CvMat * projectedTrainFaceMat = 0; // projected training faces
 
 CvCapture* camera = 0; // The camera device.
-
+#ifdef LDA
+CvMat* ldaeigens = 0;
+void lda(CvMat* projectedFaceMat, CvMat* ldaeigens, CvMat* ldaProjection);
+#endif
 
 // Function prototypes
 void printUsage();
@@ -90,19 +89,13 @@ void test(char *szFileTest);
 // Show how to use this program from the command-line.
 
 void printUsage() {
-  printf("OnlineFaceRec, created by Shervin Emami (www.shervinemami.co.cc), 2nd Jun 2010.\n"
-    "Usage: OnlineFaceRec [<command>] \n"
-    "  Valid commands are: \n"
-    "    train <train_file> \n"
-    "    test <test_file> \n"
-    " (if no args are supplied, then online camera mode is enabled).\n"
-    );
+  printf("");
 }
 
 
 // Startup routine.
 
-int main(int argc, char** argv) {
+int mainpca(int argc, char** argv) {
   printUsage();
 
   if (argc >= 2 && strcmp(argv[1], "train") == 0) {
@@ -194,20 +187,26 @@ void learn(char *szFileTrain) {
   doPCA();
 
   // project the training images onto the PCA subspace
-  projectedTrainFaceMat = cvCreateMat(nTrainFaces, nEigens, CV_32FC1);
+  projectedTrainFaceMat = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
   offset = projectedTrainFaceMat->step / sizeof (float);
   for (i = 0; i < nTrainFaces; i++) {
     //int offset = i * nEigens;
     cvEigenDecomposite(
       faceImgArr[i],
-      nEigens,
+      NUMBER_EIGENS,
       eigenVectArr,
       0, 0,
       pAvgTrainImg,
       //projectedTrainFaceMat->data.fl + i*nEigens);
       projectedTrainFaceMat->data.fl + i * offset);
   }
-
+#ifdef LDA
+  CvMat* ldaProjection = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
+  ldaeigens = cvCreateMat(NUMBER_EIGENS, NUMBER_EIGENS, CV_32FC1);
+  lda(projectedTrainFaceMat, ldaeigens, ldaProjection);
+  cvReleaseMat(&projectedTrainFaceMat);
+  projectedTrainFaceMat = ldaProjection;
+#endif
   // store the recognition data as an xml file
   storeTrainingData();
 
@@ -219,10 +218,77 @@ void learn(char *szFileTrain) {
   saveArffFile("learn.pca", projectedTrainFaceMat);
 
 }
+#ifdef LDA
+void lda(CvMat* projectedFaceMat, CvMat* ldaeigens, CvMat* ldaProjection) {
+
+  cout << "begin lda" << endl;
+  ae_matrix p;
+
+  //  data.setlength(nTrainFaces, NUMBER_EIGENS + 1);
+  ae_matrix_init(&p, nTrainFaces, NUMBER_EIGENS + 1, DT_REAL, NULL, ae_true);
+  //  ae_matrix_init(&wn, 0, 0, DT_REAL, _state, ae_true);
+  real_2d_array data(&p);
+  cout << "end init matrix" << endl;
+  double** val = new double*[nTrainFaces];
+  double* trustlabel = new double[nTrainFaces];
+  for (int i = 0; i < nTrainFaces; i++) {
+    val[i] = new double[NUMBER_EIGENS];
+  }
+  for (int i = 0; i < nTrainFaces; i++) {
+    for (int j = 0; j < NUMBER_EIGENS; j++) {
+      val[i][j] = projectedFaceMat->data.fl[i * nEigens + j];
+      //      cout << val[i][j] << endl;
+      //      data.setcontent(i, j, &val[i][j]);
+      data[i][j] = val[i][j];
+    }
+    trustlabel[i] = personNumTruthMat->data.i[i] - 1;
+    //    cout << trustlabel[i] << endl;
+    //    data.setcontent(i, NUMBER_EIGENS, &trustlabel[i]);
+    data[i][NUMBER_EIGENS] = trustlabel[i];
+    //    cout << trustlabel[i] << " ";
+  }
+  cout << "end init lda" << endl;
+  alglib::ae_int_t info;
+  ae_matrix q;
+
+  //  w.setlength(NUMBER_EIGENS, NUMBER_EIGENS);
+  ae_matrix_init(&q, NUMBER_EIGENS, NUMBER_EIGENS, DT_REAL, NULL, ae_true);
+  real_2d_array w(&q);
+  try {
+    fisherldan(data, nTrainFaces, NUMBER_EIGENS, nPersons, info, w);
+  } catch (ap_error e) {
+    cout << e.msg << endl;
+  }
+
+  cout << "end fisher lda" << endl;
+  //  CvMat* ldaeigens = cvCreateMat(NUMBER_EIGENS, NUMBER_EIGENS, CV_32FC1);
+  for (int i = 0; i < NUMBER_EIGENS; i++) {
+    for (int j = 0; j < NUMBER_EIGENS; j++) {
+      ldaeigens->data.fl[i * NUMBER_EIGENS + j] = w(i, j);
+    }
+  }
+  cout << "end init mat eigens lda" << endl;
+  //  CvMat* ldaProjection = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
+  //  cvMul(projectedFaceMat, ldaeigens, ldaProjection);
+  cvMatMul(projectedFaceMat, ldaeigens, ldaProjection);
+
+  cout << "end projection lda" << endl;
+  //  for (int i = 0; i < nTrainFaces; i++) {
+  //    for (int j = 0; j < NUMBER_EIGENS; j++) {
+  //      ofdata << ldaProjection->data.fl[i * nEigens + j] << ",";
+  //    }
+  //    ofdata << personNumTruthMat->data.i[i] << endl;
+  //    //    cout << personNumTruthMat->data.i[i] << "-";
+  //  }
+  //  cout << "end out file lda" << endl;
+  //  ofdata.close();
+  //  cvReleaseMat(&ldaeigens);
+  //  cvReleaseMat(&ldaProjection);
 
 
+}
 // Open the training data from the file 'facedata.xml'.
-
+#endif
 int loadTrainingData(CvMat ** pTrainPersonNumMat) {
   CvFileStorage * fileStorage;
   int i;
@@ -263,7 +329,9 @@ int loadTrainingData(CvMat ** pTrainPersonNumMat) {
     sprintf(varname, "eigenVect_%d", i);
     eigenVectArr[i] = (IplImage *) cvReadByName(fileStorage, 0, varname, 0);
   }
-
+#ifdef LDA
+  ldaeigens = (CvMat *) cvReadByName(fileStorage, 0, "ldaeigens", 0);
+#endif
   // release the file-storage interface
   cvReleaseFileStorage(&fileStorage);
 
@@ -309,7 +377,11 @@ void storeTrainingData() {
     sprintf(varname, "eigenVect_%d", i);
     cvWrite(fileStorage, varname, eigenVectArr[i], cvAttrList(0, 0));
   }
-
+#ifdef LDA
+//  if (ldaeigens != NULL) {
+    cvWrite(fileStorage, "ldaeigens", ldaeigens, cvAttrList(0, 0));
+//  }
+#endif
   // release the file-storage interface
   cvReleaseFileStorage(&fileStorage);
 }
@@ -321,8 +393,9 @@ void saveArffFile(const char* filename, CvMat* projectedFaceMat) {
   ofstream ofdata;
   ofdata.open(arffFile);
 
+  //  #define NUMBER_EIGENS 100
   ofdata << "@RELATION digit" << endl;
-  for (int i = 0; i < nEigens; i++) {
+  for (int i = 0; i < NUMBER_EIGENS; i++) {
     ofdata << "@ATTRIBUTE axis_" << i << "			real" << endl;
   }
   ofdata << "@ATTRIBUTE class 		{";
@@ -333,14 +406,84 @@ void saveArffFile(const char* filename, CvMat* projectedFaceMat) {
   }
   ofdata << "}	" << endl;
   ofdata << "@DATA" << endl;
+  //#define LDA
+  //
+  //#ifdef LDA
+  //  cout << "begin lda" << endl;
+  //  ae_matrix p;
+  //
+  //  //  data.setlength(nTrainFaces, NUMBER_EIGENS + 1);
+  //  ae_matrix_init(&p, nTrainFaces, NUMBER_EIGENS + 1, DT_REAL, NULL, ae_true);
+  //  //  ae_matrix_init(&wn, 0, 0, DT_REAL, _state, ae_true);
+  //  real_2d_array data(&p);
+  //  cout << "end init matrix" << endl;
+  //  double** val = new double*[nTrainFaces];
+  //  double* trustlabel = new double[nTrainFaces];
+  //  for (int i = 0; i < nTrainFaces; i++) {
+  //    val[i] = new double[NUMBER_EIGENS];
+  //  }
+  //  for (int i = 0; i < nTrainFaces; i++) {
+  //    for (int j = 0; j < NUMBER_EIGENS; j++) {
+  //      val[i][j] = projectedFaceMat->data.fl[i * nEigens + j];
+  //      //      cout << val[i][j] << endl;
+  //      //      data.setcontent(i, j, &val[i][j]);
+  //      data[i][j] = val[i][j];
+  //    }
+  //    trustlabel[i] = personNumTruthMat->data.i[i] - 1;
+  //    //    cout << trustlabel[i] << endl;
+  //    //    data.setcontent(i, NUMBER_EIGENS, &trustlabel[i]);
+  //    data[i][NUMBER_EIGENS] = trustlabel[i];
+  //    //    cout << trustlabel[i] << " ";
+  //  }
+  //  cout << "end init lda" << endl;
+  //  alglib::ae_int_t info;
+  //  ae_matrix q;
+  //
+  //  //  w.setlength(NUMBER_EIGENS, NUMBER_EIGENS);
+  //  ae_matrix_init(&q, NUMBER_EIGENS, NUMBER_EIGENS, DT_REAL, NULL, ae_true);
+  //  real_2d_array w(&q);
+  //  try {
+  //    fisherldan(data, nTrainFaces, NUMBER_EIGENS, nPersons, info, w);
+  //  } catch (ap_error e) {
+  //    cout << e.msg << endl;
+  //  }
+  //
+  //  cout << "end fisher lda" << endl;
+  //  CvMat* ldaeigens = cvCreateMat(NUMBER_EIGENS, NUMBER_EIGENS, CV_32FC1);
+  //  for (int i = 0; i < NUMBER_EIGENS; i++) {
+  //    for (int j = 0; j < NUMBER_EIGENS; j++) {
+  //      ldaeigens->data.fl[i * NUMBER_EIGENS + j] = w(i, j);
+  //    }
+  //  }
+  //  cout << "end init mat eigens lda" << endl;
+  //  CvMat* ldaProjection = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
+  //  //  cvMul(projectedFaceMat, ldaeigens, ldaProjection);
+  //  cvMatMul(projectedFaceMat, ldaeigens, ldaProjection);
+  //
+  //  cout << "end projection lda" << endl;
+  //  for (int i = 0; i < nTrainFaces; i++) {
+  //    for (int j = 0; j < NUMBER_EIGENS; j++) {
+  //      ofdata << ldaProjection->data.fl[i * nEigens + j] << ",";
+  //    }
+  //    ofdata << personNumTruthMat->data.i[i] << endl;
+  //    //    cout << personNumTruthMat->data.i[i] << "-";
+  //  }
+  //  cout << "end out file lda" << endl;
+  //  ofdata.close();
+  //  cvReleaseMat(&ldaeigens);
+  //  cvReleaseMat(&ldaProjection);
+  //
+  //#else
+
   for (int i = 0; i < nTrainFaces; i++) {
-    for (int j = 0; j < nEigens; j++) {
+    for (int j = 0; j < NUMBER_EIGENS; j++) {
       ofdata << projectedFaceMat->data.fl[i * nEigens + j] << ",";
     }
     ofdata << personNumTruthMat->data.i[i] << endl;
-//    cout << personNumTruthMat->data.i[i] << "-";
+    //    cout << personNumTruthMat->data.i[i] << "-";
   }
   ofdata.close();
+  //#endif
 }
 // Find the most likely person based on a detection. Returns the index, and stores the confidence value into pConfidence.
 
@@ -386,6 +529,7 @@ void doPCA() {
 
   // set the number of eigenvalues to use
   nEigens = nTrainFaces - 1;
+  //  nEigens=2*nTrainFaces;
 
   // allocate the eigenvector images
   faceImgSize.width = faceImgArr[0]->width;
@@ -468,8 +612,14 @@ int loadFaceImgArray(char * filename) {
     personNumTruthMat->data.i[iFace] = personNumber;
 
     // load the face image
-    faceImgArr[iFace] = cvLoadImage(imgFilename, CV_LOAD_IMAGE_GRAYSCALE);
-
+    IplImage* image = cvLoadImage(imgFilename, CV_LOAD_IMAGE_GRAYSCALE);
+    //faceImgArr[iFace] = cvLoadImage(imgFilename, CV_LOAD_IMAGE_GRAYSCALE);
+    IplImage* subimg = cvCreateImage(cvSize(image->width, image->height), IPL_DEPTH_8U, 1);
+    CvPoint2D32f point = cvPoint2D32f((float) image->width / 2, (float) subimg->height / 2);
+    cvGetRectSubPix(image, subimg, point);
+    //    cvShowImage("sub img",subimg);
+    //    cvWaitKey();
+    faceImgArr[iFace] = subimg;
     if (!faceImgArr[iFace]) {
       fprintf(stderr, "Can\'t load image from %s\n", imgFilename);
       return 0;
@@ -508,19 +658,25 @@ void test(char *szFileTest) {
   // project the test images onto the PCA subspace
   //  projectedTestFace = (float *) cvAlloc(nEigens * sizeof (float));
   timeFaceRecognizeStart = (double) cvGetTickCount(); // Record the timing.
-  projectedTestFaceMat = cvCreateMat(nTrainFaces, nEigens, CV_32FC1);
+  projectedTestFaceMat = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
   int offset = projectedTrainFaceMat->step / sizeof (float);
   for (i = 0; i < nTrainFaces; i++) {
     //int offset = i * nEigens;
     cvEigenDecomposite(
       faceImgArr[i],
-      nEigens,
+      NUMBER_EIGENS,
       eigenVectArr,
       0, 0,
       pAvgTrainImg,
       //projectedTestFaceMat->data.fl + i*nEigens);
       projectedTestFaceMat->data.fl + i * offset);
   }
+#ifdef LDA
+  CvMat* ldaprojection = cvCreateMat(nTrainFaces, NUMBER_EIGENS, CV_32FC1);
+  cvMatMul(projectedTestFaceMat, ldaeigens, ldaprojection);
+  cvReleaseMat(&projectedTestFaceMat);
+  projectedTestFaceMat = ldaprojection;
+#endif
   saveArffFile("test.pca", projectedTestFaceMat);
   //  for (i = 0; i < nTestFaces; i++) {
   //    int iNearest, nearest, truth;
