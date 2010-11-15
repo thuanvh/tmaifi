@@ -33,7 +33,7 @@
 #define ERR_FUNC_MISSING "Function parametre is missing."
 
 #define NUM_MATRIX 8
-#define NUM_MATRIX_ATT 7
+#define NUM_MATRIX_ATT 6
 
 using namespace std;
 using namespace cv;
@@ -78,6 +78,8 @@ void segmenter(const char* fileImage, const char* name, int graySize, int number
 void segmenterCAH(const char* fileImage, const char* name, int graySize, int numberGroup, int segmblocksize);
 void setZero(double*** concurrenceArray, int graySize);
 void freeVector(vector<int>** vector, int size);
+void freeVector(vector<double*> vector, int size);
+void freeVector(vector<string*> vector, int size);
 void freeMatrix(double** matrix, int size);
 double test_hung();
 #endif	/* TEXTURE_H */

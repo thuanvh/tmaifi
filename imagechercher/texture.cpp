@@ -281,6 +281,7 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
   getline(ifFileLearn, firstline);
 
 
+
   while (ifFileLearn.good()) {
     // load learning vector
     string learnline;
@@ -299,10 +300,10 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
     double* textureEle = new double[textureArraySize];
     double* colorHistoEle = new double[colorHistoSize];
     for (int i = 0; i < textureArraySize; i++) {
-      sslearn >> textureArraySize;
+      sslearn >> textureEle[i];
     }
     for (int i = 0; i < colorHistoSize; i++) {
-      sslearn >> colorHistoSize;
+      sslearn >> colorHistoEle[i];
     }
 
     // calculate distance between 2 vector
@@ -352,6 +353,8 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
       //        maxKDistance = *(distanceVector.end());
     }
     //      cout << "end" << endl;
+    delete [] textureEle;
+    delete [] colorHistoEle;
   }
 
 
@@ -362,6 +365,7 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
   //  cout << endl;
   ifFileLearn.close();
   //  return maxClass;
+
 }
 
 int filename2Id(string filename) {
@@ -371,7 +375,7 @@ int filename2Id(string filename) {
     return -1;
   string pref = name.substr(0, indexName);
   int id = atoi(pref.c_str());
-  cout << id << " ";
+//  cout << id << " ";
   return id;
 }
 
@@ -442,22 +446,22 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     if (testfilename.compare("") == 0) {
       break;
     }
-    if (testfilename.compare(fileTest) == 0) {
+    if (testfilename.compare(fileTest) != 0) {
       continue;
     }
 
     for (int i = 0; i < texture_att_size; i++) {
       sstest >> textureArray[i];
-//      cout <<textureArray[i]<<" ";
+      cout << textureArray[i] << " ";
     }
-//    cout<<endl;
+    //    cout<<endl;
     for (int i = 0; i < color_histo_size; i++) {
       sstest >> colorHistArray[i];
-//      cout <<colorHistArray[i]<<" ";
+      cout << colorHistArray[i] << " ";
 
     }
-//    cout<<endl;
-//    getchar();
+    //    cout<<endl;
+    //    getchar();
     break;
   }
   ifFileLearn.close();
@@ -491,6 +495,10 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
 
+  freeVector(distanceVector, distanceVector.size());
+  freeVector(fileResultVector, fileResultVector.size());
+  delete []textureArray;
+  delete []colorHistArray;
 }
 
 double getVectorDistance(double* v1, double* v2, int size) {
@@ -516,15 +524,15 @@ double getVectorDistance(double* v1, double* v2, int size) {
 
 double getColorHistoDistance(const double* learningVector, const double* testingVector, int colorSize) {
   double distance;
-    for (int i; i < colorSize; i++) {
-      distance += abs(learningVector[i] - testingVector[i]);
-    }
-
 //  for (int i; i < colorSize; i++) {
-//    if (learningVector[i] + testingVector[i] != 0) {
-//      distance += pow(learningVector[i] - testingVector[i], 2) / (learningVector[i] + testingVector[i]);
-//    }
+//    distance += abs(learningVector[i] - testingVector[i]);
 //  }
+
+    for (int i; i < colorSize; i++) {
+      if (learningVector[i] + testingVector[i] != 0) {
+        distance += pow(learningVector[i] - testingVector[i], 2) / (learningVector[i] + testingVector[i]);
+      }
+    }
   return distance;
 }
 
@@ -587,6 +595,18 @@ void freeVector(vector<int>** vector, int size) {
     delete vector[i];
   }
   delete[] vector;
+}
+
+void freeVector(vector<double*> vector, int size) {
+  for (int i = 0; i < size; i++) {
+    delete vector[i];
+  }
+}
+
+void freeVector(vector<string*> vector, int size) {
+  for (int i = 0; i < size; i++) {
+    delete vector[i];
+  }
 }
 
 void freeMatrix(double** matrix, int size) {
@@ -678,7 +698,7 @@ void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<dou
   double sum_avg = para_sum_average(mat, size);
 
   vvalue.push_back(para_angular_second_moment(mat, size));
-  vvalue.push_back(para_constrast(mat, size));
+//    vvalue.push_back(para_constrast(mat, size));
   vvalue.push_back(para_entropy(mat, size));
   vvalue.push_back(para_correlation(mat, size, meani, meanj, vari, varj));
   vvalue.push_back(para_dissimilarity(mat, size));
