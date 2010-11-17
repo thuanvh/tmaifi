@@ -109,6 +109,104 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
   outfile.close();
 }
 
+void extractHuMomentImage(const Mat& img, ostream& output) {
+//  cout << "convert gray" << endl;
+  Mat srcgray;
+  cvtColor(img, srcgray, CV_RGB2GRAY);
+
+//  cout << "contour" << endl;
+  Mat dst;
+  Laplacian(srcgray, dst, 5);
+  Mat imgerode;
+  uchar a[9] = {0, 1, 0,
+    1, 1, 1,
+    0, 1, 0};
+  Mat mat4c(3, 3, CV_8UC1, a);
+  erode(dst, imgerode, mat4c, Point(-1, -1), 1);
+//  namedWindow("Components", 1);
+//  imshow("Components", imgerode);
+
+//  vector<vector<Point> > contours;
+//  vector<Vec4i> hierarchy;
+//  findContours(srcgray, contours, hierarchy,
+//    CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+//  cout << "end find contour"<<endl;
+//  // iterate through all the top-level contours,
+//  // draw each connected component with its own random color
+//  int idx = 0;
+//  Mat dst = Mat::zeros(img.rows, img.cols, CV_8UC1);
+//  Scalar color(255, 255, 255);
+//  for (; idx >= 0; idx = hierarchy[idx][0]) {
+//    drawContours(dst, contours, idx, color, CV_FILLED, 8, hierarchy);
+//  }
+//  cout << "end draw contour" << endl;
+//
+//  imshow("gray", srcgray);
+//  imshow("contour", dst);
+//  waitKey();
+
+//  Moments moment = moments(dst);
+  Moments moment = moments(imgerode);
+
+  double huValue[7];
+  HuMoments(moment, huValue);
+  for (int i = 0; i < 7; i++) {
+    output << huValue[i] << " ";
+  }
+}
+
+void extractHuMoment(const char* dirPath, const char* name) {
+  DIR *dp;
+  struct dirent *ep;
+  vector<string> files;
+
+  dp = opendir(dirPath);
+  if (dp != NULL) {
+    while (ep = readdir(dp)) {
+      //      puts(ep->d_name);
+      files.push_back((string) ep->d_name);
+    }
+
+    (void) closedir(dp);
+  } else
+    perror(ERR_DIR_OPEN);
+
+  sort(files.begin(), files.end());
+
+  char outFileName[255];
+  sprintf(outFileName, "%s", name);
+  ofstream outfile;
+  outfile.open(outFileName);
+
+  outfile << dirPath << " " << name << " " << endl;
+
+  for (int i = 0; i < files.size(); i++) {
+    string filename = files.at(i);
+    Mat src;
+
+    if (filename == "")
+      continue;
+    bool debug = false;
+
+    string filePathSrc = string(dirPath);
+    filePathSrc += "/" + filename;
+    cout << filePathSrc << endl;
+
+    if (!(src = imread(filePathSrc, 1)).data)
+      continue;
+
+    outfile << filename << " ";
+
+
+    extractHuMomentImage(src, outfile);
+    outfile << endl;
+  }
+
+  cout << "free memory" << endl;
+
+  outfile.close();
+}
+
 void normalizeHistogram(MatND& hist, int totalpixel) {
   for (int a = 0; a < hist.size[0]; a++)
     for (int b = 0; b < hist.size[1]; b++) {
@@ -266,6 +364,101 @@ void separateCrossTesting(const char* filename, const char* fileLearn, const cha
   ifFile.close();
 }
 
+void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberNeighbor, const double* huMomentArray,
+  int huMomentArraySize, vector<double*>& distanceVector,
+  vector<string*>& fileResultVector) {
+
+
+  double maxKDistance = 1e6;
+
+  ifstream ifFileLearn;
+  ifFileLearn.open(fileLearn);
+
+  string firstline;
+  getline(ifFileLearn, firstline);
+
+  while (ifFileLearn.good()) {
+    // load learning vector
+    string learnline;
+    getline(ifFileLearn, learnline);
+
+    stringstream sslearn(learnline);
+    string learnfilename;
+    sslearn >> learnfilename;
+
+    if (learnfilename.compare("") == 0)
+      break;
+    if (learnfilename.compare(filesearch) == 0)
+      continue;
+
+    double* huMomentEle = new double[huMomentArraySize];
+
+    for (int i = 0; i < huMomentArraySize; i++) {
+      sslearn >> huMomentEle[i];
+      //      cout << huMomentEle[i] << " ";
+    }
+    //    cout << endl;
+
+    // calculate distance between 2 vector
+    double dist = getHuMomentVectorDistance(huMomentEle, huMomentArray);
+
+    cout << learnfilename << " hu moment distance: " << dist << endl;
+
+    //      cout << "distance:" << dist << endl;
+    if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
+      //      cout << dist << "<" << maxKDistance << endl;
+      //              cout << "change k=" << k << endl;
+
+      if (distanceVector.size() == 0 || maxKDistance < dist) {
+        //        cout << "init to end" << endl;
+        distanceVector.push_back(new double(dist));
+        fileResultVector.push_back(new string(learnfilename));
+        maxKDistance = dist;
+        continue;
+      }
+      vector<double*>::iterator itdistance = distanceVector.begin();
+      vector<string*>::iterator itclass = fileResultVector.begin();
+      //      cout << "begin for" << (itdistance < distanceVector.end()) << endl;
+      for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {
+//        cout << "itdistance" << endl;
+        if ((**itdistance) > dist) {
+          //          cout << "insert" << endl;
+          double* a = new double;
+          *a = dist;
+          distanceVector.insert(itdistance, a);
+          fileResultVector.insert(itclass, new string(learnfilename));
+          break;
+        }
+      }
+      if (distanceVector.size() >= numberNeighbor) {
+        distanceVector.pop_back();
+        fileResultVector.pop_back();
+        maxKDistance = **(distanceVector.end());
+      }
+      //        if (itdistance > distanceVector.end()) {
+      //          distanceVector.push_back(dist);
+      //          classVector.push_back(learnclassname);
+      //          maxKDistance = dist;
+      //        }
+
+      //        maxKDistance = *(distanceVector.end());
+    }
+    //      cout << "end" << endl;
+    delete [] huMomentEle;
+
+  }
+
+
+  // show content:
+  //  for (it = classCount.begin(); it != classCount.end(); it++)
+  //    cout << (*it).first << " => " << (*it).second << endl;
+  //
+  //  cout << endl;
+  ifFileLearn.close();
+  //  return maxClass;
+
+}
+
 void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor, const double* textureArray,
   const double* colorHistoArray, int textureArraySize, int colorHistoSize, vector<double*>& distanceVector,
   vector<string*>& fileResultVector, double colorWeight) {
@@ -375,8 +568,30 @@ int filename2Id(string filename) {
     return -1;
   string pref = name.substr(0, indexName);
   int id = atoi(pref.c_str());
-//  cout << id << " ";
+  //  cout << id << " ";
   return id;
+}
+
+int filename2IdCoil_100(string filename) {
+  int indexName = filename.find("_");
+  string pref = filename.substr(3, indexName);
+  int id = atoi(pref.c_str());
+  return id;
+}
+
+void evalueSearchCoil_100(const char* fileTest, vector<string*>& resultFileVector, int& trueTotal) {
+
+  trueTotal = 0;
+  int fileIndex = filename2IdCoil_100(fileTest);
+
+
+  //  cout << "min-max" << min << " " << max << endl;
+  for (int i = 0; i < resultFileVector.size(); i++) {
+    int id = filename2IdCoil_100(*resultFileVector[i]);
+    if (id == fileIndex) {
+      trueTotal++;
+    }
+  }
 }
 
 void evalueSearch(const char* fileRef, const char* fileTest, vector<string*>& resultFileVector, int& trueTotal) {
@@ -408,7 +623,100 @@ void evalueSearch(const char* fileRef, const char* fileTest, vector<string*>& re
   }
 }
 
-void search(const char* fileLearn, const char* fileTest, int k, double colorWeight, const char* fileRef) {
+void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const char* fileRef, const char* refFileOutDir) {
+  ifstream ifFileLearn;
+  ifFileLearn.open(fileLearn);
+
+  string firstline;
+  getline(ifFileLearn, firstline);
+  stringstream ssfirst(stringstream::in | stringstream::out);
+  ssfirst << firstline;
+  string dirPath;
+  string name;
+  int graySize, colorSize;
+  ssfirst >> dirPath;
+  ssfirst >> name;
+
+
+  double* huMomentArray = new double[7];
+
+
+  while (ifFileLearn.good()) {
+    // load testing vector
+    string testline;
+    getline(ifFileLearn, testline);
+    //    cout << testline << endl;
+
+    stringstream sstest(stringstream::in | stringstream::out);
+    sstest << testline;
+    //    cout << "end init" << endl;
+    string testfilename;
+    //    string testclassname;
+    sstest >> testfilename;
+    if (testfilename.compare("") == 0) {
+      break;
+    }
+    if (testfilename.compare(fileTest) != 0) {
+      continue;
+    }
+
+    cout << "hu momment array test";
+    for (int i = 0; i < 7; i++) {
+      sstest >> huMomentArray[i];
+      //      cout << huMomentArray[i] << " ";
+    }
+
+    //    cout << endl;
+    //    getchar();
+    break;
+  }
+  ifFileLearn.close();
+  //  for (int i = 0; i < 7; i++) {
+  //
+  //    cout << huMomentArray[i] << " ";
+  //  }
+  //  cout << endl;
+  cout << "end get hu moment" << endl;
+  // Search
+  vector<double*> distanceVector;
+  vector<string*> fileResultVector;
+  dosearchHuMoment(fileTest, fileLearn, k, huMomentArray,
+    7, distanceVector, fileResultVector);
+
+  cout << "end search" << endl;
+  // Print out the result
+  for (int i = 0; i < k || i < distanceVector.size(); i++) {
+    cout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
+  }
+
+  //  if (fileRef != NULL) {
+  int trueTotal = 0;
+  evalueSearchCoil_100(fileTest, fileResultVector, trueTotal);
+  cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
+  //  }
+
+  //  getchar();
+  ofstream htmlout;
+  char filehtml[255];
+  sprintf(filehtml, "%s/%s.%d.%d.%d.hu.html", refFileOutDir, fileTest, k, graySize, colorSize);
+  //  cout << filehtml << endl;
+  htmlout.open(filehtml);
+  //  getchar();
+  htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
+  htmlout << "result:</br>" << endl;
+  for (int i = 0; i < k || i < distanceVector.size(); i++) {
+    htmlout << "<image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 />";
+    htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
+  }
+  htmlout.close();
+
+  freeVector(distanceVector, distanceVector.size());
+  freeVector(fileResultVector, fileResultVector.size());
+  delete []huMomentArray;
+
+}
+
+void search(const char* fileLearn, const char* fileTest, int k, double colorWeight, const char* fileRef, const char* refFileOutDir) {
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
 
@@ -457,7 +765,7 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     //    cout<<endl;
     for (int i = 0; i < color_histo_size; i++) {
       sstest >> colorHistArray[i];
-      cout << colorHistArray[i] << " ";
+      //      cout << colorHistArray[i] << " ";
 
     }
     //    cout<<endl;
@@ -484,16 +792,20 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
   }
 
+  //  getchar();
   ofstream htmlout;
   char filehtml[255];
-  sprintf(filehtml, "%s.%d.%d.%d.%d.html", fileTest, k, graySize, colorSize, (int) (colorWeight * 100));
+  sprintf(filehtml, "%s/%s.%d.%d.%d.%d.html", refFileOutDir, fileTest, k, graySize, colorSize, (int) (colorWeight * 100));
+  //  cout << filehtml << endl;
   htmlout.open(filehtml);
+  //  getchar();
   htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
   htmlout << "result:</br>" << endl;
   for (int i = 0; i < k || i < distanceVector.size(); i++) {
     htmlout << "<image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 />";
     htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
+  htmlout.close();
 
   freeVector(distanceVector, distanceVector.size());
   freeVector(fileResultVector, fileResultVector.size());
@@ -522,17 +834,30 @@ double getVectorDistance(double* v1, double* v2, int size) {
   return distance;
 }
 
+double getHuMomentVectorDistance(const double* learningVector, const double* testingVector) {
+  double distance = 0;
+  for (int i = 0; i < 7; i++) {
+    double ma = ((learningVector[i] >= 0) ? 1 : -1) * log(abs(learningVector[i]));
+    double mb = ((testingVector[i] >= 0) ? 1 : -1) * log(abs(testingVector[i]));
+    //cout << ma << "-" << mb << endl;
+    //    cout << mb << "-" << ma << endl;
+    if (ma != 0 && mb != 0)
+      distance += abs(1 / ma - 1 / mb);
+  }
+  return distance;
+}
+
 double getColorHistoDistance(const double* learningVector, const double* testingVector, int colorSize) {
   double distance;
-//  for (int i; i < colorSize; i++) {
-//    distance += abs(learningVector[i] - testingVector[i]);
-//  }
+  //  for (int i=0; i < colorSize; i++) {
+  //    distance += abs(learningVector[i] - testingVector[i]);
+  //  }
 
-    for (int i; i < colorSize; i++) {
-      if (learningVector[i] + testingVector[i] != 0) {
-        distance += pow(learningVector[i] - testingVector[i], 2) / (learningVector[i] + testingVector[i]);
-      }
+  for (int i = 0; i < colorSize; i++) {
+    if (learningVector[i] + testingVector[i] != 0) {
+      distance += pow(learningVector[i] - testingVector[i], 2) / (learningVector[i] + testingVector[i]);
     }
+  }
   return distance;
 }
 
@@ -698,7 +1023,7 @@ void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<dou
   double sum_avg = para_sum_average(mat, size);
 
   vvalue.push_back(para_angular_second_moment(mat, size));
-//    vvalue.push_back(para_constrast(mat, size));
+  //    vvalue.push_back(para_constrast(mat, size));
   vvalue.push_back(para_entropy(mat, size));
   vvalue.push_back(para_correlation(mat, size, meani, meanj, vari, varj));
   vvalue.push_back(para_dissimilarity(mat, size));
