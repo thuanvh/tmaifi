@@ -22,7 +22,9 @@ void printHelp();
 int main(int argc, char** argv) {
   try {
     int typeOfFunction = 0;
+    int typeOfFeature = 0;
     char* refFileDir = NULL;
+    char* refFileOutDir = NULL;
     char* refFilePath = NULL;
     char* refOutFilePath = NULL;
     char* refRefFilePath = NULL;
@@ -43,6 +45,16 @@ int main(int argc, char** argv) {
         i++;
         if (i < argc) {
           refFileDir = argv[i];
+        } else {
+          throw ERR_DIR_MISSING;
+        }
+        continue;
+      }
+      // directory reference
+      if (strcmp(argv[i], "-out-dir") == 0) {
+        i++;
+        if (i < argc) {
+          refFileOutDir = argv[i];
         } else {
           throw ERR_DIR_MISSING;
         }
@@ -153,20 +165,50 @@ int main(int argc, char** argv) {
         continue;
       }
       // type d'algo
+      if (strcmp(argv[i], "-feature-type") == 0) {
+
+        if (++i < argc) {
+
+          if (strcmp(argv[i], STR_FEATURE_TYPE_HU) == 0) {
+            typeOfFeature = FEATURE_TYPE_HU;
+            continue;
+          }
+          if (strcmp(argv[i], STR_FEATURE_TYPE_TEXTURE_COLOR) == 0) {
+            typeOfFeature = FEATURE_TYPE_TEXTURE_COLOR;
+            continue;
+          }
+
+        } else {
+          throw ERR_FUNC_MISSING;
+        }
+        continue;
+      }
+      // type d'algo
       if (strcmp(argv[i], "--help") == 0) {
         printHelp();
         return 0;
       }
 
     }
+    if (typeOfFeature == FEATURE_TYPE_TEXTURE_COLOR) {
+      if (typeOfFunction == FUNC_EXTRACT) {
+        extract(refFileDir, histoName, gris_texture, num_color);
 
-    if (typeOfFunction == FUNC_EXTRACT) {
-      extract(refFileDir, histoName, gris_texture, num_color);
+      } else if (typeOfFunction == FUNC_SEARCH) {
 
-    } else if (typeOfFunction == FUNC_SEARCH) {
+        search(refOutFilePath, refFilePath, numberReturn, colorWeight, refRefFilePath, refFileOutDir);
 
-      search(refOutFilePath, refFilePath, numberReturn, colorWeight, refRefFilePath);
+      }
+    }
+    if (typeOfFeature == FEATURE_TYPE_HU) {
+      if (typeOfFunction == FUNC_EXTRACT) {
+        extractHuMoment(refFileDir, histoName);
 
+      } else if (typeOfFunction == FUNC_SEARCH) {
+
+        searchHuMoment(refOutFilePath, refFilePath, numberReturn,  refRefFilePath, refFileOutDir);
+
+      }
     }
   } catch (const char* e) {
     // error
