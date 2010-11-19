@@ -78,7 +78,8 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
     }
   }
 
-  outfile << dirPath << " " << name << " " << graySize << " " << colorSize << " " << NUM_MATRIX_ATT * NUM_MATRIX << " " << colorSize * colorSize << endl;
+  outfile << dirPath << " " << name << " " << graySize << " " << colorSize << " ";
+  outfile << NUM_MATRIX_ATT * NUM_MATRIX << " " << colorSize * colorSize * colorSize << endl;
 
   for (int i = 0; i < files.size(); i++) {
     string filename = files.at(i);
@@ -110,12 +111,13 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
 }
 
 void extractHuMomentImage(const Mat& img, ostream& output) {
-//  cout << "convert gray" << endl;
+  //  cout << "convert gray" << endl;
   Mat srcgray;
   cvtColor(img, srcgray, CV_RGB2GRAY);
 
-//  cout << "contour" << endl;
+  //  cout << "contour" << endl;
   Mat dst;
+  //  Canny(srcgray,dst,150, 180);
   Laplacian(srcgray, dst, 5);
   Mat imgerode;
   uchar a[9] = {0, 1, 0,
@@ -123,29 +125,29 @@ void extractHuMomentImage(const Mat& img, ostream& output) {
     0, 1, 0};
   Mat mat4c(3, 3, CV_8UC1, a);
   erode(dst, imgerode, mat4c, Point(-1, -1), 1);
-//  namedWindow("Components", 1);
-//  imshow("Components", imgerode);
+  ////  namedWindow("Components", 1);
+  //  imshow("Components", imgerode);
 
-//  vector<vector<Point> > contours;
-//  vector<Vec4i> hierarchy;
-//  findContours(srcgray, contours, hierarchy,
-//    CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-//  cout << "end find contour"<<endl;
-//  // iterate through all the top-level contours,
-//  // draw each connected component with its own random color
-//  int idx = 0;
-//  Mat dst = Mat::zeros(img.rows, img.cols, CV_8UC1);
-//  Scalar color(255, 255, 255);
-//  for (; idx >= 0; idx = hierarchy[idx][0]) {
-//    drawContours(dst, contours, idx, color, CV_FILLED, 8, hierarchy);
-//  }
-//  cout << "end draw contour" << endl;
-//
-//  imshow("gray", srcgray);
-//  imshow("contour", dst);
-//  waitKey();
+  //  vector<vector<Point> > contours;
+  //  vector<Vec4i> hierarchy;
+  //  findContours(srcgray, contours, hierarchy,
+  //    CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+  //  cout << "end find contour"<<endl;
+  //  // iterate through all the top-level contours,
+  //  // draw each connected component with its own random color
+  //  int idx = 0;
+  //  Mat dst = Mat::zeros(img.rows, img.cols, CV_8UC1);
+  //  Scalar color(255, 255, 255);
+  //  for (; idx >= 0; idx = hierarchy[idx][0]) {
+  //    drawContours(dst, contours, idx, color, CV_FILLED, 8, hierarchy);
+  //  }
+  //  cout << "end draw contour" << endl;
+  //
+  //  imshow("gray", srcgray);
+  //  imshow("contour", dst);
+  //  waitKey();
 
-//  Moments moment = moments(dst);
+  //  Moments moment = moments(dst);
   Moments moment = moments(imgerode);
 
   double huValue[7];
@@ -224,14 +226,25 @@ int histNo(const MatND& hist) {
   return histno;
 }
 
-void SaveMatrix(const MatND& hist, ostream& outfile) {
-
-  for (int a = 0; a < hist.size[0]; a++) {
-    for (int b = 0; b < hist.size[1]; b++) {
-      outfile << hist.at<float>(a, b) << " ";
-      //      cout << hist.at<float>(a, b) << " ";
+void SaveMatrix(const MatND& hist, ostream& outfile, int degree) {
+  if (degree == 2) {
+    for (int a = 0; a < hist.size[0]; a++) {
+      for (int b = 0; b < hist.size[1]; b++) {
+        outfile << hist.at<float>(a, b) << " ";
+        //      cout << hist.at<float>(a, b) << " ";
+      }
+    }
+  } else if (degree == 3) {
+    for (int a = 0; a < hist.size[0]; a++) {
+      for (int b = 0; b < hist.size[1]; b++) {
+        for (int c = 0; c < hist.size[2]; c++) {
+          outfile << hist.at<float>(a, b, c) << " ";
+          //      cout << hist.at<float>(a, b) << " ";
+        }
+      }
     }
   }
+
   //  getchar();
 }
 
@@ -248,15 +261,15 @@ void resizeImageColor(const Mat& src, Mat& dst, int num_color) {
   }
 }
 
-void extractHistoColor(const Mat & src, int colorSize, ostream& outfile) {
-  MatND hist; // histogram red
+void extractHistoColorLab(const Mat & src, int colorSize, ostream & outfile) {
+  MatND hist; // histogram lab
 
 
 
   int histSize[] = {colorSize, colorSize};
 
-  float aranges[] = {0, 256};
-  float branges[] = {0, 256};
+  float aranges[] = {-256, 256};
+  float branges[] = {-256, 256};
 
   const float* ranges[] = {aranges, branges};
 
@@ -277,11 +290,49 @@ void extractHistoColor(const Mat & src, int colorSize, ostream& outfile) {
   int nbhist = histNo(hist);
   //  cout << "nb hist" << nbhist << endl;
   normalizeHistogram(hist, nbhist);
-  SaveMatrix(hist, outfile);
+  SaveMatrix(hist, outfile, 2);
 
 }
 
-void extractTexture(const Mat & src, int graySize, double*** concurrenceArray, ostream& outfile) {
+void extractHistoColorRGB(const Mat & src, int colorSize, ostream & outfile) {
+  MatND hist; // histogram rgb
+
+  int histSize[] = {colorSize, colorSize, colorSize};
+
+  float rranges[] = {0, 256};
+  float granges[] = {0, 256};
+  float branges[] = {0, 256};
+
+  const float* ranges[] = {rranges, granges, branges};
+
+  // we compute the histogram from the 0-th and 1-st channels
+  int channels[] = {0, 1, 2};
+  //from 256 to 32
+  Mat dst = src.clone();
+  resizeImageColor(src, dst, colorSize);
+  //  cout<<colorSize<<endl;
+  //  imshow("image 256 bit", src);
+  //  imshow("image 32 bit", dst);
+  //  waitKey();
+  //  Mat srclab;
+  //  cvtColor(dst, srclab, CV_BGR2Lab);
+
+  //calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
+  calcHist(&dst, 1, channels, Mat(), hist, 3, histSize, ranges, true, false);
+
+  int nbhist = histNo(hist);
+  //  cout << "nb hist" << nbhist << endl;
+  normalizeHistogram(hist, nbhist);
+  SaveMatrix(hist, outfile, 3);
+
+}
+
+void extractHistoColor(const Mat & src, int colorSize, ostream & outfile) {
+  extractHistoColorRGB(src, colorSize, outfile);
+  //  extractHistoColorLab(src, colorSize,outfile);
+}
+
+void extractTexture(const Mat & src, int graySize, double*** concurrenceArray, ostream & outfile) {
   //  cout << "size=" << graySize << endl;
   Mat srcgray;
   cvtColor(src, srcgray, CV_RGB2GRAY);
@@ -402,7 +453,7 @@ void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberN
     // calculate distance between 2 vector
     double dist = getHuMomentVectorDistance(huMomentEle, huMomentArray);
 
-    cout << learnfilename << " hu moment distance: " << dist << endl;
+    //    cout << learnfilename << " hu moment distance: " << dist << endl;
 
     //      cout << "distance:" << dist << endl;
     if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
@@ -420,7 +471,7 @@ void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberN
       vector<string*>::iterator itclass = fileResultVector.begin();
       //      cout << "begin for" << (itdistance < distanceVector.end()) << endl;
       for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {
-//        cout << "itdistance" << endl;
+        //        cout << "itdistance" << endl;
         if ((**itdistance) > dist) {
           //          cout << "insert" << endl;
           double* a = new double;
@@ -504,7 +555,7 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
     double colorHistoDist = getColorHistoDistance(colorHistoEle, colorHistoArray, colorHistoSize);
 
     double dist = (1 - colorWeight) * texturedist + colorWeight*colorHistoDist;
-    cout << learnfilename << " texture:" << texturedist << " " << "color:" << colorHistoDist << " total:" << dist << endl;
+    //    cout << learnfilename << " texture:" << texturedist << " " << "color:" << colorHistoDist << " total:" << dist << endl;
 
     //      cout << "distance:" << dist << endl;
     if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
@@ -836,13 +887,19 @@ double getVectorDistance(double* v1, double* v2, int size) {
 
 double getHuMomentVectorDistance(const double* learningVector, const double* testingVector) {
   double distance = 0;
+
   for (int i = 0; i < 7; i++) {
     double ma = ((learningVector[i] >= 0) ? 1 : -1) * log(abs(learningVector[i]));
     double mb = ((testingVector[i] >= 0) ? 1 : -1) * log(abs(testingVector[i]));
     //cout << ma << "-" << mb << endl;
     //    cout << mb << "-" << ma << endl;
-    if (ma != 0 && mb != 0)
-      distance += abs(1 / ma - 1 / mb);
+    // case 1
+    //    if (ma != 0 && mb != 0)
+    distance += abs(1 / ma - 1 / mb);
+    // case 2
+    //    distance += abs(ma-mb);
+    // case 3
+    //    distance += abs((ma-mb)/ma);
   }
   return distance;
 }
@@ -861,7 +918,7 @@ double getColorHistoDistance(const double* learningVector, const double* testing
   return distance;
 }
 
-double getTextureVectorDistance(const double* learningVector, const double* testingVector, int textureSize) {
+double getTextureVectorDistanceBipartiMatching(const double* learningVector, const double* testingVector, int textureSize) {
   int numberPara = NUM_MATRIX_ATT;
   double distanceMatching = 0;
   double distance[NUM_MATRIX][NUM_MATRIX];
@@ -888,6 +945,27 @@ double getTextureVectorDistance(const double* learningVector, const double* test
 
   delete [] v1;
   delete [] v2;
+  //  cout << "end assignment " << distanceMatching << endl;
+  return distanceMatching;
+}
+
+double getTextureVectorDistance(const double* learningVector, const double* testingVector, int textureSize) {
+
+  double distanceMatching = 0;
+
+  double distancePara[NUM_MATRIX_ATT];
+
+  for (int i = 0; i < NUM_MATRIX; i++) {
+    for (int j = 0; j < NUM_MATRIX_ATT; j++) {
+      int index = j * NUM_MATRIX + i;
+      //      cout << i<<"*"<<j<<"="<<index << ":" << learningVector[index] << " " << testingVector[index];
+      distancePara[i] += abs(((double) (learningVector[index] - testingVector[index])) / testingVector[index]);
+    }
+  }
+  for (int i = 0; i < NUM_MATRIX_ATT; i++) {
+    distanceMatching += distancePara[i];
+  }
+  distanceMatching /= NUM_MATRIX_ATT*NUM_MATRIX;
   //  cout << "end assignment " << distanceMatching << endl;
   return distanceMatching;
 }
