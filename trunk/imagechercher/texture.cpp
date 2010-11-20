@@ -22,7 +22,7 @@ using namespace cv;
 using namespace std;
 
 /*
- * Apprendtissage a partir d'une serie d'image de peau
+ * extraire des caracteristique des images
  */
 void extract(const char* dirPath, const char* name, int graySize, int colorSize) {
 
@@ -30,18 +30,17 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
   DIR *dp;
   struct dirent *ep;
   vector<string> files;
-
+  // lire liste de fichier
   dp = opendir(dirPath);
   if (dp != NULL) {
     while (ep = readdir(dp)) {
       //      puts(ep->d_name);
       files.push_back((string) ep->d_name);
     }
-
     (void) closedir(dp);
   } else
     perror(ERR_DIR_OPEN);
-
+  // trier liste de fichier
   sort(files.begin(), files.end());
 
   char outFileName[255];
@@ -49,8 +48,7 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
   ofstream outfile;
   outfile.open(outFileName);
 
-  //int size = 32;
-  // initialize list of matrix
+  // initialize list of matrix co-occurence
   double*** concurrenceArray = new double**[NUM_MATRIX];
   for (int i = 0; i < NUM_MATRIX; i++) {
     concurrenceArray[i] = new double*[graySize];
@@ -61,17 +59,15 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
       }
     }
   }
-
+  // affichier l'entete de fichier
   outfile << dirPath << " " << name << " " << graySize << " " << colorSize << " ";
   outfile << NUM_MATRIX_ATT * NUM_MATRIX << " " << colorSize * colorSize * colorSize << endl;
 
   for (int i = 0; i < files.size(); i++) {
     string filename = files.at(i);
     Mat src;
-
     if (filename == "")
-      continue;
-    bool debug = false;
+      continue;    
 
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filename;
@@ -81,25 +77,24 @@ void extract(const char* dirPath, const char* name, int graySize, int colorSize)
       continue;
 
     outfile << filename << " ";
-
+    // Extraire des caracteristique
     extractTexture(src, graySize, concurrenceArray, outfile);
     extractHistoColor(src, colorSize, outfile);
 
     outfile << endl;
-
   }
-
+  // Free memory
   cout << "free memory" << endl;
   freeMatrix(concurrenceArray, graySize);
   outfile.close();
 }
-
+// Extraire des valeurs de HuMoment pour chaque image
 void extractHuMomentImage(const Mat& img, ostream& output) {
   //  cout << "convert gray" << endl;
   Mat srcgray;
   cvtColor(img, srcgray, CV_RGB2GRAY);
 
-  //  cout << "contour" << endl;
+  //  Find contour
   Mat dst;
   //  Canny(srcgray,dst,150, 180);
   Laplacian(srcgray, dst, 5);
@@ -109,31 +104,14 @@ void extractHuMomentImage(const Mat& img, ostream& output) {
     0, 1, 0};
   Mat mat4c(3, 3, CV_8UC1, a);
   erode(dst, imgerode, mat4c, Point(-1, -1), 1);
-  ////  namedWindow("Components", 1);
-  //  imshow("Components", imgerode);
-
-  //  vector<vector<Point> > contours;
-  //  vector<Vec4i> hierarchy;
-  //  findContours(srcgray, contours, hierarchy,
-  //    CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-  //  cout << "end find contour"<<endl;
-  //  // iterate through all the top-level contours,
-  //  // draw each connected component with its own random color
-  //  int idx = 0;
-  //  Mat dst = Mat::zeros(img.rows, img.cols, CV_8UC1);
-  //  Scalar color(255, 255, 255);
-  //  for (; idx >= 0; idx = hierarchy[idx][0]) {
-  //    drawContours(dst, contours, idx, color, CV_FILLED, 8, hierarchy);
-  //  }
-  //  cout << "end draw contour" << endl;
-  //
   //  imshow("gray", srcgray);
   //  imshow("contour", dst);
   //  waitKey();
 
+  // Calculer des moment
   //  Moments moment = moments(dst);
   Moments moment = moments(imgerode);
-
+  // Calculer Hu
   double huValue[7];
   HuMoments(moment, huValue);
   for (int i = 0; i < 7; i++) {
@@ -141,65 +119,62 @@ void extractHuMomentImage(const Mat& img, ostream& output) {
   }
 }
 
+// extract Humoment pour la repertoire
 void extractHuMoment(const char* dirPath, const char* name) {
   DIR *dp;
   struct dirent *ep;
   vector<string> files;
-
+  // lire les fichiers
   dp = opendir(dirPath);
   if (dp != NULL) {
     while (ep = readdir(dp)) {
       //      puts(ep->d_name);
       files.push_back((string) ep->d_name);
     }
-
     (void) closedir(dp);
   } else
     perror(ERR_DIR_OPEN);
-
+  // trier des fichier par nom
   sort(files.begin(), files.end());
 
   char outFileName[255];
   sprintf(outFileName, "%s", name);
   ofstream outfile;
   outfile.open(outFileName);
-
+  // affichier l'entete de fichier
   outfile << dirPath << " " << name << " " << endl;
 
   for (int i = 0; i < files.size(); i++) {
     string filename = files.at(i);
     Mat src;
-
     if (filename == "")
-      continue;
-    bool debug = false;
+      continue;    
 
     string filePathSrc = string(dirPath);
     filePathSrc += "/" + filename;
     cout << filePathSrc << endl;
-
+    // load image
     if (!(src = imread(filePathSrc, 1)).data)
       continue;
 
+    // extraire caracteristique
     outfile << filename << " ";
-
-
     extractHuMomentImage(src, outfile);
     outfile << endl;
   }
-
   cout << "free memory" << endl;
-
   outfile.close();
 }
-
+// Normalize histogramme
 void normalizeHistogram(MatND& hist, int totalpixel, int degree) {
   if (degree == 2) {
+    // 2 dimensions
     for (int a = 0; a < hist.size[0]; a++)
       for (int b = 0; b < hist.size[1]; b++) {
         hist.at<float>(a, b) /= totalpixel;
       }
   } else if (degree == 3) {
+    // 3 dimensions
     for (int a = 0; a < hist.size[0]; a++)
       for (int b = 0; b < hist.size[1]; b++) {
         for (int c = 0; c < hist.size[2]; c++) {
@@ -208,7 +183,7 @@ void normalizeHistogram(MatND& hist, int totalpixel, int degree) {
       }
   }
 }
-
+// calculer le nombre total de valeur dans histogramme
 int histNo(const MatND& hist, int degree) {
   int histno = 0;
   if (degree == 2) {
@@ -225,7 +200,7 @@ int histNo(const MatND& hist, int degree) {
   }
   return histno;
 }
-
+// Sauver la matrice
 void SaveMatrix(const MatND& hist, ostream& outfile, int degree) {
   if (degree == 2) {
     for (int a = 0; a < hist.size[0]; a++) {
@@ -247,7 +222,7 @@ void SaveMatrix(const MatND& hist, ostream& outfile, int degree) {
 
   //  getchar();
 }
-
+// Reduire le nombre de couleur
 void resizeImageColor(const Mat& src, Mat& dst, int num_color) {
   typedef Vec<uchar, 3 > VT;
   MatConstIterator_<VT> it = src.begin<VT > (),
@@ -260,12 +235,9 @@ void resizeImageColor(const Mat& src, Mat& dst, int num_color) {
     *itdest = VT(srcval[0] * scale, srcval[1] * scale, srcval[2] * scale);
   }
 }
-
+// Extraire Histogramme de l'espace couleur Lab
 void extractHistoColorLab(const Mat & src, int colorSize, ostream & outfile) {
   MatND hist; // histogram lab
-
-
-
   int histSize[] = {colorSize, colorSize};
 
   float aranges[] = {-256, 256};
@@ -278,25 +250,22 @@ void extractHistoColorLab(const Mat & src, int colorSize, ostream & outfile) {
   //from 256 to 32
   Mat dst = src.clone();
   resizeImageColor(src, dst, colorSize);
-  //  cout<<colorSize<<endl;
-  //  imshow("image 256 bit", src);
-  //  imshow("image 32 bit", dst);
-  //  waitKey();
+
+  //Convertir l'espace de couleur
   Mat srclab;
   cvtColor(dst, srclab, CV_BGR2Lab);
-
+  // Calculer Histogramme
   calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
 
   int nbhist = histNo(hist, 2);
-  //  cout << "nb hist" << nbhist << endl;
+  
   normalizeHistogram(hist, nbhist, 2);
   SaveMatrix(hist, outfile, 2);
 
 }
-
+// Extraire Histogramme de l'espace couleur RGB
 void extractHistoColorRGB(const Mat & src, int colorSize, ostream & outfile) {
   MatND hist; // histogram rgb
-
   int histSize[] = {colorSize, colorSize, colorSize};
 
   float rranges[] = {0, 256};
@@ -310,74 +279,42 @@ void extractHistoColorRGB(const Mat & src, int colorSize, ostream & outfile) {
   //from 256 to 32
   Mat dst = src.clone();
   resizeImageColor(src, dst, colorSize);
-  //  cout<<colorSize<<endl;
-  //  imshow("image 256 bit", src);
-  //  imshow("image 32 bit", dst);
-  //  waitKey();
-  //  Mat srclab;
-  //  cvtColor(dst, srclab, CV_BGR2Lab);
 
-  //calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
   calcHist(&dst, 1, channels, Mat(), hist, 3, histSize, ranges, true, false);
 
   int nbhist = histNo(hist, 3);
-  //  cout << "nb hist" << nbhist << endl;
   normalizeHistogram(hist, nbhist, 3);
   SaveMatrix(hist, outfile, 3);
 
 }
-
+// extraire histogramme couleur
 void extractHistoColor(const Mat & src, int colorSize, ostream & outfile) {
   extractHistoColorRGB(src, colorSize, outfile);
   //  extractHistoColorLab(src, colorSize,outfile);
 }
-
+// extraire la valeur de texture
 void extractTexture(const Mat & src, int graySize, double*** concurrenceArray, ostream & outfile) {
-  //  cout << "size=" << graySize << endl;
+  
   Mat srcgray;
   cvtColor(src, srcgray, CV_RGB2GRAY);
-  reduireNiveauDeGris(srcgray, graySize);
-  //  if (debug) {
-  //    cout << "end niveau de gris" << endl;
-  //    getchar();
-  //  }
-
+  reduireNiveauDeGris(srcgray, graySize);  
   setZero(concurrenceArray, graySize);
-
-  //  if (debug) {
-  //  cout << "begin calcul matrix" << endl;
-  //    for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-  //      printMatrix(concurrenceArray[matrixIndex], graySize);
-  //    }
-  //    getchar();
-  //  }
-
-  //    double*** matrices = calculerMatrixCooccurence(src, size);
+  
   calculerMatrixCooccurence(srcgray, concurrenceArray, graySize);
 
-  //  if (debug) {
-  //  cout << "end calcul matrix" << endl;
-  //    getchar();
-  //  }
-
-
-
-
-  for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {
-    //      printMatrix(concurrenceArray[matrixIndex], size);
+  for (int matrixIndex = 0; matrixIndex < NUM_MATRIX; matrixIndex++) {   
     vector<double> vvalue;
-    extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, &outfile, vvalue);
-    //      getchar();
+    extraitCaracteristicVector(concurrenceArray[matrixIndex], graySize, &outfile, vvalue);    
   }
 }
-
+// print out la valuer de vecteur
 void printVector(const vector<double>& vector) {
   for (int i = 0; i < vector.size(); i++) {
     cout << vector[i] << " ";
   }
   cout << endl;
 }
-
+// print out la valuer de matrix
 void printMatrix(double** dirPath, int size) {
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < size; j++) {
@@ -387,49 +324,21 @@ void printMatrix(double** dirPath, int size) {
   }
   cout << endl;
 }
-
-//void extract(const char* dirPath, const char* name, int graySize, int colorSize) {
-//  extraitFeatureVector(dirPath, name, graySize);
-//}
-
-void separateCrossTesting(const char* filename, const char* fileLearn, const char* fileTest, int percent) {
-
-  ofstream ofFileLearn;
-  ofFileLearn.open(fileLearn);
-  ofstream ofFileTest;
-  ofFileTest.open(fileTest);
-  ifstream ifFile;
-  ifFile.open(filename);
-  srand(time(NULL));
-  while (ifFile.good()) {
-    string line;
-    getline(ifFile, line);
-    if (rand() % 100 < percent) {
-      ofFileLearn << line << endl;
-    } else {
-      ofFileTest << line << endl;
-    }
-  }
-  ofFileTest.close();
-  ofFileLearn.close();
-  ifFile.close();
-}
-
+// executer la recherche par Moment Hu
 void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberNeighbor, const double* huMomentArray,
   int huMomentArraySize, vector<double*>& distanceVector,
   vector<string*>& fileResultVector) {
-
-
   double maxKDistance = 1e6;
 
+  // fichier de caracteristique
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
-
+  // fichier d'apprentissage
   string firstline;
   getline(ifFileLearn, firstline);
 
   while (ifFileLearn.good()) {
-    // load learning vector
+    // obtenir chaque ligne
     string learnline;
     getline(ifFileLearn, learnline);
 
@@ -442,26 +351,17 @@ void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberN
     if (learnfilename.compare(filesearch) == 0)
       continue;
 
+    // obtenir la valeur de Hu Moment
     double* huMomentEle = new double[huMomentArraySize];
-
     for (int i = 0; i < huMomentArraySize; i++) {
-      sslearn >> huMomentEle[i];
-      //      cout << huMomentEle[i] << " ";
+      sslearn >> huMomentEle[i];      
     }
-    //    cout << endl;
-
+    
     // calculate distance between 2 vector
     double dist = getHuMomentVectorDistance(huMomentEle, huMomentArray);
-
-    //    cout << learnfilename << " hu moment distance: " << dist << endl;
-
-    //      cout << "distance:" << dist << endl;
-    if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
-      //      cout << dist << "<" << maxKDistance << endl;
-      //              cout << "change k=" << k << endl;
-
+    // Merge sort
+    if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {      
       if (distanceVector.size() == 0 || maxKDistance < dist) {
-        //        cout << "init to end" << endl;
         distanceVector.push_back(new double(dist));
         fileResultVector.push_back(new string(learnfilename));
         maxKDistance = dist;
@@ -469,11 +369,9 @@ void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberN
       }
       vector<double*>::iterator itdistance = distanceVector.begin();
       vector<string*>::iterator itclass = fileResultVector.begin();
-      //      cout << "begin for" << (itdistance < distanceVector.end()) << endl;
-      for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {
-        //        cout << "itdistance" << endl;
-        if ((**itdistance) > dist) {
-          //          cout << "insert" << endl;
+      
+      for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {        
+        if ((**itdistance) > dist) {          
           double* a = new double;
           *a = dist;
           distanceVector.insert(itdistance, a);
@@ -485,46 +383,25 @@ void dosearchHuMoment(const char* filesearch, const char* fileLearn, int numberN
         distanceVector.pop_back();
         fileResultVector.pop_back();
         maxKDistance = **(distanceVector.end());
-      }
-      //        if (itdistance > distanceVector.end()) {
-      //          distanceVector.push_back(dist);
-      //          classVector.push_back(learnclassname);
-      //          maxKDistance = dist;
-      //        }
-
-      //        maxKDistance = *(distanceVector.end());
+      }      
     }
-    //      cout << "end" << endl;
     delete [] huMomentEle;
-
   }
 
-
-  // show content:
-  //  for (it = classCount.begin(); it != classCount.end(); it++)
-  //    cout << (*it).first << " => " << (*it).second << endl;
-  //
-  //  cout << endl;
-  ifFileLearn.close();
-  //  return maxClass;
-
+  ifFileLearn.close();  
 }
-
+// executer la recherche par couleur et texture
 void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor, const double* textureArray,
   const double* colorHistoArray, int textureArraySize, int colorHistoSize, vector<double*>& distanceVector,
   vector<string*>& fileResultVector, double colorWeight) {
 
-
   double maxKDistance = 1e6;
-  double maxKIndex = 0;
 
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
 
   string firstline;
   getline(ifFileLearn, firstline);
-
-
 
   while (ifFileLearn.good()) {
     // load learning vector
@@ -533,14 +410,13 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
 
     stringstream sslearn(learnline);
     string learnfilename;
-    //    string learnclassname;
+    // load entete
     sslearn >> learnfilename;
-    //    sslearn >> learnclassname;
     if (learnfilename.compare("") == 0)
       break;
     if (learnfilename.compare(filesearch) == 0)
       continue;
-
+    // obtenir des valeurs de texture et couleur
     double* textureEle = new double[textureArraySize];
     double* colorHistoEle = new double[colorHistoSize];
     for (int i = 0; i < textureArraySize; i++) {
@@ -553,17 +429,11 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
     // calculate distance between 2 vector
     double texturedist = getTextureVectorDistance(textureEle, textureArray, textureArraySize);
     double colorHistoDist = getColorHistoDistance(colorHistoEle, colorHistoArray, colorHistoSize);
-
     double dist = (1 - colorWeight) * texturedist + colorWeight*colorHistoDist;
-    //    cout << learnfilename << " texture:" << texturedist << " " << "color:" << colorHistoDist << " total:" << dist << endl;
 
-    //      cout << "distance:" << dist << endl;
+    // Merge sort
     if (maxKDistance > dist || distanceVector.size() < numberNeighbor) {
-      //      cout << dist << "<" << maxKDistance << endl;
-      //              cout << "change k=" << k << endl;
-
-      if (distanceVector.size() == 0 || maxKDistance < dist) {
-        //        cout << "init to end" << endl;
+      if (distanceVector.size() == 0 || maxKDistance < dist) {        
         distanceVector.push_back(new double(dist));
         fileResultVector.push_back(new string(learnfilename));
         maxKDistance = dist;
@@ -571,11 +441,9 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
       }
       vector<double*>::iterator itdistance = distanceVector.begin();
       vector<string*>::iterator itclass = fileResultVector.begin();
-      //      cout << "begin for" << (itdistance < distanceVector.end()) << endl;
       for (; itdistance <= distanceVector.end(); ++itdistance, ++itclass) {
-        //        cout << "itdistance" << endl;
+
         if ((**itdistance) > dist) {
-          //          cout << "insert" << endl;
           double* a = new double;
           *a = dist;
           distanceVector.insert(itdistance, a);
@@ -588,30 +456,14 @@ void dosearch(const char* filesearch, const char* fileLearn, int numberNeighbor,
         fileResultVector.pop_back();
         maxKDistance = **(distanceVector.end());
       }
-      //        if (itdistance > distanceVector.end()) {
-      //          distanceVector.push_back(dist);
-      //          classVector.push_back(learnclassname);
-      //          maxKDistance = dist;
-      //        }
-
-      //        maxKDistance = *(distanceVector.end());
     }
-    //      cout << "end" << endl;
     delete [] textureEle;
     delete [] colorHistoEle;
   }
 
-
-  // show content:
-  //  for (it = classCount.begin(); it != classCount.end(); it++)
-  //    cout << (*it).first << " => " << (*it).second << endl;
-  //
-  //  cout << endl;
   ifFileLearn.close();
-  //  return maxClass;
-
 }
-
+// Get Id from filename
 int filename2Id(string filename) {
   string name = string(filename);
   int indexName = name.rfind(".");
@@ -619,24 +471,20 @@ int filename2Id(string filename) {
     return -1;
   string pref = name.substr(0, indexName);
   int id = atoi(pref.c_str());
-  //  cout << id << " ";
   return id;
 }
-
+// Get Id from filename for images Coil 100
 int filename2IdCoil_100(string filename) {
   int indexName = filename.find("_");
   string pref = filename.substr(3, indexName);
   int id = atoi(pref.c_str());
   return id;
 }
-
+// Evaluer search of Coil 100
 void evalueSearchCoil_100(const char* fileTest, vector<string*>& resultFileVector, int& trueTotal) {
-
   trueTotal = 0;
   int fileIndex = filename2IdCoil_100(fileTest);
 
-
-  //  cout << "min-max" << min << " " << max << endl;
   for (int i = 0; i < resultFileVector.size(); i++) {
     int id = filename2IdCoil_100(*resultFileVector[i]);
     if (id == fileIndex) {
@@ -644,7 +492,7 @@ void evalueSearchCoil_100(const char* fileTest, vector<string*>& resultFileVecto
     }
   }
 }
-
+// Evaluer search of texture
 void evalueSearch(const char* fileRef, const char* fileTest, vector<string*>& resultFileVector, int& trueTotal) {
   ifstream ifFileRef;
   ifFileRef.open(fileRef);
@@ -673,19 +521,18 @@ void evalueSearch(const char* fileRef, const char* fileTest, vector<string*>& re
     }
   }
 }
-
+// l'entree pour la fonction de recher par Moment Hu
 void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const char* fileRef, const char* refFileOutDir) {
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
 
   string firstline;
   getline(ifFileLearn, firstline);
-
+  // Lire l'entete de fichier
   stringstream ssfirst(stringstream::in | stringstream::out);
   ssfirst << firstline;
   string dirPath;
   string name;
-  int graySize, colorSize;
   ssfirst >> dirPath;
   ssfirst >> name;
   cout << fileLearn << "-" << dirPath << "-" << name << endl;
@@ -697,16 +544,11 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
     // load testing vector
     string testline;
     getline(ifFileLearn, testline);
-    //    cout << testline << endl;
 
     stringstream sstest(stringstream::in | stringstream::out);
-    sstest << testline;
-    //    cout << "end init" << endl;
-    string testfilename;
-    //    string testclassname;
+    sstest << testline;    
+    string testfilename; 
     sstest >> testfilename;
-    //    cout << testfilename << endl;
-
     if (testfilename.compare("") == 0) {
       break;
     }
@@ -716,20 +558,13 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
 
     cout << "hu momment array test";
     for (int i = 0; i < 7; i++) {
-      sstest >> huMomentArray[i];
-      //      cout << huMomentArray[i] << " ";
+      sstest >> huMomentArray[i];      
     }
 
-    //    cout << endl;
-    //    getchar();
     break;
   }
   ifFileLearn.close();
-  //  for (int i = 0; i < 7; i++) {
-  //
-  //    cout << huMomentArray[i] << " ";
-  //  }
-  //  cout << endl;
+  
   cout << "end get hu moment" << endl;
   // Search
   vector<double*> distanceVector;
@@ -743,19 +578,17 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
     cout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
 
-  //  if (fileRef != NULL) {
+  // Evaluer des resultat de recherche
   int trueTotal = 0;
   evalueSearchCoil_100(fileTest, fileResultVector, trueTotal);
   cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
-  //  }
-
-  //  getchar();
+  
+  // Sortie le fichier de html
   ofstream htmlout;
   char filehtml[255];
-  sprintf(filehtml, "%s/%s.%d.hu.html", refFileOutDir, fileTest, k);
-  //  cout << filehtml << endl;
+  sprintf(filehtml, "%s/%s.%d.hu.html", refFileOutDir, fileTest, k);  
   htmlout.open(filehtml);
-  //  getchar();
+  //  sortir le contenu
   htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
   htmlout << "<br/>Result Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
   htmlout << "<br/>" << endl;
@@ -764,17 +597,17 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
     htmlout << *fileResultVector[i] << "<br/>" << *distanceVector[i] << "</div>" << endl;
   }
   htmlout.close();
-
+  // free memory
   freeVector(distanceVector, distanceVector.size());
   freeVector(fileResultVector, fileResultVector.size());
   delete []huMomentArray;
 
 }
-
+// l'entree pour chercher par texture et couleur
 void search(const char* fileLearn, const char* fileTest, int k, double colorWeight, const char* fileRef, const char* refFileOutDir) {
   ifstream ifFileLearn;
   ifFileLearn.open(fileLearn);
-
+  // lire l'entete de fichier
   string firstline;
   getline(ifFileLearn, firstline);
   stringstream ssfirst(stringstream::in | stringstream::out);
@@ -798,13 +631,10 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     // load testing vector
     string testline;
     getline(ifFileLearn, testline);
-    //    cout << testline << endl;
 
     stringstream sstest(stringstream::in | stringstream::out);
     sstest << testline;
-    //    cout << "end init" << endl;
     string testfilename;
-    //    string testclassname;
     sstest >> testfilename;
     if (testfilename.compare("") == 0) {
       break;
@@ -812,19 +642,14 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     if (testfilename.compare(fileTest) != 0) {
       continue;
     }
-
+    // load valeur de texture
     for (int i = 0; i < texture_att_size; i++) {
-      sstest >> textureArray[i];
-      cout << textureArray[i] << " ";
+      sstest >> textureArray[i];      
     }
-    //    cout<<endl;
+    // load valeur de couleur
     for (int i = 0; i < color_histo_size; i++) {
-      sstest >> colorHistArray[i];
-      //      cout << colorHistArray[i] << " ";
-
-    }
-    //    cout<<endl;
-    //    getchar();
+      sstest >> colorHistArray[i];      
+    }    
     break;
   }
   ifFileLearn.close();
@@ -840,19 +665,19 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
   for (int i = 0; i < k || i < distanceVector.size(); i++) {
     cout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
+  // Evaluer le resultat
   int trueTotal = 0;
   if (fileRef != NULL) {
     evalueSearch(fileRef, fileTest, fileResultVector, trueTotal);
     cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
   }
 
-  //  getchar();
+  // print out file html result
   ofstream htmlout;
   char filehtml[255];
   sprintf(filehtml, "%s/%s.%d.%d.%d.%d.html", refFileOutDir, fileTest, k, graySize, colorSize, (int) (colorWeight * 100));
-  //  cout << filehtml << endl;
   htmlout.open(filehtml);
-  //  getchar();
+  //  print out the content
   htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
   htmlout << ". Param: Couleur M :" << colorSize << ", Texture Gris: " << graySize << ", Poids de Couleur:" << colorWeight << ", Nombre de resultat:" << k << endl;
   htmlout << "<br/> Result ";
@@ -862,13 +687,13 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
     htmlout << *fileResultVector[i] << "<br/>" << *distanceVector[i] << "</div> " << endl;
   }
   htmlout.close();
-
+  // Free memory
   freeVector(distanceVector, distanceVector.size());
   freeVector(fileResultVector, fileResultVector.size());
   delete []textureArray;
   delete []colorHistArray;
 }
-
+// Calculer la distance entre 2 vecteurs
 double getVectorDistance(double* v1, double* v2, int size) {
   double distance = 0;
   // distance eclidienne
@@ -889,7 +714,7 @@ double getVectorDistance(double* v1, double* v2, int size) {
 
   return distance;
 }
-
+// Calculer la distance entre HuMoment vector
 double getHuMomentVectorDistance(const double* learningVector, const double* testingVector) {
   double distance = 0;
 
@@ -908,7 +733,7 @@ double getHuMomentVectorDistance(const double* learningVector, const double* tes
   }
   return distance;
 }
-
+// Calculer la distance entre Couleur
 double getColorHistoDistance(const double* learningVector, const double* testingVector, int colorSize) {
   double distance;
   //  for (int i=0; i < colorSize; i++) {
@@ -922,7 +747,7 @@ double getColorHistoDistance(const double* learningVector, const double* testing
   }
   return distance;
 }
-
+// Get texture pour le bipartie Matching
 double getTextureVectorDistanceBipartiMatching(const double* learningVector, const double* testingVector, int textureSize) {
   int numberPara = NUM_MATRIX_ATT;
   double distanceMatching = 0;
@@ -938,22 +763,18 @@ double getTextureVectorDistanceBipartiMatching(const double* learningVector, con
         v1[k] = learningVector[i * numberPara + k];
         v2[k] = testingVector[j * numberPara + k];
       }
-      distance[i][j] = getVectorDistance(v1, v2, numberPara);
-      //      cout << distance[i][j] << " ";
-    }
-    //    cout << endl;
+      distance[i][j] = getVectorDistance(v1, v2, numberPara);      
+    }    
   }
-  double assignment[NUM_MATRIX];
-  //  double cost;
+  double assignment[NUM_MATRIX]; 
 
   assignmentoptimal(assignment, &distanceMatching, (double*) distance, NUM_MATRIX, NUM_MATRIX);
 
   delete [] v1;
-  delete [] v2;
-  //  cout << "end assignment " << distanceMatching << endl;
+  delete [] v2;  
   return distanceMatching;
 }
-
+// Get distance for texture normal vecteur
 double getTextureVectorDistance(const double* learningVector, const double* testingVector, int textureSize) {
 
   double distanceMatching = 0;
@@ -974,20 +795,17 @@ double getTextureVectorDistance(const double* learningVector, const double* test
   //  cout << "end assignment " << distanceMatching << endl;
   return distanceMatching;
 }
-
+// Reduire le niveau de gris
 void reduireNiveauDeGris(Mat& image, int size) {
   double a = (double) size / 256;
   //  cout<<"a="<<a;
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
-      image.at<uchar > (i, j) = (uchar) (a * image.at<uchar > (i, j));
-      //            cout<<(int)image.at<uchar > (i, j)<<" ";
-    }
-    //        cout<<endl;
-  }
-  //  getchar();
+      image.at<uchar > (i, j) = (uchar) (a * image.at<uchar > (i, j));      
+    }    
+  }  
 }
-
+// Set Zero pour la matrice
 void setZero(double*** concurrenceArray, int graySize) {
   for (int i = 0; i < NUM_MATRIX; i++) {
     for (int j = 0; j < graySize; j++) {
@@ -997,46 +815,43 @@ void setZero(double*** concurrenceArray, int graySize) {
     }
   }
 }
-
+// Free memory
 void freeVector(vector<int>** vector, int size) {
   for (int i = 0; i < size; i++) {
     delete vector[i];
   }
   delete[] vector;
 }
-
+// Free memory
 void freeVector(vector<double*> vector, int size) {
   for (int i = 0; i < size; i++) {
     delete vector[i];
   }
 }
-
+// Free memory
 void freeVector(vector<string*> vector, int size) {
   for (int i = 0; i < size; i++) {
     delete vector[i];
   }
 }
-
+// Free memory
 void freeMatrix(double** matrix, int size) {
   for (int i = 0; i < size; i++) {
     delete[] matrix[i];
   }
   delete matrix;
 }
-
+// Free memory
 void freeMatrix(double*** concurrenceArray, int graySize) {
   for (int i = 0; i < NUM_MATRIX; i++) {
-
-    for (int j = 0; j < graySize; j++) {
-      //      cout<<i<<","<<j<<" ";
-      delete[] concurrenceArray[i][j]; // = new double[graySize];
+    for (int j = 0; j < graySize; j++) {      
+      delete[] concurrenceArray[i][j]; 
     }
-    delete[] concurrenceArray[i]; // = new double*[graySize];
+    delete[] concurrenceArray[i]; 
   }
   //  delete[] concurrenceArray;
 }
 // calculer 8 matrices de co-occurences
-
 void calculerMatrixCooccurence(const Mat& image, double*** concurrenceArray, int graySize) {
 
   // convertir image a partir de 256 a size
@@ -1049,50 +864,33 @@ void calculerMatrixCooccurence(const Mat& image, double*** concurrenceArray, int
   //  cout << "begin calculer matrix of concurrence" << endl;
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
-      for (int k = 0; k < NUM_MATRIX; k++) {
-        //        cout << k << " ";
-        //        getchar();
+      for (int k = 0; k < NUM_MATRIX; k++) {        
         int ia = i + deltaY[k];
         int ja = j + deltaX[k];
         if (ia < image.rows && ja < image.cols) {
           int g1 = image.at<uchar > (i, j);
           int g2 = image.at<uchar > (ia, ja);
-          //          cout << g1 << "-" << g2 << " ";getchar();
+          
           concurrenceArray[k][g1][g2]++;
-          //          cout << concurrenceArray[k][g1][g2] << " ";getchar();
+         
           numberOfPair[k]++;
         }
       }
     }
   }
-
-  //  cout << "begin divise" << endl;
-  //  for (int i = 0; i < NUM_MATRIX; i++) {
-  //    cout << numberOfPair[i] << " ";
-  //  }
-  //  cout << endl;
+ 
   // normalize matrix of concurrence
-  for (int i = 0; i < NUM_MATRIX; i++) {
-    //    cout<<i<<endl;
+  for (int i = 0; i < NUM_MATRIX; i++) {    
     for (int j = 0; j < graySize; j++) {
-      //      cout<<j<<endl;
       for (int k = 0; k < graySize; k++) {
-        //        cout << concurrenceArray[i][j][k] << " ";
         concurrenceArray[i][j][k] /= numberOfPair[i];
-
       }
-      //      cout << endl;
     }
-    //    cout<<endl;
   }
-  //  cout << "end divise" << endl;
-
-  //  return concurrenceArray;
 }
 
 // calculer 14 parametres
 // sauver le vecteur de caracteristique
-
 void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<double>& vvalue) {
   // mean
   double meani = para_meani(mat, size);
@@ -1136,7 +934,6 @@ void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<dou
   }
   sd = sqrt(sd / vvalue.size());
 
-
   for (int i = 0; i < vvalue.size(); i++) {
     vvalue[i] = (vvalue[i] - vmean) / sd;
   }
@@ -1148,13 +945,8 @@ void extraitCaracteristicVector(double** mat, int size, ostream* ofs, vector<dou
     }
   }
 }
-//
 
-void loadVector() {
-
-}
-//
-
+// para texture angular_second_moment
 double para_angular_second_moment(double** mat, int size) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1164,7 +956,7 @@ double para_angular_second_moment(double** mat, int size) {
   }
   return value;
 }
-
+// para texture constrast
 double para_constrast(double** mat, int size) {
   double value = 0;
   int number_of_gray = size;
@@ -1181,7 +973,7 @@ double para_constrast(double** mat, int size) {
   }
   return value;
 }
-
+// para texture moyenne
 double para_mean(double** mat, int size) {
   double mean = 0;
 
@@ -1193,7 +985,7 @@ double para_mean(double** mat, int size) {
   }
   return mean;
 }
-
+// para texture moyenne i
 double para_meani(double** mat, int size) {
   // mean
   double meani = 0;
@@ -1206,7 +998,7 @@ double para_meani(double** mat, int size) {
   }
   return meani;
 }
-
+// para texture moyenne j
 double para_meanj(double** mat, int size) {
   // mean
 
@@ -1219,7 +1011,7 @@ double para_meanj(double** mat, int size) {
   }
   return meanj;
 }
-
+// para texture variance
 double para_vari(double** mat, int size, double meani) {
   // variance
   double vari = 0;
@@ -1232,7 +1024,7 @@ double para_vari(double** mat, int size, double meani) {
   }
   return vari;
 }
-
+// para texture variance j
 double para_varj(double** mat, int size, double meanj) {
   // variance
 
@@ -1245,7 +1037,7 @@ double para_varj(double** mat, int size, double meanj) {
   }
   return varj;
 }
-
+// para texture correlation
 double para_correlation(double** mat, int size, double meani, double meanj, double vari, double varj) {
 
   // correlation
@@ -1257,7 +1049,7 @@ double para_correlation(double** mat, int size, double meani, double meanj, doub
   }
   return corr;
 }
-
+// para texture correlation
 double para_correlation(double** mat, int size) {
   // mean
   double meani = para_meani(mat, size);
@@ -1267,13 +1059,11 @@ double para_correlation(double** mat, int size) {
   double vari = para_vari(mat, size, meani);
   double varj = para_varj(mat, size, meanj);
 
-
   // correlation
   double corr = para_correlation(mat, size, meani, meanj, vari, varj);
   return corr;
-
 }
-
+// para texture sum_of_squares__variance
 double para_sum_of_squares__variance(double** mat, int size, double mean) {
   double var = 0;
 
@@ -1285,11 +1075,11 @@ double para_sum_of_squares__variance(double** mat, int size, double mean) {
   }
   return var;
 }
-
+// para texture inverse_difference_moment
 void para_inverse_difference_moment(double** mat, int size) {
 
 }
-
+// para texture average
 double para_sum_average(double** mat, int size) {
   int _2size_1 = 2 * size - 1;
   double value = 0;
@@ -1306,7 +1096,7 @@ double para_sum_average(double** mat, int size) {
   }
   return value;
 }
-
+// para texture variance
 double para_sum_variance(double** mat, int size, double sum_e) {
   int _2size_1 = 2 * size - 1;
   double value = 0;
@@ -1323,7 +1113,7 @@ double para_sum_variance(double** mat, int size, double sum_e) {
   }
   return value;
 }
-
+// para texture entropy
 double para_sum_entropy(double** mat, int size) {
   int _2size_1 = 2 * size - 1;
   double value = 0;
@@ -1341,7 +1131,7 @@ double para_sum_entropy(double** mat, int size) {
   }
   return -value;
 }
-
+// para texture entropy
 double para_entropy(double** mat, int size) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1352,7 +1142,7 @@ double para_entropy(double** mat, int size) {
   }
   return -value;
 }
-
+// para texture variance
 double para_difference_variance(double** mat, int size) {
   double value = 0;
   double p_i_sub_j = 0;
@@ -1368,7 +1158,7 @@ double para_difference_variance(double** mat, int size) {
   }
   return value;
 }
-
+// para texture difference entropy
 double para_difference_entropy(double** mat, int size) {
   //int _2size_1 = 2 * size - 1;
   double value = 0;
@@ -1386,19 +1176,19 @@ double para_difference_entropy(double** mat, int size) {
   }
   return -value;
 }
-
+//para_info_measure_of_correlation_1
 void para_info_measure_of_correlation_1(double** mat, int size) {
 
 }
-
+//para_info_measure_of_correlation_2
 void para_info_measure_of_correlation_2(double** mat, int size) {
 
 }
-
+//para_max_correlation_coeff
 void para_max_correlation_coeff(double** mat, int size) {
 
 }
-
+//para_dissimilarity
 double para_dissimilarity(double** mat, int size) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1408,7 +1198,7 @@ double para_dissimilarity(double** mat, int size) {
   }
   return value;
 }
-
+//para_energy
 double para_energy(double** mat, int size) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1418,7 +1208,7 @@ double para_energy(double** mat, int size) {
   }
   return value;
 }
-
+//para_homogenety
 double para_homogenety(double** mat, int size) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1428,7 +1218,7 @@ double para_homogenety(double** mat, int size) {
   }
   return value;
 }
-
+//para_shade
 double para_shade(double** mat, int size, int meani, int meanj) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1439,7 +1229,7 @@ double para_shade(double** mat, int size, int meani, int meanj) {
   return value;
 
 }
-
+//para_prominence
 double para_prominence(double** mat, int size, int meani, int meanj) {
   double value = 0;
   for (int i = 0; i < size; i++) {
@@ -1451,58 +1241,3 @@ double para_prominence(double** mat, int size, int meani, int meanj) {
 
 }
 
-////double test_hung() {
-////  while (1) {
-////    hungarian_t prob;
-////
-////    /*
-////    int r[4][4] =  {{  363, 626, 376,  46  },
-////                    {  802, 993, 784, 953  },
-////                    {  673,  23, 823, 207  },
-////                    {  380, 451, 520, 646  }};
-////     */
-////    double* r;
-////    int m, n;
-////    m = n = 4;
-////
-////    //  parse_args(argc,argv);
-////
-////    //  if(!strlen(input_fname))
-////    r = make_random_r(m, n);
-////    //  else
-////    //    r = make_r_from_ORlib(input_fname,&m,&n);
-////
-////    if (!r) {
-////      puts("got NULL input");
-////      exit(-1);
-////    }
-////
-////    hungarian_init(&prob, (double*) r, m, n, HUNGARIAN_MIN);
-////    hungarian_print_rating(&prob);
-////    hungarian_solve(&prob);
-////    hungarian_print_assignment(&prob);
-////
-////    printf("\nfeasible? %s\n",
-////      (hungarian_check_feasibility(&prob)) ? "yes" : "no");
-////    printf("benefit: %f\n\n", hungarian_benefit(&prob));
-////
-////    hungarian_fini(&prob);
-////    free(r);
-////  }
-////}
-//
-//double*
-//make_random_r(size_t m, size_t n) {
-//  int i, j;
-//  double* r;
-//  time_t curr;
-//  assert(r = (double*) malloc(sizeof (double) *m * n));
-//  curr = time(NULL);
-//  srand(curr);
-//  for (i = 0; i < m; i++) {
-//    for (j = 0; j < n; j++) {
-//      r[i * n + j] = 1 + rand() / (double) 1000;
-//    }
-//  }
-//  return (r);
-//}

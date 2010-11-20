@@ -90,6 +90,6 @@ void freeVector(vector<int>** vector, int size);
 void freeVector(vector<double*> vector, int size);
 void freeVector(vector<string*> vector, int size);
 void freeMatrix(double** matrix, int size);
-double test_hung();
+
 #endif	/* TEXTURE_H */
 
