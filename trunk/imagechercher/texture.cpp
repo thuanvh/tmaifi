@@ -26,22 +26,6 @@ using namespace std;
  */
 void extract(const char* dirPath, const char* name, int graySize, int colorSize) {
 
-  //  // load list of file in dir
-  //  DIR *dp;
-  //  struct dirent *ep;
-  //  vector<string> files;
-  //  vector<string> classes;
-  //
-  //  dp = opendir(dirPath);
-  //  if (dp != NULL) {
-  //    while (ep = readdir(dp)) {
-  //      //      puts(ep->d_name);
-  //      files.push_back((string) ep->d_name);
-  //    }
-  //    (void) closedir(dp);
-  //  } else
-  //    perror(ERR_DIR_OPEN);
-
   // read list of file and its class
   DIR *dp;
   struct dirent *ep;
@@ -209,20 +193,36 @@ void extractHuMoment(const char* dirPath, const char* name) {
   outfile.close();
 }
 
-void normalizeHistogram(MatND& hist, int totalpixel) {
-  for (int a = 0; a < hist.size[0]; a++)
-    for (int b = 0; b < hist.size[1]; b++) {
-      hist.at<float>(a, b) /= totalpixel;
-    }
-
+void normalizeHistogram(MatND& hist, int totalpixel, int degree) {
+  if (degree == 2) {
+    for (int a = 0; a < hist.size[0]; a++)
+      for (int b = 0; b < hist.size[1]; b++) {
+        hist.at<float>(a, b) /= totalpixel;
+      }
+  } else if (degree == 3) {
+    for (int a = 0; a < hist.size[0]; a++)
+      for (int b = 0; b < hist.size[1]; b++) {
+        for (int c = 0; c < hist.size[2]; c++) {
+          hist.at<float>(a, b, c) /= totalpixel;
+        }
+      }
+  }
 }
 
-int histNo(const MatND& hist) {
+int histNo(const MatND& hist, int degree) {
   int histno = 0;
-  for (int a = 0; a < hist.size[0]; a++)
-    for (int b = 0; b < hist.size[1]; b++) {
-      histno += hist.at<float> (a, b);
-    }
+  if (degree == 2) {
+    for (int a = 0; a < hist.size[0]; a++)
+      for (int b = 0; b < hist.size[1]; b++) {
+        histno += hist.at<float> (a, b);
+      }
+  } else if (degree == 3) {
+    for (int a = 0; a < hist.size[0]; a++)
+      for (int b = 0; b < hist.size[1]; b++)
+        for (int c = 0; c < hist.size[2]; c++) {
+          histno += hist.at<float> (a, b, c);
+        }
+  }
   return histno;
 }
 
@@ -287,9 +287,9 @@ void extractHistoColorLab(const Mat & src, int colorSize, ostream & outfile) {
 
   calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
 
-  int nbhist = histNo(hist);
+  int nbhist = histNo(hist, 2);
   //  cout << "nb hist" << nbhist << endl;
-  normalizeHistogram(hist, nbhist);
+  normalizeHistogram(hist, nbhist, 2);
   SaveMatrix(hist, outfile, 2);
 
 }
@@ -320,9 +320,9 @@ void extractHistoColorRGB(const Mat & src, int colorSize, ostream & outfile) {
   //calcHist(&srclab, 1, channels, Mat(), hist, 2, histSize, ranges, true, false);
   calcHist(&dst, 1, channels, Mat(), hist, 3, histSize, ranges, true, false);
 
-  int nbhist = histNo(hist);
+  int nbhist = histNo(hist, 3);
   //  cout << "nb hist" << nbhist << endl;
-  normalizeHistogram(hist, nbhist);
+  normalizeHistogram(hist, nbhist, 3);
   SaveMatrix(hist, outfile, 3);
 
 }
@@ -680,6 +680,7 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
 
   string firstline;
   getline(ifFileLearn, firstline);
+
   stringstream ssfirst(stringstream::in | stringstream::out);
   ssfirst << firstline;
   string dirPath;
@@ -687,10 +688,10 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
   int graySize, colorSize;
   ssfirst >> dirPath;
   ssfirst >> name;
-
+  cout << fileLearn << "-" << dirPath << "-" << name << endl;
+  cout << "File test:" << fileTest << endl;
 
   double* huMomentArray = new double[7];
-
 
   while (ifFileLearn.good()) {
     // load testing vector
@@ -704,6 +705,8 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
     string testfilename;
     //    string testclassname;
     sstest >> testfilename;
+    //    cout << testfilename << endl;
+
     if (testfilename.compare("") == 0) {
       break;
     }
@@ -749,15 +752,16 @@ void searchHuMoment(const char* fileLearn, const char* fileTest, int k, const ch
   //  getchar();
   ofstream htmlout;
   char filehtml[255];
-  sprintf(filehtml, "%s/%s.%d.%d.%d.hu.html", refFileOutDir, fileTest, k, graySize, colorSize);
+  sprintf(filehtml, "%s/%s.%d.hu.html", refFileOutDir, fileTest, k);
   //  cout << filehtml << endl;
   htmlout.open(filehtml);
   //  getchar();
   htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
-  htmlout << "result:</br>" << endl;
+  htmlout << "<br/>Result Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
+  htmlout << "<br/>" << endl;
   for (int i = 0; i < k || i < distanceVector.size(); i++) {
-    htmlout << "<image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 />";
-    htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
+    htmlout << "<div style=\"float:left;margin:2px;\"><image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 /><br/>";
+    htmlout << *fileResultVector[i] << "<br/>" << *distanceVector[i] << "</div>" << endl;
   }
   htmlout.close();
 
@@ -836,9 +840,8 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
   for (int i = 0; i < k || i < distanceVector.size(); i++) {
     cout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
   }
-
+  int trueTotal = 0;
   if (fileRef != NULL) {
-    int trueTotal = 0;
     evalueSearch(fileRef, fileTest, fileResultVector, trueTotal);
     cout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << endl;
   }
@@ -851,10 +854,12 @@ void search(const char* fileLearn, const char* fileTest, int k, double colorWeig
   htmlout.open(filehtml);
   //  getchar();
   htmlout << "<image src=\"" << dirPath << "/" << fileTest << "\" width=100 height=100 />" << fileTest << endl;
-  htmlout << "result:</br>" << endl;
+  htmlout << ". Param: Couleur M :" << colorSize << ", Texture Gris: " << graySize << ", Poids de Couleur:" << colorWeight << ", Nombre de resultat:" << k << endl;
+  htmlout << "<br/> Result ";
+  htmlout << "Performance: " << trueTotal << "/" << fileResultVector.size() << "=" << ((double) trueTotal) / fileResultVector.size() << "</br>" << endl;
   for (int i = 0; i < k || i < distanceVector.size(); i++) {
-    htmlout << "<image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 />";
-    htmlout << *fileResultVector[i] << " " << *distanceVector[i] << endl;
+    htmlout << "<div style=\"float:left;margin:2px;\"><image src=\"" << dirPath << "/" << *fileResultVector[i] << "\" width=100 height=100 /><br/>";
+    htmlout << *fileResultVector[i] << "<br/>" << *distanceVector[i] << "</div> " << endl;
   }
   htmlout.close();
 

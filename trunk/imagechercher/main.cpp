@@ -222,14 +222,15 @@ void printHelp() {
   cout << std::endl << "Using:" << std::endl;
   cout << "imagechercher -dir « répertoire de l'apprentissage » ";
   cout << "-name « nom de sample » ";
-  cout << "-testing-file « fichier de test » ";
-  cout << "-learning-file « fichier sorti de test » ";
-  //  cout << "-segment-file « fichier de segmentation » ";
-  //  cout << "-segment-block-size « size of segment block » ";
+  cout << "-test-file « fichier de test » ";
+  cout << "-att-file « fichier sorti de test » ";
+  cout << "-out-dir « repertoire de sortie » ";  
   cout << "-t « niveau de gris » ";
   cout << "-m « nombre de couleur » ";
-  //  cout << "-cross-test-percent « percent » ";
+  cout << "-ref-file « fichier de reference » ";
   cout << "-n « number of neighbor  » ";
+  cout << "-p « poids de couleur  » ";
   cout << "-cmd « extract | search » ";
+  cout << "-feature-type « hu | texturecolor » ";
   cout << std::endl;
 }
