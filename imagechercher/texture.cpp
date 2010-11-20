@@ -1,4 +1,9 @@
-
+/*
+ * File:   texture.cpp
+ * Author: thuanvh
+ *
+ * Created on October 17, 2010, 10:42 PM
+ */
 #include <vector>
 #include <map>
 #include "texture.h"

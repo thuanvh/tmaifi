@@ -1,4 +1,9 @@
-
+/*
+ * File:   main.cpp
+ * Author: thuanvh
+ *
+ * Created on October 17, 2010, 10:42 PM
+ */
 #include <stdlib.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
