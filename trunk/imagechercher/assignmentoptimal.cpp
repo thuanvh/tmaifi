@@ -7,38 +7,11 @@ function [assignment, cost] = assignmentoptimal(distMatrix)
 #include <stdlib.h>
 #include <stdint.h>
 #include "assignmentoptimal.h"
-//#define CHECK_FOR_INF
-//#define ONE_INDEXING
-
-
-//void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
-//{
-//	double *assignment, *cost, *distMatrix;
-//	int nOfRows, nOfColumns;
-//
-//	/* Input arguments */
-//	nOfRows    = mxGetM(prhs[0]);
-//	nOfColumns = mxGetN(prhs[0]);
-//	distMatrix = mxGetPr(prhs[0]);
-//
-//	/* Output arguments */
-//	plhs[0]    = mxCreateDoubleMatrix(nOfRows, 1, mxREAL);
-//	plhs[1]    = mxCreateDoubleScalar(0);
-//	assignment = mxGetPr(plhs[0]);
-//	cost       = mxGetPr(plhs[1]);
-//
-//	/* Call C-function */
-//	assignmentoptimal(assignment, cost, distMatrix, nOfRows, nOfColumns);
-//}
 
 void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns) {
   double *distMatrix, *distMatrixTemp, *distMatrixEnd, *columnEnd, value, minValue;
   bool *coveredColumns, *coveredRows, *starMatrix, *newStarMatrix, *primeMatrix;
   int nOfElements, minDim, row, col;
-#ifdef CHECK_FOR_INF
-  bool infiniteValueFound;
-  double maxFiniteValue, infValue;
-#endif
 
   /* initialization */
   *cost = 0;
@@ -61,35 +34,6 @@ void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, i
     distMatrix[row] = value;
   }
 
-#ifdef CHECK_FOR_INF
-  /* check for infinite values */
-  maxFiniteValue = -1;
-  infiniteValueFound = false;
-
-  distMatrixTemp = distMatrix;
-  while (distMatrixTemp < distMatrixEnd) {
-    value = *distMatrixTemp++;
-    if (mxIsFinite(value)) {
-      if (value > maxFiniteValue)
-        maxFiniteValue = value;
-    } else
-      infiniteValueFound = true;
-  }
-  if (infiniteValueFound) {
-    if (maxFiniteValue == -1) /* all elements are infinite */
-      return;
-
-    /* set all infinite elements to big finite value */
-    if (maxFiniteValue > 0)
-      infValue = 10 * maxFiniteValue * nOfElements;
-    else
-      infValue = 10;
-    distMatrixTemp = distMatrix;
-    while (distMatrixTemp < distMatrixEnd)
-      if (mxIsInf(*distMatrixTemp++))
-        *(distMatrixTemp - 1) = infValue;
-  }
-#endif
 
   /* memory allocation */
   coveredColumns = (bool *)calloc(nOfColumns, sizeof (bool));
