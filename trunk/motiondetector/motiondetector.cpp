@@ -10,6 +10,7 @@
 #include <string>
 #include <cstring>
 #include <stdio.h>
+#include "motiondetector.h"
 using namespace std;
 using namespace cv;
 
@@ -42,7 +43,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     {
       //      cap.set(CV_CAP_PROP_POS_MSEC, time);
       //      cap.set(CV_CAP_PROP_POS_FRAMES, time);
-      cout << "need convert to RGB " << cap.get(CV_CAP_PROP_CONVERT_RGB) << endl;
+      //      cout << "need convert to RGB " << cap.get(CV_CAP_PROP_CONVERT_RGB) << endl;
       //time += 1000;
       time++;
       frame = new Mat();
@@ -72,23 +73,19 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
         matqueue.erase(matqueue.begin());
       }
       imshow("video", *frame);
-
     }
 
 
     //    for (int row = 0; row < height; row++) {
     //      for (int col = 0; col < width; col++) {
     int cap = backImage.dataend - backImage.datastart;
-//    cout << "size:" << cap << endl;
+    //    cout << "size:" << cap << endl;
     for (int ptrIndex = 0; ptrIndex < cap; ptrIndex++) {
       //        for (int k = 0; k < 3; k++) {
       for (int i = 0; i < matqueue.size(); i++) {
         Mat* frmImage = matqueue[i];
         uchar frmImagePtr = *(frmImage->data + ptrIndex);
-
         pixelArray[i] = frmImagePtr;
-
-
       }
       sort(pixelArray, pixelArray + matqueue.size());
       //        for (int i = 0; i < matqueue.size(); i++) {
@@ -111,11 +108,86 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     //      cout << matqueue[i] << "-";
     //    }
     imshow("background", backImage);
+    Mat currentFrame=(*frame).clone();
     absdiff(*frame, backImage, imgsubtract);
     //      subtract(*frame, backImage, imgsubtract);
-    imshow("diff", imgsubtract);
+    Mat imgerode;
+    uchar a[9] = {0, 1, 0,
+      1, 1, 1,
+      0, 1, 0};
+    Mat mat4c(3, 3, CV_8UC1, a);
+
+
+    Mat subtractGray;
+    subtractGray.create(imgsubtract.rows, imgsubtract.cols, CV_8UC1);
+    cvtColor(imgsubtract, subtractGray, CV_RGB2GRAY);
+
+    imshow("diff", subtractGray);
+    threshold(subtractGray, imgerode, 30, 255, THRESH_BINARY);
+
+    dilate(imgerode, imgerode, mat4c, Point(-1, -1), 1);
+    erode(imgerode, imgerode, mat4c, Point(-1, -1), 4);
+    dilate(imgerode, imgerode, mat4c, Point(-1, -1), 8);
+    //
+    //    printImage(imgerode);
+    //    waitKey();
+    Mat labeledImage = Mat::zeros(imgerode.rows, imgerode.cols, CV_32SC1);
+    int maxLabel;
+    LabelingConnectedComponent(imgerode, labeledImage, maxLabel);
+    int* maxX = new int[maxLabel];
+    int* maxY = new int[maxLabel];
+    int* minX = new int[maxLabel];
+    int* minY = new int[maxLabel];
+    FrameMotionDetect(labeledImage, maxLabel, maxX, maxY, minX, minY);
+    cout << "end motion detect" << endl;
+    FrameMotionMarking(imgerode, maxLabel, maxX, maxY, minX, minY);
+    FrameMotionMarking(currentFrame, maxLabel, maxX, maxY, minX, minY);
+
+    cout << "end motion marking" << endl;
+    //    printImage(labeledImage);
+    //    Mat labeledColorImage;
+    //    Mat b = Mat::zeros(labeledImage.rows, labeledImage.cols, CV_8UC1);
+    //    //scaleAdd(labeledImage, 255 / (double) maxLabel, b, labeledColorImage);
+    //    //    convertScaleAbs(labeledImage, labeledColorImage, 255 / (double) maxLabel, 0);
+
+    imshow("differode", imgerode);
+    imshow("currentFrame", currentFrame);
+    //    imshow("labelImage", labeledColorImage);
+
 //    waitKey();
+//    getchar();
+    delete []maxX;
+    delete []maxY;
+    delete []minX;
+    delete []minY;
     if (waitKey(30) >= 0) break;
+  }
+}
+
+void FrameMotionMarking(Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY) {
+  for (int i = 0; i < maxLabel; i++) {
+    if (minX[i] == MAXINT) continue;
+    //rectangle(image, Point(minY[i], minX[i]), Point(maxY[i], maxX[i]), Scalar(255), 1, 8, 0);
+    rectangle(image, Point(minX[i], minY[i]), Point(maxX[i], maxY[i]), Scalar(255), 1, 8, 0);
+  }
+}
+
+void FrameMotionDetect(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY) {
+  for (int i = 0; i < maxLabel; i++) {
+    minX[i] = minY[i] = MAXINT;
+    maxX[i] = maxY[i] = MININT;
+  }
+  for (int i = 0; i < image.rows; i++) {
+    for (int j = 0; j < image.cols; j++) {
+      int label = image.at<int>(i, j);
+      if (label != 0) {
+        int labelIndex = label - 1;
+        maxX[labelIndex] = maxX[labelIndex] < j ? j : maxX[labelIndex];
+        maxY[labelIndex] = maxY[labelIndex] < i ? i : maxY[labelIndex];
+        minX[labelIndex] = minX[labelIndex] < j ? minX[labelIndex] : j;
+        minY[labelIndex] = minY[labelIndex] < i ? minY[labelIndex] : i;
+      }
+    }
   }
 }
 
@@ -199,4 +271,120 @@ int KalmanMotionDetection(int argc, char** argv) {
   cvDestroyWindow("Kalman");
 
   return 0;
+}
+
+void printImageLabel(const Mat& img) {
+  for (int i = 0; i < img.rows; i++) {
+    for (int j = 0; j < img.cols; j++) {
+      cout << (int) img.at<int > (i, j) << " ";
+    }
+    cout << endl;
+  }
+}
+
+void printImage(const Mat& img) {
+  for (int i = 0; i < img.rows; i++) {
+    for (int j = 0; j < img.cols; j++) {
+      cout << (int) img.at<uchar > (i, j) << " ";
+    }
+    cout << endl;
+  }
+}
+
+void LabelingConnectedComponent(const Mat& img, Mat& dst, int& label) {
+  label = 0;
+  //dst.setTo(Scalar(0), Mat());
+  for (int i = 0; i < dst.rows; i++) {
+    for (int j = 0; j < dst.cols; j++) {
+      dst.at<int>(i, j) = img.at<char>(i, j);
+    }
+  }
+  //  img.copyTo(dst);
+  const int max = 1000;
+  int left = max;
+  int top = max;
+  int right = max;
+  int bottom = max;
+  int min = 0;
+  cout << "contour loop 1" << dst.rows << "*" << dst.cols << endl;
+  for (int i = 0; i < dst.rows; i++) {
+    for (int j = 0; j < dst.cols; j++) {
+      if (dst.at<int > (i, j) != 0) {
+        if (j == 0)
+          left = max;
+        else
+          left = (dst.at<int > (i, j - 1) == 0) ? max : dst.at<int > (i, j - 1);
+        if (i == 0)
+          top = max;
+        else
+          top = (dst.at<int > (i - 1, j) == 0) ? max : dst.at<int > (i - 1, j);
+        min = left < top ? left : top;
+        //cout << i << "-" << j << "-" << left << "-" << top << "-" << min << "-" << label << endl;
+        if (min == max) {
+          label++;
+          dst.at<int > (i, j) = label;
+        } else {
+          dst.at<int > (i, j) = min;
+        }
+        //        cout << "label:" << label << endl;
+      }
+    }
+  }
+//  printImageLabel(dst);
+  cout << "contour loop 2" << endl;
+  for (int i = dst.rows - 1; i >= 0; i--) {
+    for (int j = dst.cols - 1; j >= 0; j--) {
+      if (dst.at<float > (i, j) != 0) {
+        if (j == dst.cols - 1) right = max;
+        else
+          right = (dst.at<int > (i, j + 1) == 0) ? max : dst.at<int > (i, j + 1);
+        if (i == dst.rows - 1) bottom = max;
+        else
+          bottom = (dst.at<int > (i + 1, j) == 0) ? max : dst.at<int > (i + 1, j);
+
+        //cout << i << "-" << j << "-" << right << "-" << bottom << "-" << min  << endl;
+        min = right < bottom ? right : bottom;
+        dst.at<int > (i, j) = dst.at<int > (i, j) < min ? dst.at<int > (i, j) : min;
+      }
+    }
+  }
+
+//  printImageLabel(dst);
+  cout << "end contour loop" << endl;
+}
+
+int main1(int argc, char** argv) {
+  uchar a[78] = {
+    0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 1, 1, 0, 0, 0, 1, 3, 5, 0, 0, 0,
+    0, 1, 2, 1, 0, 0, 0, 0, 4, 7, 0, 0, 0,
+    1, 1, 1, 1, 0, 0, 0, 0, 3, 2, 0, 0, 0,
+    0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+  };
+  Mat mat4c(6, 13, CV_8UC1, a);
+  Mat labeledImage = Mat::zeros(mat4c.rows, mat4c.cols, CV_32SC1);
+  int maxLabel;
+  printImage(mat4c);
+  LabelingConnectedComponent(mat4c, labeledImage, maxLabel);
+  printImageLabel(labeledImage);
+  int* maxX = new int[maxLabel];
+  int* maxY = new int[maxLabel];
+  int* minX = new int[maxLabel];
+  int* minY = new int[maxLabel];
+  FrameMotionDetect(labeledImage, maxLabel, maxX, maxY, minX, minY);
+  cout << "end motion detect" << endl;
+  for (int i = 0; i < maxLabel; i++) {
+    //    if (minX[i] == MAXINT) continue;
+    //rectangle(image, Point(minY[i], minX[i]), Point(maxY[i], maxX[i]), Scalar(255), 1, 8, 0);
+    cout << minY[i] << "-" << minX[i] << "-" << maxY[i] << "-" << maxX[i] << endl;
+  }
+  FrameMotionMarking(mat4c, maxLabel, maxX, maxY, minX, minY);
+  cout << "end motion marking" << endl;
+  imshow("frame", mat4c);
+  waitKey();
+  delete []maxX;
+  delete []maxY;
+  delete []minX;
+  delete []minY;
 }
