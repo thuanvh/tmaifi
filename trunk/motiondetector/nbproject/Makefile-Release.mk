@@ -34,6 +34,7 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/patchItem.o \
 	${OBJECTDIR}/motiondetector.o
 
 
@@ -65,6 +66,11 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/patchItem.o: patchItem.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/patchItem.o patchItem.cpp
 
 ${OBJECTDIR}/motiondetector.o: motiondetector.cpp 
 	${MKDIR} -p ${OBJECTDIR}
