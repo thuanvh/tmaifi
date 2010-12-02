@@ -99,7 +99,25 @@ void getMapLocal(int**& localmap, Position2dProxy& pos, LaserProxy& laser, int& 
   }
 }
 
-void integrateToMapGlobal(Mat* global, Mat* img, Position2dProxy& pos) {
+void integrateToMapGlobal(int**& map, int** maplocal, Position2dProxy& pos, int mapwidth, int mapheight, int maplocalsize) {
+  double yaw = pos.GetYaw();
+  double posx = pos.GetXPos() / scale;
+  double posy = pos.GetYPos() / scale;
+  double cosAngle = cos(yaw);
+  double sinAngle = sin(yaw);
+  for (int i = 0; i < maplocalsize; i++) {
+    for (int j = 0; j < maplocalsize; j++) {
+      int x = j - maplocalsize / 2;
+      int y = maplocalsize / 2 - i;
+      int newx = posx + x * cosAngle - y*sinAngle;
+      int newy = posy + x * sinAngle + y*cosAngle;
+      int newj = mapwidth / 2 + newx;
+      int newi = mapheight / 2 - newy;
+      if (map[newi][newj] == UNKNOWN) {
+        map[newi][newj] = maplocal[i][j];
+      }
+    }
+  }
 
 }
 
@@ -145,12 +163,7 @@ int main(int argc, char **argv) {
       //cout<<endl;
     }
     while (!stop) {
-      for (int i = 0; i < mapimage.rows; i++) {
-        for (int j = 0; j < mapimage.cols; j++) {
-          mapimage.at<uchar > (i, j) = map[i][j]*255 / 2;
-        }
-      }
-      imshow("carte", mapimage);
+
       robot.Read();
 
       // get localmap
@@ -164,6 +177,14 @@ int main(int argc, char **argv) {
         }
       }
       imshow("localmap", localimage);
+
+      integrateToMapGlobal(map, localmap, pos, width, height, localsize);
+      for (int i = 0; i < mapimage.rows; i++) {
+        for (int j = 0; j < mapimage.cols; j++) {
+          mapimage.at<uchar > (i, j) = map[i][j]*255 / 2;
+        }
+      }
+      imshow("carte", mapimage);
       //      waitKey();
       //getchar();
       if (waitKey(30) >= 0) continue;
