@@ -121,14 +121,174 @@ void integrateToMapGlobal(int**& map, int** maplocal, Position2dProxy& pos, int 
 
 }
 
-//void findBestNextPoint(Mat* map, Mat* img,) {
-//
-//}
+void findBestNextPoint(int** map, Position2dProxy& pos, int& x, int& y, int mapwidth, int mapheight) {
+  x = y = -1;
+  int posx = mapwidth / 2 + pos.GetXPos() / scale;
+  int posy = mapheight / 2 - pos.GetYPos() / scale;
+  cout << "robot:" << posx << "*" << posy << endl;
+#define MAXDISTANCE 1e20
+  double mindistance = 1e20;
+  for (int i = 0; i < mapheight; i++) {
+    for (int j = 0; j < mapwidth; j++) {
+      if (map[i][j] == FREE
+        && (map[i - 1][j] == UNKNOWN || map[i][j + 1] == UNKNOWN || map[i + 1][j] == UNKNOWN || map[i][j - 1] == UNKNOWN)
+        && (map[i - 1][j] != OBSTACLE && map[i][j + 1] != OBSTACLE && map[i + 1][j] != OBSTACLE && map[i][j - 1] != OBSTACLE)
+        ) {
+        //        cout<<"existe"<<endl;
+        double distance = sqrt(pow(posx - j, 2) + pow(posy - i, 2));
+        if (mindistance > distance) {
+          mindistance = distance;
+          x = j;
+          y = i;
+        }
+      }
+    }
+  }
+}
+#define CHILD_NUMBER 4
 
-void AStarMapFinder() {
+struct node {
+  node();
 
+  node(int _x, int _y, node * _parent) {
+    x = _x;
+    y = _y;
+    parent = _parent;
+    if (parent != NULL)
+      rootdistance = _parent->rootdistance + 1;
+    for (int i = 0; i < CHILD_NUMBER; i++) {
+      childs[i]=NULL;
+    }
+  }
+  int x;
+  int y;
+  int rootdistance;
+  double estimatedistane;
+  node * childs[CHILD_NUMBER];
+  node* parent;
+
+  void estimateDistance(node * dist) {
+    double d = sqrt(pow(dist->x - x, 2) + pow(dist->y - y, 2));
+    estimatedistane = d + rootdistance;
+  }
+
+  ~node() {
+    for (int i = 0; i < CHILD_NUMBER; i++) {
+      if (childs[i] != NULL) {
+        delete childs[i];
+      }
+    }
+  }
+};
+
+bool isEqual(node* a, node* b) {
+  return (a->x == b->x && a->y == b->y);
+}
+
+bool isInList(node* a, vector<node*>& visitedList) {
+  for (int i = 0; i < visitedList.size(); i++) {
+    node* b = visitedList[i];
+    if (isEqual(a, b)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void insertIntoList(node* a, vector<node*>& nodeList) {
+  vector<node*>::iterator iter;
+  for (iter = nodeList.begin(); iter < nodeList.end(); iter++) {
+    node* item = *iter;
+    if (a->estimatedistane < item->estimatedistane) {
+      nodeList.insert(iter, a);
+      return;
+    }
+  }
+  nodeList.push_back(a);
+}
+
+void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int mapwidth, int mapheight,
+  int*& pathX, int*& pathY, int& length) {
+  node* root = new node(startX, startY, NULL);
+  root->rootdistance = 0;
+  node* dest = new node(destX, destY, NULL);
+  vector<node*> list;
+  vector<node*> visitedList;
+  list.push_back(root);
+  bool found = false;
+  node* current = NULL;
+  while (!found && list.size() > 0) {
+    cout << list.size() << " ";
+    current = list[0];
+    list.erase(list.begin());
+    if (isInList(current, visitedList)) {
+      continue;
+    } else {
+      visitedList.push_back(current);
+    }
+    if (isEqual(current, dest)) {
+      found = true;
+      break;
+    }
+    current->childs[0] = current->x < 1 ? NULL : new node(current->x - 1, current->y, current);
+    current->childs[1] = current->x > mapwidth - 1 ? NULL : new node(current->x + 1, current->y, current);
+    current->childs[2] = current->y < 1 ? NULL : new node(current->x, current->y - 1, current);
+    current->childs[3] = current->y > mapheight - 1 ? NULL : new node(current->x, current->y + 1, current);
+    for (int i = 0; i < CHILD_NUMBER; i++) {
+      node* child = current->childs[i];
+      if (child != NULL) {
+        if (map[child->y][child->x] == FREE && !isInList(child, visitedList)) {
+          child->estimateDistance(dest);
+          insertIntoList(child, list);
+        }else{
+          current->childs[i]=NULL;
+          delete child;
+        }
+      }
+    }
+  }
+  if (found) {
+    cout << "found" << endl;
+    length = current->rootdistance;
+    pathX = new int[length];
+    pathY = new int[length];
+    node* temp = current;
+    int tempindex = length;
+    while (temp->parent != NULL) {
+      pathX[tempindex - 1] = temp->parent->x;
+      pathY[tempindex - 1] = temp->parent->y;
+      temp = temp->parent;
+      tempindex--;
+    }
+    cout << "path:";
+    for (int i = 0; i < length; i++) {
+      cout << pathX[i] << "*" << pathY[i] << " ";
+    }
+    cout << endl;
+  } else {
+    length = -1;
+  }
+  delete root;
+  delete dest;
 }
 //fonction principale
+
+int main1(int argc, char** argv) {
+  int** A;
+  A = new int*[30];
+  for (int i = 0; i < 30; i++) {
+    A[i] = new int[7];
+    for (int j = 0; j < 7; j++) {
+      A[i][j] = FREE;
+    }
+  }
+  A[3][4] = OBSTACLE;
+  A[4][4] = OBSTACLE;
+  int* pathX;
+  int* pathY;
+  int length;
+  AStarMapFinder(A, 3, 3, 5, 5, 7, 30, pathX, pathY, length);
+}
 
 int main(int argc, char **argv) {
 
@@ -185,7 +345,17 @@ int main(int argc, char **argv) {
         }
       }
       imshow("carte", mapimage);
-      //      waitKey();
+      int destX;
+      int destY;
+      findBestNextPoint(map, pos, destX, destY, width, height);
+      cout << "target " << destX << "*" << destY << endl;
+      int* pathX;
+      int* pathY;
+      int length;
+      int startX = width / 2 + pos.GetXPos() / scale;
+      int startY = height / 2 - pos.GetYPos() / scale;
+      AStarMapFinder(map, startX, startY, destX, destY, width, height, pathX, pathY, length);
+      waitKey();
       //getchar();
       if (waitKey(30) >= 0) continue;
     }
