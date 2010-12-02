@@ -55,12 +55,15 @@ void getMapLocal(int**& localmap, Position2dProxy& pos, LaserProxy& laser, int& 
       int x = j - localsize / 2;
       int y = localsize / 2 - i;
       double length = sqrt(x * x + y * y);
-      double sinAngle = 0;
+      double angle = 0;
       if (length > 0)
-        sinAngle = sin(abs(y) / length);
-      int intAngle = round(asin(sinAngle)*180 / M_PI);
+        angle = asin(abs(y) / length);
+      int intAngle = round(angle*180 / M_PI);
       if (abs(x) == abs(y) && abs(x) == localsize / 2) {
         int a = 0;
+      }
+      if(x==0 || y==0){
+        int a=0;
       }
       if (x >= 0 && y > 0) {
         intAngle = intAngle;
@@ -157,7 +160,7 @@ struct node {
     if (parent != NULL)
       rootdistance = _parent->rootdistance + 1;
     for (int i = 0; i < CHILD_NUMBER; i++) {
-      childs[i]=NULL;
+      childs[i] = NULL;
     }
   }
   int x;
@@ -240,8 +243,8 @@ void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int
         if (map[child->y][child->x] == FREE && !isInList(child, visitedList)) {
           child->estimateDistance(dest);
           insertIntoList(child, list);
-        }else{
-          current->childs[i]=NULL;
+        } else {
+          current->childs[i] = NULL;
           delete child;
         }
       }
@@ -290,6 +293,47 @@ int main1(int argc, char** argv) {
   AStarMapFinder(A, 3, 3, 5, 5, 7, 30, pathX, pathY, length);
 }
 
+int getAngle(double x, double y) {
+  double length = sqrt(x * x + y * y);
+  double sinAngle = 0;
+  if (length > 0)
+    sinAngle = sin(abs(y) / length);
+  int intAngle = round(asin(sinAngle)*180 / M_PI);
+
+  if (x >= 0 && y > 0) {
+    intAngle = intAngle;
+  } else if (x < 0 && y >= 0) {
+    intAngle = 180 - intAngle;
+  } else if (x <= 0 && y < 0) {
+    intAngle = 180 + intAngle;
+  } else if (x > 0 && y <= 0) {
+    intAngle = 360 - intAngle;
+  }
+  intAngle = (180 + intAngle) % 360;
+  return intAngle;
+}
+
+void MoveToTarget(double targetX, double targetY, Position2dProxy& pos, PlayerClient& robot) {
+  robot.Read();
+  robot.Read();
+  double startX = pos.GetXPos();
+  double startY = pos.GetYPos();
+  double yaw = pos.GetYaw();
+  int angleYaw = rtod(yaw);
+  int angleRotate = getAngle(targetX - startX, targetY - startY);
+  cout << angleYaw << " " << angleRotate << endl;
+}
+
+void MoveToPath(int* pathX, int *pathY, int length, Position2dProxy& pos, PlayerClient& robot, int width, int height) {
+  pos.SetMotorEnable(true);
+  for (int i = 0; i < length; i++) {
+    double targetX = (pathX[i] - width / 2) * scale;
+    double targetY = (height / 2 - pathY[i]) * scale;
+    MoveToTarget(targetX, targetY, pos, robot);
+
+  }
+}
+
 int main(int argc, char **argv) {
 
   bool comeback;
@@ -325,7 +369,7 @@ int main(int argc, char **argv) {
     while (!stop) {
 
       robot.Read();
-
+      robot.Read();
       // get localmap
       int** localmap;
       int localsize;
@@ -355,7 +399,10 @@ int main(int argc, char **argv) {
       int startX = width / 2 + pos.GetXPos() / scale;
       int startY = height / 2 - pos.GetYPos() / scale;
       AStarMapFinder(map, startX, startY, destX, destY, width, height, pathX, pathY, length);
+
+      MoveToTarget(1,1,pos,robot);
       waitKey();
+
       //getchar();
       if (waitKey(30) >= 0) continue;
     }
