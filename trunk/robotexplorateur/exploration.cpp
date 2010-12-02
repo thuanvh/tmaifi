@@ -25,7 +25,7 @@ typedef struct {
   int degree;
 } laser_range;
 
-//double scale = 0.05;
+double scale = 0.05;
 int taille_laser = 81;
 laser_range info[81][81];
 int carte[640][640];
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
     comeback = true;
     bool stop = false;
     cvNamedWindow("carte", 1);
-    Mat map(640, 640, CV_8UC1, carte);
+    Mat map(640, 640, CV_8UC1);
     while (!stop) {
       // show image
 //      cout << "show carte" << endl;
