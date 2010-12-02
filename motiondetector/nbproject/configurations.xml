@@ -6,6 +6,7 @@
                    projectFiles="true"
                    kind="SOURCE_LOGICAL_FOLDER">
       <itemPath>motiondetector.h</itemPath>
+      <itemPath>patchItem.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -18,6 +19,7 @@
                    kind="SOURCE_LOGICAL_FOLDER">
       <itemPath>main.cpp</itemPath>
       <itemPath>motiondetector.cpp</itemPath>
+      <itemPath>patchItem.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
