@@ -16,6 +16,7 @@ PatchItem::PatchItem(int x, int y, int vx, int vy) {
 }
 
 PatchItem::~PatchItem() {
+  cout<<"~~~~"<<endl;
 //  if (image != NULL)
 //    delete image;
   if (kalman != NULL)
@@ -91,7 +92,9 @@ void PatchItem::correct() {
   correctVy = correctMat.at<float>(3, 0);
   cout << "correct result " << correctX << "*" << correctY << " " << correctVx << " " << correctVy << endl;
 }
+void PatchItem::refresh(){
 
+}
 int KalmanMotionDetection(int argc, char** argv) {
   const float A[] = {1, 1, 0, 1};
 
@@ -193,7 +196,7 @@ void patchItemTest() {
 
     patch.correct();
     cout << "Correct: " << patch.correctX << " " << patch.correctY << " "\
-      << patch.vx << " " << patch.vy << endl;
+      << patch.correctVx << " " << patch.correctVy << endl;
     getchar();
   }
 }

@@ -55,9 +55,9 @@ void GetCaracteristic(const Mat& image, vector<double>& caracteristic);
 double getColorHistoDistance(const vector<double>& learningVector, const vector<double>& testingVector);
 
 double GetImageDistance(const PatchItem& image1, const PatchItem& image2);
-
+void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited, int listTempImageLength);
 void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited);
-
+void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length);
 void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, vector<PatchItem*>& listImage);
 void FrameMotionFilter(int maxLabel, int* maxX, int* maxY, int* minX, int* minY);
 void markItem(Mat& markedImage, vector<PatchItem*> trackingList);
