@@ -46,7 +46,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
 
   vector<PatchItem*> trackingItemList;
   int itemLabel = 0;
-  int defaultVisited = 5;
+  int defaultVisited = 2;
   while (true) {
     {
       //      cap.set(CV_CAP_PROP_POS_MSEC, time);
@@ -188,12 +188,14 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     imshow("differode", imgerode);
     imshow("currentFrame", currentFrame);
     //    imshow("labelImage", labeledColorImage);
-    vector<PatchItem*> currentListImage;
+    //vector<PatchItem*> currentListImage;
+    PatchItem** currentListImage;
+    int currentListImageLength;
     // extraire une liste d'objets
-    FrameMotionExtraire(currentFrame, maxLabel, maxX, maxY, minX, minY, currentListImage);
+    FrameMotionExtraire(currentFrame, maxLabel, maxX, maxY, minX, minY, currentListImage, currentListImageLength);
     cout << "end frame motion extraire" << endl;
     // create image de points
-    FrameMotionMatching(currentListImage, trackingItemList, itemLabel, defaultVisited);
+    FrameMotionMatching(currentListImage, trackingItemList, itemLabel, defaultVisited, currentListImageLength);
     cout << "end frame motion matching" << endl;
     // trackingItemList
     Mat itemPointImage = Mat::zeros(imgerode.rows, imgerode.cols, CV_32SC1);
@@ -225,7 +227,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     //Recalculate points
     //Draw result
 
-    //    waitKey();
+        waitKey();
     //    getchar();
     delete []maxX;
     delete []maxY;
@@ -359,10 +361,10 @@ double getColorHistoDistance(const vector<double>& learningVector, const vector<
 //  return distance;
 //}
 
-void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited) {
+void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited, int listTempImageLength) {
   cout << "list for compare" << mapImage.size() << endl;
-  int measureFrameSize = 70;
-  for (int i = 0; i < listImage.size(); i++) {
+  int measureFrameSize = 250;
+  for (int i = 0; i < listTempImageLength; i++) {
     PatchItem* patch = listImage[i];
     //    imshow("patch", * (patch->image));
     double minDistance = 1e20;
@@ -382,9 +384,9 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
       PatchItem* oldpatch = mapImage[j];
       //      cout <<"frame compare "<< oldpatch->centerX << " " << oldpatch->centerY << " " \
 //        << frameMinX << " " << frameMaxX << " " << frameMinY << " " << frameMaxY << endl;
-      if (oldpatch->centerX > frameMinX && oldpatch->centerY > frameMinY &&
-        oldpatch->centerX < frameMaxX && oldpatch->centerY < frameMaxY) {
-        double distance = sqrt(pow((double) oldpatch->centerX - patch->centerX, 2.) + pow((double) oldpatch->centerY - patch->centerY, 2));
+      if (oldpatch->predictX > frameMinX && oldpatch->predictY > frameMinY &&
+        oldpatch->predictX < frameMaxX && oldpatch->predictY < frameMaxY) {
+        double distance = sqrt(pow((double) oldpatch->centerX - patch->predictX, 2.) + pow((double) oldpatch->centerY - patch->predictY, 2));
         if (minDistance > distance) {
           minDistance = distance;
           matchingIndex = j;
@@ -400,11 +402,18 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
       //      patch->color = mapImage[matchingIndex]->color;
       //      patch->vx = mapImage[matchingIndex]->centerX - patch->centerX;
       //      patch->vy = mapImage[matchingIndex]->centerY - patch->centerY;
+
       mapImage[matchingIndex]->vx = patch->centerX - mapImage[matchingIndex]->centerX;
       mapImage[matchingIndex]->vy = patch->centerY - mapImage[matchingIndex]->centerY;
       mapImage[matchingIndex]->centerY = patch->centerX;
       mapImage[matchingIndex]->centerY = patch->centerY;
+      mapImage[matchingIndex]->minX=patch->minX;
+      mapImage[matchingIndex]->maxX=patch->maxX;
+      mapImage[matchingIndex]->minY=patch->minY;
+      mapImage[matchingIndex]->maxY=patch->maxY;
+      mapImage[matchingIndex]->visited++;
       //mapImage[i] = patch;
+      listImage[i] = NULL;
 //      delete patch;
     } else {
       patch->label = totalLabel++;
@@ -416,6 +425,7 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
       //init kalman
       patch->initKalman();
       mapImage.push_back(patch);
+      listImage[i] = NULL;
     }
   }
   vector<PatchItem*>::iterator iter;
@@ -426,9 +436,10 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
       cout << "delete expire" << a->label << endl;
       mapImage.erase(iter);
 //      delete a;
-      
+
     }
   }
+  //  listImage.clear();
   //mapImage.clear();
   //  for (int i = 0; i < listImage.size(); i++) {
   //    PatchItem* patch = listImage[i];
@@ -449,8 +460,113 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
   //    }
   //  }
 }
+//void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited) {
+//  cout << "list for compare" << mapImage.size() << endl;
+//  int measureFrameSize = 70;
+//  for (int i = 0; i < listImage.size(); i++) {
+//    PatchItem* patch = listImage[i];
+//    //    imshow("patch", * (patch->image));
+//    double minDistance = 1e20;
+//    int matchingIndex = -1;
+//    //    cout << "distance:";
+//    int frameMinX = patch->centerX - measureFrameSize / 2;
+//    int frameMaxX = patch->centerX + measureFrameSize / 2;
+//    int frameMinY = patch->centerY - measureFrameSize / 2;
+//    int frameMaxY = patch->centerY + measureFrameSize / 2;
+//    for (int j = 0; j < mapImage.size(); j++) {
+//      //      double distance = GetImageDistance(*patch, *mapImage[j]);
+//      //      if (minDistance > distance) {
+//      //        minDistance = distance;
+//      //        matchingIndex = j;
+//      //        cout << distance << " ";
+//      //      }
+//      PatchItem* oldpatch = mapImage[j];
+//      //      cout <<"frame compare "<< oldpatch->centerX << " " << oldpatch->centerY << " " \
+////        << frameMinX << " " << frameMaxX << " " << frameMinY << " " << frameMaxY << endl;
+//      if (oldpatch->centerX > frameMinX && oldpatch->centerY > frameMinY &&
+//        oldpatch->centerX < frameMaxX && oldpatch->centerY < frameMaxY) {
+//        double distance = sqrt(pow((double) oldpatch->centerX - patch->centerX, 2.) + pow((double) oldpatch->centerY - patch->centerY, 2));
+//        if (minDistance > distance) {
+//          minDistance = distance;
+//          matchingIndex = j;
+//        }
+//      }
+//    }
+//    cout << endl << matchingIndex << "-" << minDistance << endl;
+//    //    waitKey();
+//    // seuil
+//    if (matchingIndex >= 0) {
+//      //      patch->label = mapImage[matchingIndex]->label;
+//      //      patch->visited = mapImage[matchingIndex]->visited;
+//      //      patch->color = mapImage[matchingIndex]->color;
+//      //      patch->vx = mapImage[matchingIndex]->centerX - patch->centerX;
+//      //      patch->vy = mapImage[matchingIndex]->centerY - patch->centerY;
+//      mapImage[matchingIndex]->vx = patch->centerX - mapImage[matchingIndex]->centerX;
+//      mapImage[matchingIndex]->vy = patch->centerY - mapImage[matchingIndex]->centerY;
+//      mapImage[matchingIndex]->centerY = patch->centerX;
+//      mapImage[matchingIndex]->centerY = patch->centerY;
+//      //mapImage[i] = patch;
+//      //      listImage[i]=NULL;
+//      //      delete patch;
+//    } else {
+//      patch->label = totalLabel++;
+//      patch->visited = defaultVisited;
+//      int r = rand() % 255;
+//      int g = rand() % 255;
+//      int b = rand() % 255;
+//      patch->color = Scalar(r, g, b);
+//      //init kalman
+//      patch->initKalman();
+//      mapImage.push_back(patch);
+//      //      listImage[i]=NULL;
+//    }
+//  }
+//  vector<PatchItem*>::iterator iter;
+//  for (iter = mapImage.begin(); iter < mapImage.end(); iter++) {
+//    PatchItem* a = *iter;
+//    a->visited--;
+//    if (a->visited <= 0) {
+//      cout << "delete expire" << a->label << endl;
+//      mapImage.erase(iter);
+//      //      delete a;
+//
+//    }
+//  }
+//  listImage.clear();
+//  //mapImage.clear();
+//  //  for (int i = 0; i < listImage.size(); i++) {
+//  //    PatchItem* patch = listImage[i];
+//  //    // assign matching
+//  //    int j;
+//  //    for (j = 0; j < mapImage.size(); j++) {
+//  //      PatchItem* matchingPatch = mapImage[j];
+//  //      if (matchingPatch->label == patch->label) {
+//  //        cout << "change old" << matchingPatch->label << endl;
+//  //        //        delete matchingPatch;
+//  //        mapImage[j] = patch;
+//  //        break;
+//  //      }
+//  //    }
+//  //    //add nouvel
+//  //    if (j == mapImage.size()) {
+//  //      mapImage.push_back(patch);
+//  //    }
+//  //  }
+//}
 
-void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, vector<PatchItem*>& listImage) {
+void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length) {
+  length = 0;
+  for (int i = 0; i < maxLabel; i++) {
+    //    cout << i << endl;
+    //    cout << minY[i] << " " << minX[i] << maxY[i] << " " << maxX[i];
+    if (minX[i] == MAXINT || minX[i] == maxX[i] || minY[i] == maxY[i]) {
+      //      cout << "continue";
+      continue;
+    }
+    length++;
+  }
+  int listIndex = 0;
+  listImage = new PatchItem*[length];
   for (int i = 0; i < maxLabel; i++) {
     //    cout << i << endl;
     //    cout << minY[i] << " " << minX[i] << maxY[i] << " " << maxX[i];
@@ -459,8 +575,6 @@ void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, i
       continue;
     }
 
-    //rectangle(image, Point(minY[i], minX[i]), Point(maxY[i], maxX[i]), Scalar(255), 1, 8, 0);
-    //rectangle(image, Point(minX[i], minY[i]), Point(maxX[i], maxY[i]), Scalar(255), 1, 8, 0);
     int width = abs(maxX[i] - minX[i]);
     int height = abs(maxY[i] - minY[i]);
     int centerX = (maxX[i] + minX[i]) / 2;
@@ -481,9 +595,44 @@ void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, i
     patch->minX = minX[i];
     patch->maxY = maxY[i];
     patch->minY = minY[i];
-    listImage.push_back(patch);
+    listImage[listIndex++] = patch;
   }
 }
+
+//void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, vector<PatchItem*>& listImage) {
+//  for (int i = 0; i < maxLabel; i++) {
+//    //    cout << i << endl;
+//    //    cout << minY[i] << " " << minX[i] << maxY[i] << " " << maxX[i];
+//    if (minX[i] == MAXINT || minX[i] == maxX[i] || minY[i] == maxY[i]) {
+//      //      cout << "continue";
+//      continue;
+//    }
+//
+//    //rectangle(image, Point(minY[i], minX[i]), Point(maxY[i], maxX[i]), Scalar(255), 1, 8, 0);
+//    //rectangle(image, Point(minX[i], minY[i]), Point(maxX[i], maxY[i]), Scalar(255), 1, 8, 0);
+//    int width = abs(maxX[i] - minX[i]);
+//    int height = abs(maxY[i] - minY[i]);
+//    int centerX = (maxX[i] + minX[i]) / 2;
+//    int centerY = (maxY[i] + minY[i]) / 2;
+//
+//    //    cout<<"end cut image"<<endl;
+//    PatchItem* patch = new PatchItem();
+//    //    imshow("region", *region);
+//    //    waitKey();
+//    //    Mat* region = new Mat();
+//    //    getRectSubPix(image, Size(width, height), Point(centerX, centerY), *region);
+//    //    patch->image = region;
+//    patch->label = -1;
+//    //    GetCaracteristic(*patch->image, patch->caracteristic);
+//    patch->centerX = centerX;
+//    patch->centerY = centerY;
+//    patch->maxX = maxX[i];
+//    patch->minX = minX[i];
+//    patch->maxY = maxY[i];
+//    patch->minY = minY[i];
+//    listImage.push_back(patch);
+//  }
+//}
 
 void markItem(Mat& markedImage, vector<PatchItem*> trackingList) {
   for (int i = 0; i < trackingList.size(); i++) {

@@ -53,6 +53,7 @@ public:
     void predict();
     void correct();
     void initKalman();
+    void refresh();
 };
 
 
