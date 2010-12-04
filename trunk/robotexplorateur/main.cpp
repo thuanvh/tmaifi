@@ -55,26 +55,27 @@ void getMapLocal(int**& localmap, Position2dProxy& pos, LaserProxy& laser, int& 
       int x = j - localsize / 2;
       int y = localsize / 2 - i;
       double length = sqrt(x * x + y * y);
-      double angle = 0;
-      if (length > 0)
-        angle = asin(abs(y) / length);
-      int intAngle = round(angle*180 / M_PI);
-      if (abs(x) == abs(y) && abs(x) == localsize / 2) {
-        int a = 0;
-      }
-      if(x==0 || y==0){
-        int a=0;
-      }
-      if (x >= 0 && y > 0) {
-        intAngle = intAngle;
-      } else if (x < 0 && y >= 0) {
-        intAngle = 180 - intAngle;
-      } else if (x <= 0 && y < 0) {
-        intAngle = 180 + intAngle;
-      } else if (x > 0 && y <= 0) {
-        intAngle = 360 - intAngle;
-      }
-      intAngle = (180 + intAngle) % 360;
+      //      double angle = 0;
+      //      if (length > 0)
+      //        angle = asin(abs(y) / length);
+      //      int intAngle = round(angle * 180 / M_PI);
+      ////      if (abs(x) == abs(y) && abs(x) == localsize / 2) {
+      ////        int a = 0;
+      ////      }
+      //      if (x == 0 || y == 0) {
+      //        int a = 0;
+      //      }
+      //      if (x >= 0 && y > 0) {
+      //        intAngle = intAngle;
+      //      } else if (x < 0 && y >= 0) {
+      //        intAngle = 180 - intAngle;
+      //      } else if (x <= 0 && y < 0) {
+      //        intAngle = 180 + intAngle;
+      //      } else if (x > 0 && y <= 0) {
+      //        intAngle = 360 - intAngle;
+      //      }
+      //      intAngle = (180 + intAngle) % 360;
+      int intAngle = getAngle(x, y);
       double range = 0;
       int tempAngle = intAngle;
       while ((range = laser.GetRange(tempAngle)) <= 0) {
@@ -118,16 +119,40 @@ void integrateToMapGlobal(int**& map, int** maplocal, Position2dProxy& pos, int 
       int newi = mapheight / 2 - newy;
       if (map[newi][newj] == UNKNOWN) {
         map[newi][newj] = maplocal[i][j];
+      } else if (map[newi][newj] == FREE && maplocal[i][j] == OBSTACLE) {
+        map[newi][newj] = maplocal[i][j];
+      } else if (map[newi][newj] == OBSTACLE && maplocal[i][j] == FREE) {
+//        map[newi][newj] = maplocal[i][j];
       }
+
     }
   }
 
 }
 
-void findBestNextPoint(int** map, Position2dProxy& pos, int& x, int& y, int mapwidth, int mapheight) {
+
+bool isNearObstacle(int x, int y, int** map, int width, int height) {
+  int obstaclerange = 5;
+  bool nearobstacle = false;
+  for (int k = y - obstaclerange; k < y + obstaclerange; k++) {
+    for (int l = x - obstaclerange; l < x + obstaclerange; l++) {
+      if (k < 0 || k >= height || l < 0 || l >= width)
+        continue;
+      if (map[k][l] == OBSTACLE) {
+        nearobstacle = true;
+        break;
+      }
+    }
+    if (nearobstacle) break;
+  }
+  return nearobstacle;
+}
+
+void findBestNextPoint(int** map, Position2dProxy& pos, int& x, int& y, int mapwidth, int mapheight, int range) {
   x = y = -1;
   int posx = mapwidth / 2 + pos.GetXPos() / scale;
   int posy = mapheight / 2 - pos.GetYPos() / scale;
+
   cout << "robot:" << posx << "*" << posy << endl;
 #define MAXDISTANCE 1e20
   double mindistance = 1e20;
@@ -135,11 +160,13 @@ void findBestNextPoint(int** map, Position2dProxy& pos, int& x, int& y, int mapw
     for (int j = 0; j < mapwidth; j++) {
       if (map[i][j] == FREE
         && (map[i - 1][j] == UNKNOWN || map[i][j + 1] == UNKNOWN || map[i + 1][j] == UNKNOWN || map[i][j - 1] == UNKNOWN)
-        && (map[i - 1][j] != OBSTACLE && map[i][j + 1] != OBSTACLE && map[i + 1][j] != OBSTACLE && map[i][j - 1] != OBSTACLE)
+        //&& (map[i - 1][j] != OBSTACLE && map[i][j + 1] != OBSTACLE && map[i + 1][j] != OBSTACLE && map[i][j - 1] != OBSTACLE)
         ) {
+        bool nearobstacle = isNearObstacle(j, i, map, mapwidth, mapheight);
+        if (nearobstacle) continue;
         //        cout<<"existe"<<endl;
-        double distance = sqrt(pow(posx - j, 2) + pow(posy - i, 2));
-        if (mindistance > distance) {
+        int distance = sqrt(pow(posx - j, 2) + pow(posy - i, 2));
+        if (mindistance > distance && distance >= range - 1) {
           mindistance = distance;
           x = j;
           y = i;
@@ -148,41 +175,14 @@ void findBestNextPoint(int** map, Position2dProxy& pos, int& x, int& y, int mapw
     }
   }
 }
-#define CHILD_NUMBER 4
 
-struct node {
-  node();
-
-  node(int _x, int _y, node * _parent) {
-    x = _x;
-    y = _y;
-    parent = _parent;
-    if (parent != NULL)
-      rootdistance = _parent->rootdistance + 1;
-    for (int i = 0; i < CHILD_NUMBER; i++) {
-      childs[i] = NULL;
-    }
+bool isContain(node* a, node* b, int r, int** map) {
+  if (a->x - r <= b->x && a->x + r >= b->x && a->y - r <= b->y && a->y + r >= b->y) {
+    if (isFreePath(a, b, map))
+      return true;
   }
-  int x;
-  int y;
-  int rootdistance;
-  double estimatedistane;
-  node * childs[CHILD_NUMBER];
-  node* parent;
-
-  void estimateDistance(node * dist) {
-    double d = sqrt(pow(dist->x - x, 2) + pow(dist->y - y, 2));
-    estimatedistane = d + rootdistance;
-  }
-
-  ~node() {
-    for (int i = 0; i < CHILD_NUMBER; i++) {
-      if (childs[i] != NULL) {
-        delete childs[i];
-      }
-    }
-  }
-};
+  return false;
+}
 
 bool isEqual(node* a, node* b) {
   return (a->x == b->x && a->y == b->y);
@@ -210,6 +210,22 @@ void insertIntoList(node* a, vector<node*>& nodeList) {
   nodeList.push_back(a);
 }
 
+bool isFreePath(node* a, node* b, int** map) {
+  int minX = (a->x < b->x) ? a->x : b->x;
+  int maxX = (a->x > b->x) ? a->x : b->x;
+  int minY = (a->y < b->y) ? a->y : b->y;
+  int maxY = (a->y > b->y) ? a->y : b->y;
+
+  for (int i = minY; i < maxY; i++) {
+    for (int j = minX; j < maxX; j++) {
+      if (map[i][j] != FREE) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int mapwidth, int mapheight,
   int*& pathX, int*& pathY, int& length) {
   node* root = new node(startX, startY, NULL);
@@ -220,8 +236,9 @@ void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int
   list.push_back(root);
   bool found = false;
   node* current = NULL;
+  const int deltaCell = 10;
   while (!found && list.size() > 0) {
-    cout << list.size() << " ";
+    //    cout << list.size() << " ";
     current = list[0];
     list.erase(list.begin());
     if (isInList(current, visitedList)) {
@@ -229,18 +246,20 @@ void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int
     } else {
       visitedList.push_back(current);
     }
-    if (isEqual(current, dest)) {
+    //if (isEqual(current, dest)) {
+    if (isContain(current, dest, deltaCell, map)) {
       found = true;
       break;
     }
-    current->childs[0] = current->x < 1 ? NULL : new node(current->x - 1, current->y, current);
-    current->childs[1] = current->x > mapwidth - 1 ? NULL : new node(current->x + 1, current->y, current);
-    current->childs[2] = current->y < 1 ? NULL : new node(current->x, current->y - 1, current);
-    current->childs[3] = current->y > mapheight - 1 ? NULL : new node(current->x, current->y + 1, current);
+    current->childs[0] = current->x < deltaCell ? NULL : new node(current->x - deltaCell, current->y, current);
+    current->childs[1] = current->x >= mapwidth - deltaCell ? NULL : new node(current->x + deltaCell, current->y, current);
+    current->childs[2] = current->y < deltaCell ? NULL : new node(current->x, current->y - deltaCell, current);
+    current->childs[3] = current->y >= mapheight - deltaCell ? NULL : new node(current->x, current->y + deltaCell, current);
     for (int i = 0; i < CHILD_NUMBER; i++) {
       node* child = current->childs[i];
       if (child != NULL) {
-        if (map[child->y][child->x] == FREE && !isInList(child, visitedList)) {
+        if (map[child->y][child->x] == FREE && isFreePath(current, child, map)
+          && !isNearObstacle(child->x, child->y, map, mapwidth, mapheight) && !isInList(child, visitedList)) {
           child->estimateDistance(dest);
           insertIntoList(child, list);
         } else {
@@ -258,8 +277,8 @@ void AStarMapFinder(int** map, int startX, int startY, int destX, int destY, int
     node* temp = current;
     int tempindex = length;
     while (temp->parent != NULL) {
-      pathX[tempindex - 1] = temp->parent->x;
-      pathY[tempindex - 1] = temp->parent->y;
+      pathX[tempindex - 1] = temp->x;
+      pathY[tempindex - 1] = temp->y;
       temp = temp->parent;
       tempindex--;
     }
@@ -280,8 +299,8 @@ int main1(int argc, char** argv) {
   int** A;
   A = new int*[30];
   for (int i = 0; i < 30; i++) {
-    A[i] = new int[7];
-    for (int j = 0; j < 7; j++) {
+    A[i] = new int[10];
+    for (int j = 0; j < 10; j++) {
       A[i][j] = FREE;
     }
   }
@@ -290,15 +309,15 @@ int main1(int argc, char** argv) {
   int* pathX;
   int* pathY;
   int length;
-  AStarMapFinder(A, 3, 3, 5, 5, 7, 30, pathX, pathY, length);
+  AStarMapFinder(A, 3, 3, 5, 5, 10, 30, pathX, pathY, length);
 }
 
 int getAngle(double x, double y) {
   double length = sqrt(x * x + y * y);
-  double sinAngle = 0;
+  double angle = 0;
   if (length > 0)
-    sinAngle = sin(abs(y) / length);
-  int intAngle = round(asin(sinAngle)*180 / M_PI);
+    angle = asin(abs(y) / length);
+  int intAngle = round(angle * 180 / M_PI);
 
   if (x >= 0 && y > 0) {
     intAngle = intAngle;
@@ -313,6 +332,12 @@ int getAngle(double x, double y) {
   return intAngle;
 }
 
+void MoveToTarget(int x, int y, Position2dProxy& pos, PlayerClient& robot, int width, int height) {
+  double targetX = (x - width / 2) * scale;
+  double targetY = (height / 2 - y) * scale;
+  MoveToTarget(targetX, targetY, pos, robot);
+}
+
 void MoveToTarget(double targetX, double targetY, Position2dProxy& pos, PlayerClient& robot) {
   robot.Read();
   robot.Read();
@@ -321,7 +346,37 @@ void MoveToTarget(double targetX, double targetY, Position2dProxy& pos, PlayerCl
   double yaw = pos.GetYaw();
   int angleYaw = rtod(yaw);
   int angleRotate = getAngle(targetX - startX, targetY - startY);
-  cout << angleYaw << " " << angleRotate << endl;
+  //  cout << angleYaw << " " << angleRotate << endl;
+
+  pos.SetSpeed(0, dtor(angleRotate - angleYaw));
+  sleep(1);
+  pos.SetSpeed(0, 0);
+  double distance = sqrt(pow(targetX - startX, 2) + pow(targetY - startY, 2));
+  pos.SetSpeed(-distance, -distance, 0);
+  //pos.SetSpeed(-abs(targetX - startX), -abs(targetY - startY), 0);
+  //pos.SetSpeed((targetX-startX),(targetY-startY),0);
+  sleep(1);
+  pos.SetSpeed(0, 0);
+}
+
+void Wander(Position2dProxy & pos) {
+  double oldx = pos.GetXPos();
+  double oldy = pos.GetYPos();
+  while (true) {
+    pos.GetPlayerClient()->Read();
+    int forward = rand() % 2;
+    double v = 20 * scale;
+    if (forward) {
+      pos.SetSpeed(v, v, dtor(rand() % 360));
+    } else {
+      pos.SetSpeed(-v, -v, dtor(rand() % 360));
+    }
+    sleep(1);
+    pos.SetSpeed(0, 0);
+    if (pos.GetXPos() != oldx || pos.GetYPos() != oldy) {
+      break;
+    }
+  }
 }
 
 void MoveToPath(int* pathX, int *pathY, int length, Position2dProxy& pos, PlayerClient& robot, int width, int height) {
@@ -330,8 +385,35 @@ void MoveToPath(int* pathX, int *pathY, int length, Position2dProxy& pos, Player
     double targetX = (pathX[i] - width / 2) * scale;
     double targetY = (height / 2 - pathY[i]) * scale;
     MoveToTarget(targetX, targetY, pos, robot);
-
   }
+}
+
+void MoveOutObstacle(Position2dProxy& pos, int** map, int mapwidth, int mapheight) {
+  pos.GetPlayerClient()->Read();
+  int x = mapwidth / 2 + pos.GetXPos() / scale;
+  int y = mapheight / 2 - pos.GetYPos() / scale;
+  int obstaclerange = 5;
+  bool nearobstacle = false;
+  int k;
+  int l;
+  for (k = y - obstaclerange; k < y + obstaclerange; k++) {
+    for (l = x - obstaclerange; l < x + obstaclerange; l++) {
+      if (k < 0 || k >= mapheight || l < 0 || l >= mapwidth)
+        continue;
+      if (map[k][l] == OBSTACLE) {
+        nearobstacle = true;
+        break;
+      }
+    }
+    if (nearobstacle) break;
+  }
+  if (nearobstacle) {
+    int x2[1] = {2 * l - x};
+    int y2[1] = {2 * k - y};
+    MoveToPath(x2, y2, 1, pos, *pos.GetPlayerClient(), mapwidth, mapheight);
+    Wander(pos);
+  }
+
 }
 
 int main(int argc, char **argv) {
@@ -366,32 +448,44 @@ int main(int argc, char **argv) {
       }
       //cout<<endl;
     }
+    vector<int> planPathX;
+    vector<int> planPathY;
     while (!stop) {
 
-      robot.Read();
-      robot.Read();
-      // get localmap
-      int** localmap;
-      int localsize;
-      getMapLocal(localmap, pos, laser, localsize);
-      Mat localimage(localsize, localsize, CV_8UC1);
-      for (int i = 0; i < localsize; i++) {
-        for (int j = 0; j < localsize; j++) {
-          localimage.at<uchar > (i, j) = localmap[i][j]*255 / 2;
-        }
-      }
-      imshow("localmap", localimage);
+      int numberRotate = 2;
+      while (true) {
+        robot.Read();
+        robot.Read();
+        // get localmap
+        int** localmap;
+        int localsize;
+        getMapLocal(localmap, pos, laser, localsize);
+        //        Mat localimage(localsize, localsize, CV_8UC1);
+        //        for (int i = 0; i < localsize; i++) {
+        //          for (int j = 0; j < localsize; j++) {
+        //            localimage.at<uchar > (i, j) = localmap[i][j]*255 / 2;
+        //          }
+        //        }
+        //        imshow("localmap", localimage);
 
-      integrateToMapGlobal(map, localmap, pos, width, height, localsize);
-      for (int i = 0; i < mapimage.rows; i++) {
-        for (int j = 0; j < mapimage.cols; j++) {
-          mapimage.at<uchar > (i, j) = map[i][j]*255 / 2;
+        integrateToMapGlobal(map, localmap, pos, width, height, localsize);
+        for (int i = 0; i < mapimage.rows; i++) {
+          for (int j = 0; j < mapimage.cols; j++) {
+            mapimage.at<uchar > (i, j) = map[i][j]*255 / 2;
+          }
         }
-      }
-      imshow("carte", mapimage);
+        imshow("carte", mapimage);
+        pos.SetSpeed(0, 0, dtor(rand() % 360));
+        sleep(1);
+        if (numberRotate-- <= 0)
+          break;
+        pos.SetSpeed(0, 0, 0);
+      }      
+
       int destX;
       int destY;
-      findBestNextPoint(map, pos, destX, destY, width, height);
+      int range = laser.GetMaxRange() / scale;
+      findBestNextPoint(map, pos, destX, destY, width, height, range);
       cout << "target " << destX << "*" << destY << endl;
       int* pathX;
       int* pathY;
@@ -399,11 +493,41 @@ int main(int argc, char **argv) {
       int startX = width / 2 + pos.GetXPos() / scale;
       int startY = height / 2 - pos.GetYPos() / scale;
       AStarMapFinder(map, startX, startY, destX, destY, width, height, pathX, pathY, length);
-
-      MoveToTarget(1,1,pos,robot);
-      waitKey();
-
       //getchar();
+      Mat pathimage = mapimage.clone();
+      circle(pathimage, Point(startX, startY), 2, Scalar(0));
+      circle(pathimage, Point(destX, destY), 2, Scalar(0));
+      imshow("image path", pathimage);
+      if (waitKey(30) >= 0) continue;
+      if (length != -1) {
+        MoveToPath(pathX, pathY, length, pos, robot, width, height);
+
+        //        //        MoveToTarget(1, 1, pos, robot);
+        //        planPathX.clear();
+        //        planPathY.clear();
+        //        for (int i = 0; i < length; i++) {
+        //          circle(pathimage, Point(pathX[i], pathY[i]), 2, Scalar(0));
+        //
+        //          planPathX.insert(planPathX.begin(), pathX[i]);
+        //          planPathY.insert(planPathY.begin(), pathY[i]);
+        //        }
+        //        //getchar();
+        //
+        //        //      waitKey();
+      } else {
+        Wander(pos);
+      }
+      //      if (planPathX.size() > 0) {
+      //        //MoveToPath(pathX, pathY, length, pos, robot, width, height);
+      //        MoveToTarget(planPathX[0], planPathY[0], pos, robot, width, height);
+      //        planPathX.erase(planPathX.begin());
+      //        planPathY.erase(planPathY.begin());
+      //
+      //      } else {
+      //        Wander(pos);
+      //      }
+      MoveOutObstacle(pos, map, width, height);
+      imshow("image path", pathimage);
       if (waitKey(30) >= 0) continue;
     }
   } catch (PlayerCc::PlayerError e) {
