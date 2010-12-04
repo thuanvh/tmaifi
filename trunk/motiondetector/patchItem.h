@@ -21,9 +21,9 @@ using namespace cv;
 class PatchItem {
 public:
     int label;
-    Mat* image;
+//    Mat* image;
     int visited;
-    vector<double> caracteristic;
+//    vector<double> caracteristic;
     int minX;
     int minY;
     int maxX;
@@ -31,22 +31,24 @@ public:
     //centre of mesure
     int centerX;
     int centerY;
+    int vx;
+    int vy;
     Scalar color;
     KalmanFilter* kalman;
-
-    ~PatchItem() {
-        if (image != NULL)
-            delete image;
-        if (kalman != NULL)
-            delete kalman;
-    }
+    PatchItem();
+    PatchItem(int x, int y, int vx, int vy);
+    ~PatchItem();
     // predict
     int predictX;
     int predictY;
+    int predictVx;
+    int predictVy;
     
     // correct
     int correctX;
     int correctY;
+    int correctVx;
+    int correctVy;
 
     void predict();
     void correct();

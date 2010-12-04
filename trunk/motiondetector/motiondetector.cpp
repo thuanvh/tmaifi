@@ -40,9 +40,9 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
   Mat* frame = NULL;
   Mat imgsubtract;
 
-  Mat predictImage=Mat::zeros(height,width,CV_8UC3);
-  Mat measureImage=Mat::zeros(height,width,CV_8UC3);
-  Mat correctImage=Mat::zeros(height,width,CV_8UC3);
+  Mat predictImage = Mat::zeros(height, width, CV_8UC3);
+  Mat measureImage = Mat::zeros(height, width, CV_8UC3);
+  Mat correctImage = Mat::zeros(height, width, CV_8UC3);
 
   vector<PatchItem*> trackingItemList;
   int itemLabel = 0;
@@ -73,14 +73,14 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
         cvtColor(backImage, img2, CV_RGB2GRAY);
         compare(img1, img2, diff, (int) CMP_EQ);
         //        compare(*frame, backImage, diff, (int) CMP_EQ);
-//        imshow("diff", diff);
+        //        imshow("diff", diff);
       }
       if (matqueue.size() > queuesize) {
         matqueue.front()->release();
         delete matqueue.front();
         matqueue.erase(matqueue.begin());
       }
-//      imshow("video", *frame);
+      //      imshow("video", *frame);
     }
 
 
@@ -115,7 +115,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     //      imshow(frameNo, *matqueue[i]);
     //      cout << matqueue[i] << "-";
     //    }
-//    imshow("background", backImage);
+    //    imshow("background", backImage);
     Mat currentFrame = (*frame).clone();
     Mat currentFrameLab;
     cvtColor(currentFrame, currentFrameLab, CV_RGB2Lab);
@@ -143,13 +143,13 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     cvtColor(imgsubtract, subtractGray, CV_RGB2GRAY);
 
 
-//    imshow("diff", subtractGray);
+    //    imshow("diff", subtractGray);
     threshold(subtractGray, imgerode, 30, 255, THRESH_BINARY);
 
     dilate(imgerode, imgerode, mat4c, Point(-1, -1), 1);
     erode(imgerode, imgerode, mat4c, Point(-1, -1), 4);
     dilate(imgerode, imgerode, mat4c, Point(-1, -1), 8);
-//    imshow("morpho", imgerode);
+    //    imshow("morpho", imgerode);
     //
     //        printImage(imgerode);
     //        waitKey();
@@ -203,35 +203,35 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     FrameMotionMarkingLabeled(currentFrameMarkLabel, trackingItemList);
     imshow("currentFrameLabel", currentFrameMarkLabel);
     cout << "end marking label" << endl;
-    cout << "predict"<<endl;
+    cout << "predict" << endl;
     //    //Predict
-    for(int i=0; i<trackingItemList.size(); i++){
+    for (int i = 0; i < trackingItemList.size(); i++) {
       trackingItemList[i]->predict();
     }
-    DotMotionPredictMarking(predictImage,trackingItemList);
-    imshow("predict Image",predictImage);
-    cout << "measure"<<endl;
-    DotMotionMesureMarking(measureImage,trackingItemList);
-    imshow("measure Image",measureImage);
+    DotMotionPredictMarking(predictImage, trackingItemList);
+    imshow("predict Image", predictImage);
+    cout << "measure" << endl;
+    DotMotionMesureMarking(measureImage, trackingItemList);
+    imshow("measure Image", measureImage);
 
     //    //Analyse Kalman
-    cout<<"correct"<<endl;
-    for(int i=0; i<trackingItemList.size(); i++){
+    cout << "correct" << endl;
+    for (int i = 0; i < trackingItemList.size(); i++) {
       trackingItemList[i]->correct();
     }
-    DotMotionCorrectMarking(correctImage,trackingItemList);
+    DotMotionCorrectMarking(correctImage, trackingItemList);
     imshow("correct image", correctImage);
 
     //Recalculate points
     //Draw result
 
-//    waitKey();
+    //    waitKey();
     //    getchar();
     delete []maxX;
     delete []maxY;
     delete []minX;
     delete []minY;
-        if (waitKey(30) >= 0) break;
+    if (waitKey(30) >= 0) break;
   }
 }
 //#define CARACTERISTIC_SIZE
@@ -353,11 +353,11 @@ double getColorHistoDistance(const vector<double>& learningVector, const vector<
   return distance;
 }
 
-double GetImageDistance(const PatchItem& image1, const PatchItem& image2) {
-  //return 0;
-  double distance = getColorHistoDistance(image1.caracteristic, image2.caracteristic);
-  return distance;
-}
+//double GetImageDistance(const PatchItem& image1, const PatchItem& image2) {
+//  //return 0;
+//  double distance = getColorHistoDistance(image1.caracteristic, image2.caracteristic);
+//  return distance;
+//}
 
 void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited) {
   cout << "list for compare" << mapImage.size() << endl;
@@ -395,10 +395,17 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
     //    waitKey();
     // seuil
     if (matchingIndex >= 0) {
-      patch->label = mapImage[matchingIndex]->label;
-      patch->visited = mapImage[matchingIndex]->visited;
-      patch->color = mapImage[matchingIndex]->color;
+      //      patch->label = mapImage[matchingIndex]->label;
+      //      patch->visited = mapImage[matchingIndex]->visited;
+      //      patch->color = mapImage[matchingIndex]->color;
+      //      patch->vx = mapImage[matchingIndex]->centerX - patch->centerX;
+      //      patch->vy = mapImage[matchingIndex]->centerY - patch->centerY;
+      mapImage[matchingIndex]->vx = patch->centerX - mapImage[matchingIndex]->centerX;
+      mapImage[matchingIndex]->vy = patch->centerY - mapImage[matchingIndex]->centerY;
+      mapImage[matchingIndex]->centerY = patch->centerX;
+      mapImage[matchingIndex]->centerY = patch->centerY;
       //mapImage[i] = patch;
+//      delete patch;
     } else {
       patch->label = totalLabel++;
       patch->visited = defaultVisited;
@@ -408,6 +415,7 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
       patch->color = Scalar(r, g, b);
       //init kalman
       patch->initKalman();
+      mapImage.push_back(patch);
     }
   }
   vector<PatchItem*>::iterator iter;
@@ -416,29 +424,30 @@ void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapI
     a->visited--;
     if (a->visited <= 0) {
       cout << "delete expire" << a->label << endl;
-      delete a;
       mapImage.erase(iter);
+//      delete a;
+      
     }
   }
   //mapImage.clear();
-  for (int i = 0; i < listImage.size(); i++) {
-    PatchItem* patch = listImage[i];
-    // assign matching
-    int j;
-    for (j = 0; j < mapImage.size(); j++) {
-      PatchItem* matchingPatch = mapImage[j];
-      if (matchingPatch->label == patch->label) {
-        cout << "change old" << matchingPatch->label << endl;
-        delete matchingPatch;
-        mapImage[j] = patch;
-        break;
-      }
-    }
-    //add nouvel
-    if (j == mapImage.size()) {      
-      mapImage.push_back(patch);
-    }
-  }
+  //  for (int i = 0; i < listImage.size(); i++) {
+  //    PatchItem* patch = listImage[i];
+  //    // assign matching
+  //    int j;
+  //    for (j = 0; j < mapImage.size(); j++) {
+  //      PatchItem* matchingPatch = mapImage[j];
+  //      if (matchingPatch->label == patch->label) {
+  //        cout << "change old" << matchingPatch->label << endl;
+  //        //        delete matchingPatch;
+  //        mapImage[j] = patch;
+  //        break;
+  //      }
+  //    }
+  //    //add nouvel
+  //    if (j == mapImage.size()) {
+  //      mapImage.push_back(patch);
+  //    }
+  //  }
 }
 
 void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, vector<PatchItem*>& listImage) {
@@ -456,16 +465,16 @@ void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, i
     int height = abs(maxY[i] - minY[i]);
     int centerX = (maxX[i] + minX[i]) / 2;
     int centerY = (maxY[i] + minY[i]) / 2;
-    Mat* region = new Mat();
-    getRectSubPix(image, Size(width, height), Point(centerX, centerY), *region);
+
     //    cout<<"end cut image"<<endl;
     PatchItem* patch = new PatchItem();
     //    imshow("region", *region);
     //    waitKey();
-
-    patch->image = region;
+    //    Mat* region = new Mat();
+    //    getRectSubPix(image, Size(width, height), Point(centerX, centerY), *region);
+    //    patch->image = region;
     patch->label = -1;
-    GetCaracteristic(*patch->image, patch->caracteristic);
+    //    GetCaracteristic(*patch->image, patch->caracteristic);
     patch->centerX = centerX;
     patch->centerY = centerY;
     patch->maxX = maxX[i];
@@ -499,19 +508,20 @@ void DotMotionMesureMarking(Mat& image, vector<PatchItem*> trackingList) {
     circle(image, Point(item->centerX, item->centerY), 1, item->color, 1, 8, 0);
   }
 }
+
 void DotMotionPredictMarking(Mat& image, vector<PatchItem*> trackingList) {
   for (int i = 0; i < trackingList.size(); i++) {
     PatchItem* item = trackingList[i];
     circle(image, Point(item->predictX, item->predictY), 1, item->color, 1, 8, 0);
   }
 }
+
 void DotMotionCorrectMarking(Mat& image, vector<PatchItem*> trackingList) {
   for (int i = 0; i < trackingList.size(); i++) {
     PatchItem* item = trackingList[i];
     circle(image, Point(item->correctX, item->correctY), 1, item->color, 1, 8, 0);
   }
 }
-
 
 void FrameMotionMarking(Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY) {
   for (int i = 0; i < maxLabel; i++) {
@@ -548,88 +558,6 @@ void FrameMotionDetect(const Mat& image, int maxLabel, int* maxX, int* maxY, int
       }
     }
   }
-}
-
-int KalmanMotionDetection(int argc, char** argv) {
-  const float A[] = {1, 1, 0, 1};
-
-  IplImage* img = cvCreateImage(cvSize(500, 500), 8, 3);
-  CvKalman* kalman = cvCreateKalman(2, 1, 0);
-  CvMat* state = cvCreateMat(2, 1, CV_32FC1); /* (phi, delta_phi) */
-  CvMat* process_noise = cvCreateMat(2, 1, CV_32FC1);
-  CvMat* measurement = cvCreateMat(1, 1, CV_32FC1);
-  CvRNG rng = cvRNG(-1);
-  char code = -1;
-
-  cvZero(measurement);
-  cvNamedWindow("Kalman", 1);
-
-  for (;;) {
-    cvRandArr(&rng, state, CV_RAND_NORMAL, cvRealScalar(0), cvRealScalar(0.1));
-
-    memcpy(kalman->transition_matrix->data.fl, A, sizeof (A));
-    cvSetIdentity(kalman->measurement_matrix, cvRealScalar(1));
-    cvSetIdentity(kalman->process_noise_cov, cvRealScalar(1e-5));
-    cvSetIdentity(kalman->measurement_noise_cov, cvRealScalar(1e-1));
-    cvSetIdentity(kalman->error_cov_post, cvRealScalar(1));
-    cvRandArr(&rng, kalman->state_post, CV_RAND_NORMAL, cvRealScalar(0), cvRealScalar(0.1));
-
-    for (;;) {
-#define calc_point(angle)                                      \
-                cvPoint( cvRound(img->width/2 + img->width/3*cos(angle)),  \
-                         cvRound(img->height/2 - img->width/3*sin(angle)))
-
-      float state_angle = state->data.fl[0];
-      CvPoint state_pt = calc_point(state_angle);
-
-      const CvMat* prediction = cvKalmanPredict(kalman, 0);
-      float predict_angle = prediction->data.fl[0];
-      CvPoint predict_pt = calc_point(predict_angle);
-      float measurement_angle;
-      CvPoint measurement_pt;
-
-      cvRandArr(&rng, measurement, CV_RAND_NORMAL, cvRealScalar(0),
-        cvRealScalar(sqrt(kalman->measurement_noise_cov->data.fl[0])));
-
-      /* generate measurement */
-      cvMatMulAdd(kalman->measurement_matrix, state, measurement, measurement);
-
-      measurement_angle = measurement->data.fl[0];
-      measurement_pt = calc_point(measurement_angle);
-
-      /* plot points */
-#define draw_cross( center, color, d )                                 \
-                cvLine( img, cvPoint( center.x - d, center.y - d ),                \
-                             cvPoint( center.x + d, center.y + d ), color, 1, CV_AA, 0); \
-                cvLine( img, cvPoint( center.x + d, center.y - d ),                \
-                             cvPoint( center.x - d, center.y + d ), color, 1, CV_AA, 0 )
-
-      cvZero(img);
-      draw_cross(state_pt, CV_RGB(255, 255, 255), 3);
-      draw_cross(measurement_pt, CV_RGB(255, 0, 0), 3);
-      draw_cross(predict_pt, CV_RGB(0, 255, 0), 3);
-      cvLine(img, state_pt, measurement_pt, CV_RGB(255, 0, 0), 3, CV_AA, 0);
-      cvLine(img, state_pt, predict_pt, CV_RGB(255, 255, 0), 3, CV_AA, 0);
-
-      cvKalmanCorrect(kalman, measurement);
-
-      cvRandArr(&rng, process_noise, CV_RAND_NORMAL, cvRealScalar(0),
-        cvRealScalar(sqrt(kalman->process_noise_cov->data.fl[0])));
-      cvMatMulAdd(kalman->transition_matrix, state, process_noise, state);
-
-      cvShowImage("Kalman", img);
-      code = (char) cvWaitKey(100);
-
-      if (code > 0)
-        break;
-    }
-    if (code == 27 || code == 'q' || code == 'Q')
-      break;
-  }
-
-  cvDestroyWindow("Kalman");
-
-  return 0;
 }
 
 void printImageLabel(const Mat& img) {
