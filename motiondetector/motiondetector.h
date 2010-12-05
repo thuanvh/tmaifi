@@ -27,12 +27,15 @@ using namespace cv;
 #define ERR_FILE_OPEN "Could not open file"
 #define ERR_FUNC_MISSING "Function parametre is missing."
 
+#define STR_TRACKING_POSITION "pos"
+#define STR_TRACKING_POSITION_VELOCITY "posveloc"
+
 #define MAXINT 1e6
 #define MININT -1e6
 
 
 
-void MotionDetection(char* videoFile, int fps, int queuesize);
+void MotionDetection(char* videoFile, int fps, int queueSize, int rangeMatching, char* outFileDir, int trackingType);
 
 
 // Normalize histogramme
@@ -55,9 +58,10 @@ void GetCaracteristic(const Mat& image, vector<double>& caracteristic);
 double getColorHistoDistance(const vector<double>& learningVector, const vector<double>& testingVector);
 
 double GetImageDistance(const PatchItem& image1, const PatchItem& image2);
-void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited, int listTempImageLength);
+void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, 
+        int& totalLabel, int defaultVisited, int listTempImageLength, int rangeMatching,int width, int height);
 void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited);
-void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length);
+void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length, int trackingType);
 void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, vector<PatchItem*>& listImage);
 void FrameMotionFilter(int maxLabel, int* maxX, int* maxY, int* minX, int* minY);
 void markItem(Mat& markedImage, vector<PatchItem*> trackingList);
@@ -77,5 +81,8 @@ void DotMotionMesureMarking(Mat& image, vector<PatchItem*> trackingList);
 void DotMotionPredictMarking(Mat& image, vector<PatchItem*> trackingList);
 void DotMotionCorrectMarking(Mat& image, vector<PatchItem*> trackingList);
 
+void saveImageCombination(char* outDir, Mat& imgpredict, Mat& imgcorrect, Mat& imgmesure) ;
+
+void saveImageOfObject(char* outDir, vector<PatchItem*>& trackingItemList);
 #endif	/* MOTIONDETECTOR_H */
 
