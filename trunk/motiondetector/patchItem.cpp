@@ -8,17 +8,18 @@ PatchItem::PatchItem() {
   vy = 0;
 }
 
-PatchItem::PatchItem(int x, int y, int vx, int vy) {
+PatchItem::PatchItem(int x, int y, int vx, int vy, int typeOfTracking) {
   centerX = x;
   centerY = y;
   this->vx = vx;
   this->vy = vy;
+  this->typeOfTracking = typeOfTracking;
 }
 
 PatchItem::~PatchItem() {
-  cout<<"~~~~"<<endl;
-//  if (image != NULL)
-//    delete image;
+  cout << "~~~~" << endl;
+  //  if (image != NULL)
+  //    delete image;
   if (kalman != NULL)
     delete kalman;
 }
@@ -26,17 +27,31 @@ PatchItem::~PatchItem() {
 void PatchItem::initKalman() {
 
   kalman = new KalmanFilter();
-  kalman->init(4, 4, 0);
-  //kalman->init(4,2,0);
-  const float A[4][4] = {
-    1, 0, 1, 0,
-    0, 1, 0, 1,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  };
-  for (int i = 0; i <= 4; i++) {
-    for (int j = 0; j <= 4; j++) {
-      kalman->transitionMatrix.at<float>(i, j) = A[i][j];
+  if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
+    kalman->init(4, 4, 0);
+    //kalman->init(4,2,0);
+    const float A[4][4] = {
+      1, 0, 1, 0,
+      0, 1, 0, 1,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    };
+    for (int i = 0; i <= 4; i++) {
+      for (int j = 0; j <= 4; j++) {
+        kalman->transitionMatrix.at<float>(i, j) = A[i][j];
+      }
+    }
+  } else if (typeOfTracking == TRACKING_POSITION) {
+    kalman->init(2, 2, 0);
+    //kalman->init(4,2,0);
+    const float A[2][2] = {
+      1, 0,
+      0, 1,
+    };
+    for (int i = 0; i <= 2; i++) {
+      for (int j = 0; j <= 2; j++) {
+        kalman->transitionMatrix.at<float>(i, j) = A[i][j];
+      }
     }
   }
   //  kalman->transitionMatrix.at<float>(0, 0) = 1;
@@ -49,11 +64,15 @@ void PatchItem::initKalman() {
   setIdentity(kalman->processNoiseCov, Scalar(1e-5));
   setIdentity(kalman->measurementNoiseCov, Scalar(1e-1));
   setIdentity(kalman->errorCovPost, Scalar(1));
-  kalman->statePost.at<float>(0, 0) = centerX;
-  kalman->statePost.at<float>(1, 0) = centerY;
-  kalman->statePost.at<float>(2, 0) = vx;
-  kalman->statePost.at<float>(3, 0) = vy;
-
+  if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
+    kalman->statePost.at<float>(0, 0) = centerX;
+    kalman->statePost.at<float>(1, 0) = centerY;
+    kalman->statePost.at<float>(2, 0) = vx;
+    kalman->statePost.at<float>(3, 0) = vy;
+  } else if (typeOfTracking == TRACKING_POSITION) {
+    kalman->statePost.at<float>(0, 0) = centerX;
+    kalman->statePost.at<float>(1, 0) = centerY;
+  }
   //memcpy(kalman->transitionMatrix->, A, sizeof (A));
   //    cvSetIdentity(kalman->measurement_matrix, cvRealScalar(1));
   //    cvSetIdentity(kalman->process_noise_cov, cvRealScalar(1e-5));
@@ -72,29 +91,75 @@ void PatchItem::initKalman() {
 void PatchItem::predict() {
   //  getchar();
   Mat predictMat = kalman->predict();
-  predictX = predictMat.at<float>(0, 0);
-  predictY = predictMat.at<float>(1, 0);
-  predictVx = predictMat.at<float>(2, 0);
-  predictVy = predictMat.at<float>(3, 0);
-  cout << "predict result " << predictX << "*" << predictY << " " << predictVx << " " << predictVy<< endl;
+  if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
+    predictX = predictMat.at<float>(0, 0);
+    predictY = predictMat.at<float>(1, 0);
+    predictVx = predictMat.at<float>(2, 0);
+    predictVy = predictMat.at<float>(3, 0);
+  } else if (typeOfTracking == TRACKING_POSITION) {
+    predictX = predictMat.at<float>(0, 0);
+    predictY = predictMat.at<float>(1, 0);
+  }
+
+  cout << "predict result " << predictX << "*" << predictY << " " << predictVx << " " << predictVy << endl;
 }
 
 void PatchItem::correct() {
-  Mat mesure = Mat::ones(4, 1, CV_32FC1);
-  mesure.at<float>(0, 0) = centerX;
-  mesure.at<float>(1, 0) = centerY;
-  mesure.at<float>(2, 0) = vx;
-  mesure.at<float>(3, 0) = vy;
-  Mat correctMat = kalman->correct(mesure);
-  correctX = correctMat.at<float>(0, 0);
-  correctY = correctMat.at<float>(1, 0);
-  correctVx = correctMat.at<float>(2, 0);
-  correctVy = correctMat.at<float>(3, 0);
+
+  if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
+    Mat mesure = Mat::ones(4, 1, CV_32FC1);
+    mesure.at<float>(0, 0) = centerX;
+    mesure.at<float>(1, 0) = centerY;
+    mesure.at<float>(2, 0) = vx;
+    mesure.at<float>(3, 0) = vy;
+    Mat correctMat = kalman->correct(mesure);
+    correctX = correctMat.at<float>(0, 0);
+    correctY = correctMat.at<float>(1, 0);
+    correctVx = correctMat.at<float>(2, 0);
+    correctVy = correctMat.at<float>(3, 0);
+
+  } else if (typeOfTracking == TRACKING_POSITION) {
+    Mat mesure = Mat::ones(2, 1, CV_32FC1);
+    mesure.at<float>(0, 0) = centerX;
+    mesure.at<float>(1, 0) = centerY;
+    Mat correctMat = kalman->correct(mesure);
+    correctX = correctMat.at<float>(0, 0);
+    correctY = correctMat.at<float>(1, 0);
+  }
+
   cout << "correct result " << correctX << "*" << correctY << " " << correctVx << " " << correctVy << endl;
 }
-void PatchItem::refresh(){
+
+void PatchItem::refresh() {
 
 }
+
+void PatchItem::draw() {
+  cout << "draw image" << endl;
+//  getchar();
+  // correct red
+  circle(*imgcorrect, Point(correctX, correctY), 1, Scalar(0, 255, 0), 1, 8, 0);
+  circle(*imgcombine, Point(correctX, correctY), 1, Scalar(0, 255, 0), 1, 8, 0);
+  // predire bleu
+  circle(*imgpredict, Point(predictX, predictY), 1, Scalar(255, 0, 0), 1, 8, 0);
+  circle(*imgcombine, Point(predictX, predictY), 1, Scalar(255, 0, 0), 1, 8, 0);
+  // measure vert
+  circle(*imgmeasure, Point(centerX, centerY), 1, Scalar(0, 0, 255), 1, 8, 0);
+  circle(*imgcombine, Point(centerX, centerY), 1, Scalar(0, 0, 255), 1, 8, 0);
+  cout << "draw image" << endl;
+//  getchar();
+}
+
+void PatchItem::initImage(int width, int height) {
+  cout << "init image" << endl;
+  //(int _rows, int _cols, int _type, const Scalar& _s)
+  imgcombine = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
+  imgcorrect = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
+  imgpredict = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
+  imgmeasure = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
+  cout << "init image" << endl;
+}
+
 int KalmanMotionDetection(int argc, char** argv) {
   const float A[] = {1, 1, 0, 1};
 
@@ -179,7 +244,8 @@ int KalmanMotionDetection(int argc, char** argv) {
 
 void patchItemTest() {
   int x = 1, y = 1, vx = 0, vy = 0;
-  PatchItem patch(x, y, vx, vy);
+  int type = TRACKING_POSITION;
+  PatchItem patch(x, y, vx, vy, type);
   patch.initKalman();
   while (true) {
     patch.predict();

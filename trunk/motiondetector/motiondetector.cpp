@@ -14,7 +14,9 @@
 using namespace std;
 using namespace cv;
 
-void MotionDetection(char* videoFile, int fps, int queuesize) {
+//void MotionDetection(char* videoFile, int fps, int queuesize) {
+
+void MotionDetection(char* videoFile, int fps, int queuesize, int rangeMatching, char* outFileDir, int trackingType) {
   cout << "begin" << endl;
   VideoCapture cap;
   string vf(videoFile);
@@ -48,6 +50,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
   int itemLabel = 0;
   int defaultVisited = 2;
   while (true) {
+    
     {
       //      cap.set(CV_CAP_PROP_POS_MSEC, time);
       //      cap.set(CV_CAP_PROP_POS_FRAMES, time);
@@ -187,15 +190,25 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
 
     imshow("differode", imgerode);
     imshow("currentFrame", currentFrame);
+
+
+    cout << "predict" << endl;
+    //    //Predict
+    for (int i = 0; i < trackingItemList.size(); i++) {
+      trackingItemList[i]->predict();
+    }
+    DotMotionPredictMarking(predictImage, trackingItemList);
+    imshow("predict Image", predictImage);
+
     //    imshow("labelImage", labeledColorImage);
     //vector<PatchItem*> currentListImage;
     PatchItem** currentListImage;
     int currentListImageLength;
     // extraire une liste d'objets
-    FrameMotionExtraire(currentFrame, maxLabel, maxX, maxY, minX, minY, currentListImage, currentListImageLength);
+    FrameMotionExtraire(currentFrame, maxLabel, maxX, maxY, minX, minY, currentListImage, currentListImageLength, trackingType);
     cout << "end frame motion extraire" << endl;
     // create image de points
-    FrameMotionMatching(currentListImage, trackingItemList, itemLabel, defaultVisited, currentListImageLength);
+    FrameMotionMatching(currentListImage, trackingItemList, itemLabel, defaultVisited, currentListImageLength, rangeMatching, width, height);
     cout << "end frame motion matching" << endl;
     // trackingItemList
     Mat itemPointImage = Mat::zeros(imgerode.rows, imgerode.cols, CV_32SC1);
@@ -205,13 +218,7 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     FrameMotionMarkingLabeled(currentFrameMarkLabel, trackingItemList);
     imshow("currentFrameLabel", currentFrameMarkLabel);
     cout << "end marking label" << endl;
-    cout << "predict" << endl;
-    //    //Predict
-    for (int i = 0; i < trackingItemList.size(); i++) {
-      trackingItemList[i]->predict();
-    }
-    DotMotionPredictMarking(predictImage, trackingItemList);
-    imshow("predict Image", predictImage);
+    
     cout << "measure" << endl;
     DotMotionMesureMarking(measureImage, trackingItemList);
     imshow("measure Image", measureImage);
@@ -224,16 +231,44 @@ void MotionDetection(char* videoFile, int fps, int queuesize) {
     DotMotionCorrectMarking(correctImage, trackingItemList);
     imshow("correct image", correctImage);
 
-    //Recalculate points
-    //Draw result
-
-        waitKey();
+    //Save image
+    saveImageCombination(outFileDir, predictImage, correctImage, measureImage);
+    saveImageOfObject(outFileDir, trackingItemList);
+    waitKey();
     //    getchar();
     delete []maxX;
     delete []maxY;
     delete []minX;
     delete []minY;
     if (waitKey(30) >= 0) break;
+  }
+}
+
+void saveImageCombination(char* outDir, Mat& imgpredict, Mat& imgcorrect, Mat& imgmesure) {
+  cout << "save image" << endl;
+  char strpredict[255], strmesure[255], strcorrect[255];
+  sprintf(strpredict, "%s/image.predict.jpg", outDir);
+  sprintf(strmesure, "%s/image.mesure.jpg", outDir);
+  sprintf(strcorrect, "%s/image.correct.jpg", outDir);
+  imwrite(strpredict, imgpredict);
+  imwrite(strcorrect, imgcorrect);
+  imwrite(strmesure, imgmesure);
+  cout << "save image" << endl;
+}
+
+void saveImageOfObject(char* outDir, vector<PatchItem*>& trackingItemList) {
+  for (int i = 0; i < trackingItemList.size(); i++) {
+    PatchItem* item = trackingItemList[i];
+    char strpredict[255], strmesure[255], strcorrect[255], strcombine[255];
+    sprintf(strpredict, "%s/%d.predict.jpg", outDir, item->label);
+    sprintf(strmesure, "%s/%d.mesure.jpg", outDir, item->label);
+    sprintf(strcorrect, "%s/%d.correct.jpg", outDir, item->label);
+    sprintf(strcombine, "%s/%d.combine.jpg", outDir, item->label);
+    item->draw();
+    imwrite(strpredict, *item->imgpredict);
+    imwrite(strmesure, *item->imgmeasure);
+    imwrite(strcorrect, *item->imgcorrect);
+    imwrite(strcombine, *item->imgcombine);
   }
 }
 //#define CARACTERISTIC_SIZE
@@ -361,19 +396,20 @@ double getColorHistoDistance(const vector<double>& learningVector, const vector<
 //  return distance;
 //}
 
-void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited, int listTempImageLength) {
+void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage,
+  int& totalLabel, int defaultVisited, int listTempImageLength, int rangeMatching, int width, int height) {
   cout << "list for compare" << mapImage.size() << endl;
-  int measureFrameSize = 250;
+  //int measureFrameSize = 250;
   for (int i = 0; i < listTempImageLength; i++) {
     PatchItem* patch = listImage[i];
     //    imshow("patch", * (patch->image));
     double minDistance = 1e20;
     int matchingIndex = -1;
     //    cout << "distance:";
-    int frameMinX = patch->centerX - measureFrameSize / 2;
-    int frameMaxX = patch->centerX + measureFrameSize / 2;
-    int frameMinY = patch->centerY - measureFrameSize / 2;
-    int frameMaxY = patch->centerY + measureFrameSize / 2;
+    int frameMinX = patch->centerX - rangeMatching / 2;
+    int frameMaxX = patch->centerX + rangeMatching / 2;
+    int frameMinY = patch->centerY - rangeMatching / 2;
+    int frameMaxY = patch->centerY + rangeMatching / 2;
     for (int j = 0; j < mapImage.size(); j++) {
       //      double distance = GetImageDistance(*patch, *mapImage[j]);
       //      if (minDistance > distance) {
@@ -407,14 +443,14 @@ void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, i
       mapImage[matchingIndex]->vy = patch->centerY - mapImage[matchingIndex]->centerY;
       mapImage[matchingIndex]->centerY = patch->centerX;
       mapImage[matchingIndex]->centerY = patch->centerY;
-      mapImage[matchingIndex]->minX=patch->minX;
-      mapImage[matchingIndex]->maxX=patch->maxX;
-      mapImage[matchingIndex]->minY=patch->minY;
-      mapImage[matchingIndex]->maxY=patch->maxY;
+      mapImage[matchingIndex]->minX = patch->minX;
+      mapImage[matchingIndex]->maxX = patch->maxX;
+      mapImage[matchingIndex]->minY = patch->minY;
+      mapImage[matchingIndex]->maxY = patch->maxY;
       mapImage[matchingIndex]->visited++;
       //mapImage[i] = patch;
       listImage[i] = NULL;
-//      delete patch;
+      //      delete patch;
     } else {
       patch->label = totalLabel++;
       patch->visited = defaultVisited;
@@ -424,6 +460,7 @@ void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, i
       patch->color = Scalar(r, g, b);
       //init kalman
       patch->initKalman();
+      patch->initImage(width, height);
       mapImage.push_back(patch);
       listImage[i] = NULL;
     }
@@ -435,7 +472,7 @@ void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, i
     if (a->visited <= 0) {
       cout << "delete expire" << a->label << endl;
       mapImage.erase(iter);
-//      delete a;
+      //      delete a;
 
     }
   }
@@ -554,7 +591,8 @@ void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, i
 //  //  }
 //}
 
-void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length) {
+void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY,
+  PatchItem**& listImage, int& length, int trackingType) {
   length = 0;
   for (int i = 0; i < maxLabel; i++) {
     //    cout << i << endl;
@@ -595,6 +633,7 @@ void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, i
     patch->minX = minX[i];
     patch->maxY = maxY[i];
     patch->minY = minY[i];
+    patch->typeOfTracking = trackingType;
     listImage[listIndex++] = patch;
   }
 }

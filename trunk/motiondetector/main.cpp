@@ -26,12 +26,12 @@ int main(int argc, char** argv) {
     char* refFilePath = NULL;
     char* refOutFilePath = NULL;
     char* refRefFilePath = NULL;
-    char* histoName = NULL;
+    int trackingType =0;
     float threshold = 1;
     int queueSize = 5;
     int numberNeighbor = 10;
     int segmblocksize = 32;
-    int numberGroup = 2;
+    int rangeMatching = 30;
     int fps = 10;
     // Analyser des parametres entres
     for (int i = 0; i < argc; i++) {
@@ -47,10 +47,15 @@ int main(int argc, char** argv) {
         continue;
       }
       // load histogram
-      if (strcmp(argv[i], "-name") == 0) {
+      if (strcmp(argv[i], "-tracking-type") == 0) {
         i++;
         if (i < argc) {
-          histoName = argv[i];
+          if (strcmp(argv[i], STR_TRACKING_POSITION) == 0)
+            trackingType = TRACKING_POSITION;
+          else if (strcmp(argv[i], STR_TRACKING_POSITION_VELOCITY) == 0)
+            trackingType = TRACKING_POSITION_VELOCITY;
+          else
+            throw ERR_FILE_MISSING;
         } else {
           throw ERR_FILE_MISSING;
         }
@@ -89,17 +94,17 @@ int main(int argc, char** argv) {
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-num-group") == 0) {
+      if (strcmp(argv[i], "-range-matching") == 0) {
         i++;
         if (i < argc) {
-          numberGroup = atoi(argv[i]);
+          rangeMatching = atoi(argv[i]);
         } else {
           throw ERR_FILE_MISSING;
         }
         continue;
       }
       // directory reference
-      if (strcmp(argv[i], "-queue-size") == 0) {
+      if (strcmp(argv[i], "-queue-bg-size") == 0) {
         i++;
         if (i < argc) {
           queueSize = atoi(argv[i]);
@@ -142,7 +147,7 @@ int main(int argc, char** argv) {
 
     }
     cout << refFilePath << endl;
-    MotionDetection(refFilePath, fps, queueSize);
+    MotionDetection(refFilePath, fps, queueSize, rangeMatching, refFileDir, trackingType);
 
 
   } catch (const char* e) {
@@ -156,16 +161,17 @@ int main(int argc, char** argv) {
 void printHelp() {
 
   cout << std::endl << "Using:" << std::endl;
-  cout << "texture -learn-dir « répertoire de l'apprentissage » ";
-  cout << "-name « nom de sample » ";
-  cout << "-testing-file « fichier de test » ";
-  cout << "-learning-file « fichier sorti de test » ";
-  cout << "-segment-file « fichier de segmentation » ";
-  cout << "-segment-block-size « size of segment block » ";
-  cout << "-num-color « niveau de gris » ";
-  cout << "-num-group « nombre de groupe » ";
-  cout << "-cross-test-percent « percent » ";
-  cout << "-num-neighbor « number of neighbor  » ";
-  cout << "-cmd « learn | test | crosstest | segment» ";
+  cout << "texture -video-file « chemin de video » ";
+  cout << "-queue-bg-size « nombre de trame de plan arrière » ";
+  cout << "-fps « la distance entre deux trames à manipuler » ";
+//  cout << "-learning-file « fichier sorti de test » ";
+  cout << "-range-matching « la taille de fenêtre de chercher des objets cohérents » ";
+  cout << "-out-dir « la répertoire de sortie » ";
+
+//  cout << "-num-color « niveau de gris » ";
+//  cout << "-num-group « nombre de groupe » ";
+//  cout << "-cross-test-percent « percent » ";
+//  cout << "-num-neighbor « number of neighbor  » ";
+  cout << "-tracking-type « pos | posveloc » ";
   cout << std::endl;
 }

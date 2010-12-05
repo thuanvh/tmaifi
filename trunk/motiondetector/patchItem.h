@@ -18,6 +18,10 @@
 #include <cstring>
 #include <stdio.h>
 using namespace cv;
+
+#define TRACKING_POSITION 0
+#define TRACKING_POSITION_VELOCITY 1
+
 class PatchItem {
 public:
     int label;
@@ -36,8 +40,9 @@ public:
     Scalar color;
     KalmanFilter* kalman;
     PatchItem();
-    PatchItem(int x, int y, int vx, int vy);
+    PatchItem(int x, int y, int vx, int vy, int typeOfTracking);
     ~PatchItem();
+    int typeOfTracking;
     // predict
     int predictX;
     int predictY;
@@ -50,9 +55,16 @@ public:
     int correctVx;
     int correctVy;
 
+    Mat* imgpredict;
+    Mat* imgcorrect;
+    Mat* imgmeasure;
+    Mat* imgcombine;
+    
     void predict();
     void correct();
     void initKalman();
+    void initImage(int width, int height);
+    void draw();
     void refresh();
 };
 
