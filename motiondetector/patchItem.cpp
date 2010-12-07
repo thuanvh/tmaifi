@@ -6,6 +6,8 @@ PatchItem::PatchItem() {
   centerY = 0;
   vx = 0;
   vy = 0;
+  kalman=NULL;
+  imgcombine=imgcorrect=imgmeasure=imgpredict=NULL;
 }
 
 PatchItem::PatchItem(int x, int y, int vx, int vy, int typeOfTracking) {
@@ -22,6 +24,14 @@ PatchItem::~PatchItem() {
   //    delete image;
   if (kalman != NULL)
     delete kalman;
+  if (imgcombine!=NULL)
+      delete imgcombine;
+  if(imgcorrect!=NULL)
+      delete imgcorrect;
+  if(imgpredict!=NULL)
+      delete imgpredict;
+  if(imgmeasure!=NULL)
+      delete imgmeasure;
 }
 
 void PatchItem::initKalman() {
@@ -54,16 +64,13 @@ void PatchItem::initKalman() {
       }
     }
   }
-  //  kalman->transitionMatrix.at<float>(0, 0) = 1;
-  //  kalman->transitionMatrix.at<float>(1, 0) = 0;
-  //  kalman->transitionMatrix.at<float>(0, 1) = 0;
-  //  kalman->transitionMatrix.at<float>(1, 1) = 1;
 
   //kalman->measurementMatrix.diag()
   setIdentity(kalman->measurementMatrix, Scalar(1, 1, 1));
   setIdentity(kalman->processNoiseCov, Scalar(1e-5));
   setIdentity(kalman->measurementNoiseCov, Scalar(1e-1));
   setIdentity(kalman->errorCovPost, Scalar(1));
+
   if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
     kalman->statePost.at<float>(0, 0) = centerX;
     kalman->statePost.at<float>(1, 0) = centerY;
@@ -73,6 +80,7 @@ void PatchItem::initKalman() {
     kalman->statePost.at<float>(0, 0) = centerX;
     kalman->statePost.at<float>(1, 0) = centerY;
   }
+  //predict();
   //memcpy(kalman->transitionMatrix->, A, sizeof (A));
   //    cvSetIdentity(kalman->measurement_matrix, cvRealScalar(1));
   //    cvSetIdentity(kalman->process_noise_cov, cvRealScalar(1e-5));
@@ -90,18 +98,19 @@ void PatchItem::initKalman() {
 
 void PatchItem::predict() {
   //  getchar();
-  Mat predictMat = kalman->predict();
+  const Mat* predictMat = &kalman->predict();
+  //kalman->predict();
   if (typeOfTracking == TRACKING_POSITION_VELOCITY) {
-    predictX = predictMat.at<float>(0, 0);
-    predictY = predictMat.at<float>(1, 0);
-    predictVx = predictMat.at<float>(2, 0);
-    predictVy = predictMat.at<float>(3, 0);
+    predictX = predictMat->at<float>(0, 0);
+    predictY = predictMat->at<float>(1, 0);
+    predictVx = predictMat->at<float>(2, 0);
+    predictVy = predictMat->at<float>(3, 0);
   } else if (typeOfTracking == TRACKING_POSITION) {
-    predictX = predictMat.at<float>(0, 0);
-    predictY = predictMat.at<float>(1, 0);
+    predictX = predictMat->at<float>(0, 0);
+    predictY = predictMat->at<float>(1, 0);
   }
 
-  cout << "predict result " << predictX << "*" << predictY << " " << predictVx << " " << predictVy << endl;
+//  cout << "predict result "<<label<<" : " << predictX << "*" << predictY << " " << predictVx << " " << predictVy << endl;
 }
 
 void PatchItem::correct() {
@@ -127,7 +136,7 @@ void PatchItem::correct() {
     correctY = correctMat.at<float>(1, 0);
   }
 
-  cout << "correct result " << correctX << "*" << correctY << " " << correctVx << " " << correctVy << endl;
+  cout << "correct result " <<label<<" : "<< correctX << "*" << correctY << " " << correctVx << " " << correctVy << endl;
 }
 
 void PatchItem::refresh() {
@@ -135,29 +144,29 @@ void PatchItem::refresh() {
 }
 
 void PatchItem::draw() {
-  cout << "draw image" << endl;
+//  cout << "draw image" << endl;
 //  getchar();
   // correct red
-  circle(*imgcorrect, Point(correctX, correctY), 1, Scalar(0, 255, 0), 1, 8, 0);
-  circle(*imgcombine, Point(correctX, correctY), 1, Scalar(0, 255, 0), 1, 8, 0);
-  // predire bleu
-  circle(*imgpredict, Point(predictX, predictY), 1, Scalar(255, 0, 0), 1, 8, 0);
-  circle(*imgcombine, Point(predictX, predictY), 1, Scalar(255, 0, 0), 1, 8, 0);
-  // measure vert
-  circle(*imgmeasure, Point(centerX, centerY), 1, Scalar(0, 0, 255), 1, 8, 0);
-  circle(*imgcombine, Point(centerX, centerY), 1, Scalar(0, 0, 255), 1, 8, 0);
-  cout << "draw image" << endl;
+    circle(*imgcorrect, Point(correctX, correctY), 2, Scalar(0, 0, 255), 0, 8, 0);
+    circle(*imgcombine, Point(correctX, correctY), 2, Scalar(0, 0, 255), 0, 8, 0);
+    // predire bleu
+    circle(*imgpredict, Point(predictX, predictY), 2, Scalar(255, 0, 0), 0, 8, 0);
+    circle(*imgcombine, Point(predictX, predictY), 2, Scalar(255, 0, 0), 0, 8, 0);
+    // measure vert
+    circle(*imgmeasure, Point(centerX, centerY), 2, Scalar(0, 255,0 ), 0, 8, 0);
+    circle(*imgcombine, Point(centerX, centerY), 2, Scalar(0, 255,0 ), 0, 8, 0);
+//  cout << "draw image" << endl;
 //  getchar();
 }
 
 void PatchItem::initImage(int width, int height) {
-  cout << "init image" << endl;
+//  cout << "init image" << endl;
   //(int _rows, int _cols, int _type, const Scalar& _s)
-  imgcombine = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
-  imgcorrect = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
-  imgpredict = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
-  imgmeasure = new Mat(height, width, CV_8UC3, Scalar(255, 255, 255));
-  cout << "init image" << endl;
+  imgcombine = new Mat(height, width, CV_8UC3, Scalar(0, 0, 0));
+  imgcorrect = new Mat(height, width, CV_8UC3, Scalar(0, 0, 0));
+  imgpredict = new Mat(height, width, CV_8UC3, Scalar(0, 0, 0));
+  imgmeasure = new Mat(height, width, CV_8UC3, Scalar(0, 0, 0));
+//  cout << "init image" << endl;
 }
 
 int KalmanMotionDetection(int argc, char** argv) {
@@ -271,3 +280,4 @@ int maintest(int argc, char** argv) {
   patchItemTest();
   return 0;
 }
+
