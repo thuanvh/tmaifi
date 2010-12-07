@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   motiondetector.h
  * Author: thuanvh
  *
@@ -35,7 +35,7 @@ using namespace cv;
 
 
 
-void MotionDetection(char* videoFile, int fps, int queueSize, int rangeMatching, char* outFileDir, int trackingType);
+void MotionDetection(char* videoFile, int fps, int queueSize, int rangeMatching, char* outFileDir, int trackingType, int timetolive);
 
 
 // Normalize histogramme
@@ -58,7 +58,7 @@ void GetCaracteristic(const Mat& image, vector<double>& caracteristic);
 double getColorHistoDistance(const vector<double>& learningVector, const vector<double>& testingVector);
 
 double GetImageDistance(const PatchItem& image1, const PatchItem& image2);
-void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage, 
+void FrameMotionMatching(PatchItem**& listImage, vector<PatchItem*>& mapImage,
         int& totalLabel, int defaultVisited, int listTempImageLength, int rangeMatching,int width, int height);
 void FrameMotionMatching(vector<PatchItem*>& listImage, vector<PatchItem*>& mapImage, int& totalLabel, int defaultVisited);
 void FrameMotionExtraire(const Mat& image, int maxLabel, int* maxX, int* maxY, int* minX, int* minY, PatchItem**& listImage, int& length, int trackingType);
@@ -82,7 +82,12 @@ void DotMotionPredictMarking(Mat& image, vector<PatchItem*> trackingList);
 void DotMotionCorrectMarking(Mat& image, vector<PatchItem*> trackingList);
 
 void saveImageCombination(char* outDir, Mat& imgpredict, Mat& imgcorrect, Mat& imgmesure) ;
-
+void saveScene(char* outDir, Mat& scene, int times);
 void saveImageOfObject(char* outDir, vector<PatchItem*>& trackingItemList);
+bool isInterSection(
+  int minx1, int maxx1, int miny1, int maxy1,
+  int minx2, int maxx2, int miny2, int maxy2) ;
+void FrameMotionCombiner(int maxLabel, int* maxX, int* maxY, int* minX, int* minY);
+
 #endif	/* MOTIONDETECTOR_H */
 

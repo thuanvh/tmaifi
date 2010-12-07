@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     char* refOutFilePath = NULL;
     char* refRefFilePath = NULL;
     int trackingType =0;
-    float threshold = 1;
+    int timetolive = 5;
     int queueSize = 5;
     int numberNeighbor = 10;
     int segmblocksize = 32;
@@ -74,10 +74,10 @@ int main(int argc, char** argv) {
       }
 
       // directory reference
-      if (strcmp(argv[i], "-threshold") == 0) {
+      if (strcmp(argv[i], "-time-to-live") == 0) {
         i++;
         if (i < argc) {
-          threshold = atof(argv[i]);
+          timetolive = atof(argv[i]);
         } else {
           throw ERR_FILE_MISSING;
         }
@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 
     }
     cout << refFilePath << endl;
-    MotionDetection(refFilePath, fps, queueSize, rangeMatching, refFileDir, trackingType);
+    MotionDetection(refFilePath, fps, queueSize, rangeMatching, refFileDir, trackingType,timetolive);
 
 
   } catch (const char* e) {
@@ -161,17 +161,17 @@ int main(int argc, char** argv) {
 void printHelp() {
 
   cout << std::endl << "Using:" << std::endl;
-  cout << "texture -video-file « chemin de video » ";
-  cout << "-queue-bg-size « nombre de trame de plan arrière » ";
-  cout << "-fps « la distance entre deux trames à manipuler » ";
-//  cout << "-learning-file « fichier sorti de test » ";
-  cout << "-range-matching « la taille de fenêtre de chercher des objets cohérents » ";
-  cout << "-out-dir « la répertoire de sortie » ";
+  cout << "motiondetector -video-file « chemin de video » ";
+  cout << "-queue-bg-size « nombre de trame de plan arrière » ";
+  cout << "-fps « la distance entre deux trames à manipuler » ";
+  cout << "-time-to-live « temps de supprimer » ";
+  cout << "-range-matching « la taille de fenêtre de chercher des objets cohérents » ";
+  cout << "-out-dir « la répertoire de sortie » ";
 
-//  cout << "-num-color « niveau de gris » ";
-//  cout << "-num-group « nombre de groupe » ";
-//  cout << "-cross-test-percent « percent » ";
-//  cout << "-num-neighbor « number of neighbor  » ";
-  cout << "-tracking-type « pos | posveloc » ";
+//  cout << "-num-color « niveau de gris » ";
+//  cout << "-num-group « nombre de groupe » ";
+//  cout << "-cross-test-percent « percent » ";
+//  cout << "-num-neighbor « number of neighbor  » ";
+  cout << "-tracking-type « pos | posveloc » ";
   cout << std::endl;
 }

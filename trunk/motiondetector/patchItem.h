@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   patchItem.h
  * Author: thuanvh
  *
@@ -37,6 +37,8 @@ public:
     int centerY;
     int vx;
     int vy;
+    bool touched;
+
     Scalar color;
     KalmanFilter* kalman;
     PatchItem();
@@ -48,7 +50,7 @@ public:
     int predictY;
     int predictVx;
     int predictVy;
-    
+
     // correct
     int correctX;
     int correctY;
@@ -59,7 +61,7 @@ public:
     Mat* imgcorrect;
     Mat* imgmeasure;
     Mat* imgcombine;
-    
+
     void predict();
     void correct();
     void initKalman();
