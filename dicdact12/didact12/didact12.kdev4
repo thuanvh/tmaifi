@@ -1,0 +1,4 @@
+[Project]
+Name=didact12
+Manager=KDevCMakeManager
+VersionControl=kdevsubversion
