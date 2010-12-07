@@ -1,0 +1,4 @@
+[Project]
+Name=newsgroup
+Manager=KDevCMakeManager
+VersionControl=kdevsubversion
