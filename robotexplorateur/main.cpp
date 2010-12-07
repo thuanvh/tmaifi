@@ -122,14 +122,13 @@ void integrateToMapGlobal(int**& map, int** maplocal, Position2dProxy& pos, int 
       } else if (map[newi][newj] == FREE && maplocal[i][j] == OBSTACLE) {
         map[newi][newj] = maplocal[i][j];
       } else if (map[newi][newj] == OBSTACLE && maplocal[i][j] == FREE) {
-//        map[newi][newj] = maplocal[i][j];
+        //        map[newi][newj] = maplocal[i][j];
       }
 
     }
   }
 
 }
-
 
 bool isNearObstacle(int x, int y, int** map, int width, int height) {
   int obstaclerange = 5;
@@ -365,11 +364,11 @@ void Wander(Position2dProxy & pos) {
   while (true) {
     pos.GetPlayerClient()->Read();
     int forward = rand() % 2;
-    double v = 20 * scale;
+    double v = 10 * scale;
     if (forward) {
-      pos.SetSpeed(v, v, dtor(rand() % 360));
+      pos.SetSpeed(v, v, dtor(rand() % 180));
     } else {
-      pos.SetSpeed(-v, -v, dtor(rand() % 360));
+      pos.SetSpeed(-v, -v, dtor(rand() % 180));
     }
     sleep(1);
     pos.SetSpeed(0, 0);
@@ -436,10 +435,11 @@ int main(int argc, char **argv) {
     comeback = true;
     bool stop = false;
     cvNamedWindow("carte", 1);
-    Mat mapimage(640, 640, CV_8UC1);
+
     int** map;
-    int height = 640;
-    int width = 640;
+    int height = 600;
+    int width = 1200;
+    Mat mapimage(height, width, CV_8UC1);
     map = new int*[height];
     for (int i = 0; i < height; i++) {
       map[i] = new int[width];
@@ -480,7 +480,7 @@ int main(int argc, char **argv) {
         if (numberRotate-- <= 0)
           break;
         pos.SetSpeed(0, 0, 0);
-      }      
+      }
 
       int destX;
       int destY;
@@ -500,17 +500,19 @@ int main(int argc, char **argv) {
       imshow("image path", pathimage);
       if (waitKey(30) >= 0) continue;
       if (length != -1) {
-        MoveToPath(pathX, pathY, length, pos, robot, width, height);
+
 
         //        //        MoveToTarget(1, 1, pos, robot);
         //        planPathX.clear();
         //        planPathY.clear();
-        //        for (int i = 0; i < length; i++) {
-        //          circle(pathimage, Point(pathX[i], pathY[i]), 2, Scalar(0));
-        //
-        //          planPathX.insert(planPathX.begin(), pathX[i]);
-        //          planPathY.insert(planPathY.begin(), pathY[i]);
-        //        }
+        for (int i = 0; i < length; i++) {
+          circle(pathimage, Point(pathX[i], pathY[i]), 2, Scalar(0));
+
+          planPathX.insert(planPathX.begin(), pathX[i]);
+          planPathY.insert(planPathY.begin(), pathY[i]);
+        }
+        imshow("image path", pathimage);
+        MoveToPath(pathX, pathY, length, pos, robot, width, height);
         //        //getchar();
         //
         //        //      waitKey();
