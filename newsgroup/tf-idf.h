@@ -2,8 +2,10 @@
 #define TF_IDF
 #include <iostream>
 #include <vector>
-using namespace std;
+#include <opencv/cv.h>
 
+using namespace std;
+using namespace cv;
 #define ERR_DIR_MISSING "Error in command line"
 #define ERR_DIR_OPEN "Error in open dir"
 
@@ -26,6 +28,7 @@ public:
   int wordtotal;
   void indexer();
   void write(ostream& os,const vector<string>& dict);
+//   void write(Mat& mat,const vector<string>& dict);
   void calculateTfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
 };
 
@@ -39,6 +42,7 @@ public:
   string path;
   void indexer();
   void write(ostream& os,const vector<string>& dict);
+//   void write(Mat& mat,const vector<string>& dict);
 };
 class dictionary{
 public:
