@@ -20,7 +20,7 @@ void wordindexer::indexer(char* folder, char* fileout)
     DIR *dp;
     struct dirent *ep;
     vector<string> files;
-
+    cout<<"read folder "<<folder<<endl;
     dp = opendir(folder);
     if (dp != NULL) {
         while (ep = readdir(dp)) {
@@ -31,9 +31,13 @@ void wordindexer::indexer(char* folder, char* fileout)
         (void) closedir(dp);
     } else
         perror(ERR_DIR_OPEN);
+    for (int i=0; i<files.size(); i++) {
+        cout<<files[i]<<endl;
+    }
     //create category
     for (int i=0; i<files.size(); i++) {
         string categoryname=files[i];
+        if (categoryname.compare(".")==0 || categoryname.compare("..")==0) continue;
         category cat;
         cat.categoryid=atoi(categoryname.c_str());
         cat.path=string(folder)+"/"+categoryname;
@@ -81,25 +85,25 @@ void utils::merge(vector<string>& dict,const vector<string>& a) {
 void utils::insert(vector<string>& dict,string word,int& position, bool& inserted) {
     inserted=false;
     position=-1;
-    int max=dict.size();
+    int max=dict.size()-1;
     int min=0;
 
-    while (min<max) {
+    while (min<=max) {
         int mid=(max+min)/2;
         int compared=dict[mid].compare(word);
         if (compared==0) {
             position=mid;
             inserted=false;
             return;
-        } else   if (compared>0) {
-            max=mid;
+        } else   if (compared<0) {
+            min=mid+1;
         } else {
-            min=mid;
+            max=mid-1;
         }
     }
-    if (!inserted) {
+    if (position==-1) {
         position=min;
-        if (position<dict.size()) {
+        if (position<dict.size() && position>=0) {
             vector<string>::iterator iter=dict.begin()+position;
             dict.insert(iter,word);
         } else {
@@ -127,6 +131,7 @@ void category::indexer()
         perror(ERR_DIR_OPEN);
     // read document
     for (int i=0; i<files.size(); i++) {
+        if (files[i].compare(".")==0 || files[i].compare("..")==0) continue;
         document doc;
         doc.documentPath=path.append("/").append(files[i]);
         doc.indexer();
@@ -164,27 +169,37 @@ void category::write(ostream& os,const vector<string>& dict)
 void document::indexer()
 {
     ifstream ifile(this->documentPath.c_str());
-
+    cout<<"read file "<<this->documentPath<<endl;
     while (ifile.good()) {
         string item;
         ifile>>item;
-        utils::normalizeitem(item);
-        int position;
-        bool inserted;
-        utils::insert(word,item,position,inserted);
-        if (inserted) {
-            if (position>count.size()) {
-                count.push_back(1);
+        cout<<item<<endl;
+        vector<string> itemlist;
+        utils::normalizeitem(item,itemlist);
+        for (int i=0; i<itemlist.size(); i++) {
+	  item=itemlist[i];
+            cout<<item<<endl;
+            if (!utils::isValid(item))
+                continue;
+            int position;
+            bool inserted;
+            utils::insert(word,item,position,inserted);
+            if (inserted) {
+                if (position>count.size()) {
+                    count.push_back(1);
+                } else {
+                    count.insert(count.begin()+position,1);
+                }
             } else {
-                count.insert(count.begin()+position,1);
+                count[position]++;
             }
-        } else {
-            count[position]++;
         }
     }
     int itemcount=word.size();
     for (int i=0; i<itemcount; i++) {
+
         tf.push_back(count[i]/(double)itemcount);
+        cout<<word[i]<<":"<<count[i]<<" "<<tf[i]<<endl;
     }
     ifile.close();
 }
@@ -227,19 +242,42 @@ bool utils::isValid(const std::string& item)
 {
 #define MINSIZE 3
 #define MAXSIZE 20
-    if (item.length()>MINSIZE && item.length()<MAXSIZE) {
-        return true;
+    if (!(item.length()>MINSIZE && item.length()<MAXSIZE)) {
+        return false;
     }
+    
+    // remove digit
+    int i=0;
+    for(i=0; i<item.length(); i++){
+      if(!isdigit(item[i]))
+	break;
+    }
+    if(i==item.length())
+      return false;
+    
+    return true;
 }
-void utils::normalizeitem(string& item)
+void utils::normalizeitem(string& item,vector<string>& list)
 {
     std::transform(item.begin(), item.end(), item.begin(), ::tolower);
-    
+    int start=-1;
+    int stop=-1;
+
     for (int i=0; i<item.length(); i++) {
         if (!isalnum(item[i])) {
-            item.erase(i,1);
+            //item.erase(i,1);
+            if (start!=-1) {
+                stop=i;
+                list.push_back(item.substr(start,stop-start));
+                stop=start=-1;
+            }
+        } else {
+            if (start==-1)
+                start=i;
         }
     }
+    if (start>=0 && stop==-1)
+        list.push_back(item.substr(start,item.length()-start));
 }
 
 

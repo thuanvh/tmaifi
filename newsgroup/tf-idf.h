@@ -49,7 +49,7 @@ class utils{
 public:
   static void insert(vector<string>& dict,string word,int& position, bool& success);
   static void merge(vector<string>& dict,const vector<string>& a);
-  static void normalizeitem(string& item);
+  static void normalizeitem(string& item,vector<string>& list);
   static bool isValid(const string& item);
 };
 #endif
