@@ -210,11 +210,14 @@ void category::write(ostream& os,const vector<string>& dict)
 {
     for (int i=0; i<documentList.size(); i++) {
         documentList[i].write(os,dict);
+	os<<" "<<categoryid<<endl;
         cout<<"=============end document write "<<i<<endl;
     }
-    if (documentList.size()>1)
-        os<<" "<<categoryid<<endl;
+//     if (documentList.size()>1)
+//         os<<" "<<categoryid<<endl;
 }
+
+
 // calculate tf
 void document::indexer()
 {
