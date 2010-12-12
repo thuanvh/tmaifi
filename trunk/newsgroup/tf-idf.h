@@ -7,6 +7,13 @@ using namespace std;
 #define ERR_DIR_MISSING "Error in command line"
 #define ERR_DIR_OPEN "Error in open dir"
 
+#define TYPE_TRAIN_STR "train"
+#define TYPE_TEST_STR "test"
+
+#define TYPE_TRAIN 0
+#define TYPE_TEST 1
+
+
 class document{
 public:
   int documentId;
@@ -19,7 +26,7 @@ public:
   int wordtotal;
   void indexer();
   void write(ostream& os,const vector<string>& dict);
-  void calculateIfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
+  void calculateTfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
 };
 
 class category{
@@ -42,8 +49,10 @@ public:
   //dictionary dict;
   vector<string> dict;
   vector<category> categoryList;
-  void indexer(char* folder,char* fileout);
-  
+  void indexer(char* folder,char* fileout,char* dictFile,bool createDictFile);
+  void writeARFFHeader(ostream& outfile);
+  void writeDict(ostream& dictFile);
+  void readDict(istream& dictFile,vector<string>& dict);
 };
 class utils{
 public:
