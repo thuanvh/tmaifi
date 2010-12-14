@@ -1,0 +1,4 @@
+[Project]
+Name=plandetecter
+Manager=KDevCMakeManager
+VersionControl=kdevsubversion
