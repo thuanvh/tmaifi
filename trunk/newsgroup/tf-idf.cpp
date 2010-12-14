@@ -12,6 +12,7 @@
 #include <fstream>
 #include <algorithm>
 #include "tf-idf.h"
+#include "pca.h"
 using namespace std;
 
 void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool createDictFile)
@@ -31,9 +32,9 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
         (void) closedir(dp);
     } else
         perror(ERR_DIR_OPEN);
-    for (int i=0; i<files.size(); i++) {
-        cout<<files[i]<<endl;
-    }
+//     for (int i=0; i<files.size(); i++) {
+//         cout<<files[i]<<endl;
+//     }
     //create category
     for (int i=0; i<files.size(); i++) {
         string categoryname=files[i];
@@ -45,46 +46,189 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
         categoryList.push_back(cat);
         cout<<"end indexing category "<<categoryname<<endl;
     }
+    if (createDictFile) {
+        //read category for dictionary
+        cout<<"calculate dictionary"<<endl;
+        for (int i=0; i<categoryList.size(); i++) {
+            //utils::insert(dict,categoryList);
+            //utils::merge(dict,categoryList[i].word);
+            mergeToDict(categoryList[i]);
+        }
+        cout<<"end of merging"<<endl;
 
-    //read category for dictionary
-    cout<<"calculate dictionary"<<endl;
-    for (int i=0; i<categoryList.size(); i++) {
-        //utils::insert(dict,categoryList);
-        utils::merge(dict,categoryList[i].word);
+        cout<<"filtre dict"<<endl;
+        filtreDict();
+        cout<<"end filtre"<<endl;
     }
-    cout<<"end of merging"<<endl;
 //     for (int i=0; i<dict.size(); i++) {
 //         cout<<dict[i]<<" ";
 //     }
 //     cout<<endl;
+    Mat pcaProjection;
+    //CvMat* pcaProjection;
     if (createDictFile) {
         // out to dictfile
         ofstream dictFilsStream(dictFile);
         writeDict(dictFilsStream);
         dictFilsStream.close();
-    }else{
-	ifstream idictfile(dictFile);
-	readDict(idictfile,dict);
-	idictfile.close();
+        PCAConverter pcaCvt;
+        Mat data;
+        //IplImage** data;
+        cout<<"import"<<endl;
+        pcaCvt.import(categoryList,dict,data);
+        cout<<"calculate pca"<<endl;
+        pcaCvt.calculatePCA(data);
+        cout<<"save pca"<<endl;
+        pcaCvt.saveSimple();
+        cout<<"projection"<<endl;
+        pcaCvt.getProjection(data,pcaProjection);
+    } else {
+        ifstream idictfile(dictFile);
+        readDict(idictfile,dict);
+        idictfile.close();
+        PCAConverter pcaCvt;
+        Mat data;
+        //IplImage** data;
+        pcaCvt.import(categoryList,dict,data);
+        pcaCvt.loadSimple();
+        pcaCvt.getProjection(data,pcaProjection);
     }
     // out to fileout
     ofstream outfile(fileout);
-    writeARFFHeader(outfile);
+//     writeARFFHeader(outfile);
+    writeARFFHeaderPCA(outfile,pcaProjection.cols);
+    //writeARFFHeaderPCA(outfile,pcaProjection->cols);
+    int rowIndex=0;
     for (int i=0; i<categoryList.size(); i++) {
-        categoryList[i].write(outfile,dict);
+//         categoryList[i].write(outfile,dict);
+        categoryList[i].writePCA(outfile,pcaProjection,rowIndex);
+        rowIndex+=categoryList[i].numberOfDoc;
         cout<<"end write cat "<< i<<endl;
     }
     outfile.close();
 
 }
-void wordindexer::readDict(istream& dictFile,vector<string>& dict){
+void wordindexer::filtreDict()
+{
+#define NUMBER_FREQ_MIN 10
+#define NUMBER_DOC_MIN 10
+#define NUMBER_DOC_MAX (numberOfDoc/2)
+    cout<<"Numofdoc:"<<numberOfDoc<<endl;
+    cout<<"Before:"<<dict.size()<<endl;
+    vector<string>::iterator dictPtr=dict.begin();
+    vector<int>::iterator docPtr=dictDocCount.begin();
+    vector<int>::iterator freqPtr=dictFreqCount.begin();
+    int index=0;
+    cout<<"erase:"<<endl;
+    int freqmax=0;
+    int docmax=0;
+    while (dictPtr<dict.end()) {
+        freqmax=(dictFreqCount[index]<freqmax)? freqmax:dictFreqCount[index];
+        docmax=(dictDocCount[index]<docmax)? docmax:dictDocCount[index];
+        if (dictDocCount[index]<NUMBER_DOC_MIN || dictFreqCount[index]<NUMBER_FREQ_MIN || dictDocCount[index]>NUMBER_DOC_MAX) {
+            //cout<<dict[index]<<" ";
+            dict.erase(dict.begin()+index);
+            dictDocCount.erase(dictDocCount.begin()+index);
+            dictFreqCount.erase(dictFreqCount.begin()+index);
+            continue;
+        }
+        dictPtr++;
+        index++;
+    };
+    cout<<"Max freq:"<<freqmax<<endl;
+    cout<<"Max doc:"<<docmax<<endl;
+    cout<<"End:"<<dict.size()<<endl;
+}
+
+void wordindexer::mergeToDict(category& cat) {
+    vector<string> a=cat.word;
+    int dictIndex=0;
+    int aIndex=0;
+    numberOfDoc+=cat.numberOfDoc;
+    while (true) {
+        if (aIndex>=a.size()) {
+            break;
+        }
+        if (dictIndex>=dict.size()) {
+            for (;aIndex<a.size(); aIndex++) {
+                dict.push_back(a[aIndex]);
+                dictDocCount.push_back(cat.docCountInCat[aIndex]);
+                dictFreqCount.push_back(cat.freqCountInCat[aIndex]);
+            }
+            break;
+        }
+        int compare=dict[dictIndex].compare(a[aIndex]);
+        if (compare==0) {
+            dictDocCount[dictIndex]+=cat.docCountInCat[aIndex];
+            dictFreqCount[dictIndex]+=cat.freqCountInCat[aIndex];
+            dictIndex++;
+            aIndex++;
+        } else if (compare<0) {
+            dictIndex++;
+        } else if (compare>0) {
+            dict.insert(dict.begin()+dictIndex,a[aIndex]);
+            dictDocCount.insert(dictDocCount.begin() + dictIndex,cat.docCountInCat[aIndex]);
+            dictFreqCount.insert(dictFreqCount.begin() + dictIndex,cat.freqCountInCat[aIndex]);
+            dictIndex++;
+            aIndex++;
+        }
+    }
+}
+void category::writePCA(ostream& os, CvMat* mat, int rowindex)
+{
+    for (int i=0; i<documentList.size(); i++) {
+        documentList[i].writePCA(os,mat,rowindex+i);
+        os<<this->categoryid<<endl;
+    }
+
+}
+void category::writePCA(ostream& os, Mat& mat, int rowindex)
+{
+    for (int i=0; i<documentList.size(); i++) {
+        documentList[i].writePCA(os,mat,rowindex+i);
+        os<<this->categoryid<<endl;
+    }
+
+}
+void document::writePCA(ostream& os, Mat& mat, int rowindex)
+{
+    for (int i=0; i<mat.cols; i++) {
+        os<<mat.at<float>(rowindex,i)<<" ";
+    }
+}
+void document::writePCA(ostream& os, CvMat* mat, int rowindex)
+{
+    for (int i=0; i<mat->cols; i++) {
+        os<<mat->data.fl[rowindex * mat->cols + i]<<" ";
+    }
+}
+
+void wordindexer::writeARFFHeaderPCA(ostream& outfile, int axesNumber)
+{
+    outfile << "@RELATION tfidf" << endl;
+    for (int i = 0; i < axesNumber; i++) {
+        outfile << "@ATTRIBUTE axe_" << i << "			real" << endl;
+    }
+    outfile << "@ATTRIBUTE class 		{";
+    int nbrclass = this->categoryList.size();
+    for (int i = 1; i <= nbrclass; i++) {
+        outfile << i;
+        if (i < nbrclass)
+            outfile << ",";
+    }
+    outfile << "}	" << endl;
+    outfile << "@DATA" << endl;
+
+}
+
+void wordindexer::readDict(istream& dictFile,vector<string>& dict) {
     dict.clear();
-    while(dictFile.good()){
-      string term;
-      dictFile>>term;
-      if(term.compare("")==0)
-	return;
-      dict.push_back(term);
+    while (dictFile.good()) {
+        string term;
+        dictFile>>term;
+        if (term.compare("")==0)
+            return;
+        dict.push_back(term);
     }
 }
 void wordindexer::writeDict(ostream& dictFile)
@@ -171,14 +315,16 @@ void category::indexer()
         perror(ERR_DIR_OPEN);
     // read document
     numberOfDoc=0;
-    for (int i=0; i<files.size(); i++) {
+#define maxdoc files.size()
+//#define maxdoc 10
+    for (int i=0; i<maxdoc; i++) {
         if (files[i].compare(".")==0 || files[i].compare("..")==0) continue;
         document doc;
         doc.documentPath=path+"/"+files[i];
         doc.indexer();
         documentList.push_back(doc);
         numberOfDoc++;
-        cout<<"begin doc count for "<<doc.word.size()<<" words"<<endl;
+//         cout<<"begin doc count for "<<doc.word.size()<<" words"<<endl;
         // calculate document count
         for (int j=0; j<doc.word.size(); j++) {
             int position;
@@ -186,13 +332,17 @@ void category::indexer()
             //cout<<doc.word[j]<<" ";
             utils::insert(this->word,doc.word[j],position,inserted);
             // count document
-            if (!inserted)
-                this->docCount[position]++;
-            else {
-                if (position<this->docCount.size())
-                    this->docCount.insert(this->docCount.begin()+position,1);
-                else
-                    this->docCount.push_back(1);
+            if (!inserted) {
+                this->docCountInCat[position]++;
+                this->freqCountInCat[position]+=doc.countInDoc[j];
+            } else {
+                if (position<this->docCountInCat.size()) {
+                    this->docCountInCat.insert(this->docCountInCat.begin()+position,1);
+                    this->freqCountInCat.insert(this->freqCountInCat.begin()+position,doc.countInDoc[j]);
+                } else {
+                    this->docCountInCat.push_back(1);
+                    this->freqCountInCat.push_back(doc.countInDoc[j]);
+                }
             }
 
         }
@@ -203,14 +353,14 @@ void category::indexer()
 //     cout<<endl;
     // calculate tf-idf
     for (int i=0; i<documentList.size(); i++) {
-        documentList[i].calculateTfIdf(this->word,this->docCount,this->numberOfDoc);
+        documentList[i].calculateTfIdf(this->word,this->docCountInCat,this->numberOfDoc);
     }
 }
 void category::write(ostream& os,const vector<string>& dict)
 {
     for (int i=0; i<documentList.size(); i++) {
         documentList[i].write(os,dict);
-	os<<" "<<categoryid<<endl;
+        os<<" "<<categoryid<<endl;
         cout<<"=============end document write "<<i<<endl;
     }
 //     if (documentList.size()>1)
@@ -222,7 +372,7 @@ void category::write(ostream& os,const vector<string>& dict)
 void document::indexer()
 {
     ifstream ifile(this->documentPath.c_str());
-    cout<<"*********read file "<<this->documentPath<<endl;
+//     cout<<"*********read file "<<this->documentPath<<endl;
     while (ifile.good()) {
         string item;
         ifile>>item;
@@ -238,20 +388,20 @@ void document::indexer()
             bool inserted;
             utils::insert(word,item,position,inserted);
             if (inserted) {
-                if (position>count.size()) {
-                    count.push_back(1);
+                if (position>countInDoc.size()) {
+                    countInDoc.push_back(1);
                 } else {
-                    count.insert(count.begin()+position,1);
+                    countInDoc.insert(countInDoc.begin()+position,1);
                 }
             } else {
-                count[position]++;
+                countInDoc[position]++;
             }
         }
     }
     int itemcount=word.size();
     for (int i=0; i<itemcount; i++) {
 
-        tf.push_back(count[i]/(double)itemcount);
+        tf.push_back(countInDoc[i]/(double)itemcount);
 //         cout<<word[i]<<":"<<count[i]<<" "<<tf[i]<<endl;
     }
     ifile.close();
@@ -316,11 +466,12 @@ bool utils::isValid(const std::string& item)
     if (!(item.length()>MINSIZE && item.length()<MAXSIZE)) {
         return false;
     }
-
+    if (isdigit(item[0]))
+        return false;
     // remove digit
     int i=0;
     for (i=0; i<item.length(); i++) {
-        if (!isdigit(item[i]))
+        if (!isdigit(item[i]) && item[i]!='e')
             break;
     }
     if (i==item.length())

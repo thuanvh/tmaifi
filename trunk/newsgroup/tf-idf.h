@@ -6,6 +6,7 @@
 
 using namespace std;
 using namespace cv;
+
 #define ERR_DIR_MISSING "Error in command line"
 #define ERR_DIR_OPEN "Error in open dir"
 
@@ -22,12 +23,14 @@ public:
   string documentName;
   string documentPath;
   vector<string> word;
-  vector<int> count;
+  vector<int> countInDoc;
   vector<double> tf;
   vector<double> tfidf;
   int wordtotal;
   void indexer();
   void write(ostream& os,const vector<string>& dict);
+  void writePCA(ostream& os,Mat& mat, int rowindex);
+  void writePCA(ostream& os,CvMat* mat, int rowindex);
 //   void write(Mat& mat,const vector<string>& dict);
   void calculateTfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
 };
@@ -36,12 +39,15 @@ class category{
 public:
   int categoryid;
   vector<string> word;
-  vector<int> docCount;
+  vector<int> docCountInCat;
+  vector<int> freqCountInCat;
   vector<document> documentList;
   int numberOfDoc;
   string path;
   void indexer();
   void write(ostream& os,const vector<string>& dict);
+  void writePCA(ostream& os,Mat& mat, int rowindex);
+  void writePCA(ostream& os,CvMat* mat, int rowindex);
 //   void write(Mat& mat,const vector<string>& dict);
 };
 class dictionary{
@@ -52,11 +58,17 @@ class wordindexer{
 public:
   //dictionary dict;
   vector<string> dict;
+  vector<int> dictDocCount;
+  vector<int> dictFreqCount;
+  int numberOfDoc;
   vector<category> categoryList;
   void indexer(char* folder,char* fileout,char* dictFile,bool createDictFile);
   void writeARFFHeader(ostream& outfile);
+  void writeARFFHeaderPCA(ostream& outfile,int axesNumber);
   void writeDict(ostream& dictFile);
   void readDict(istream& dictFile,vector<string>& dict);
+  void mergeToDict(category& cat);
+  void filtreDict();
 };
 class utils{
 public:
