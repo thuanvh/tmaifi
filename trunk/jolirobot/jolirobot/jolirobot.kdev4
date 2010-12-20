@@ -1,0 +1,4 @@
+[Project]
+Name=jolirobot
+Manager=KDevCMakeManager
+VersionControl=kdevsubversion
