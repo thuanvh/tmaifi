@@ -23,7 +23,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "exploration.h"
+//#include "exploration.h"
 using namespace cv;
 
 using namespace PlayerCc;
@@ -33,7 +33,7 @@ using namespace std;
 #define OBSTACLE 0
 #define FREE 2
 
-#define CHILD_NUMBER 4
+#define CHILD_NUMBER 8
 
 struct node {
   node();
