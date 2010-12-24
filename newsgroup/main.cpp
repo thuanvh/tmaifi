@@ -26,11 +26,12 @@ int main(int argc, char** argv) {
         char* refFilePath = NULL;
         char* dictFilePath = NULL;
         char* refRefFilePath = NULL;
+        char* out_dir=NULL;
         int trackingType =0;
-        int timetolive = 5;
-        int queueSize = 5;
-        int numberNeighbor = 10;
-        int segmblocksize = 32;
+        int pca_nb_eigens = 5;
+        int filtre_doc_min = 5;
+        float filtre_doc_max = 0.5;
+        int filtre_freq = 5;
         int rangeMatching = 30;
         //int typeOf = 10;
         // Analyser des parametres entres
@@ -41,6 +42,16 @@ int main(int argc, char** argv) {
                 i++;
                 if (i < argc) {
                     refFileDir = argv[i];
+                } else {
+                    throw ERR_DIR_MISSING;
+                }
+                continue;
+            }
+            // directory reference
+            if (strcmp(argv[i], "-out-dir") == 0) {
+                i++;
+                if (i < argc) {
+                    out_dir = argv[i];
                 } else {
                     throw ERR_DIR_MISSING;
                 }
@@ -84,40 +95,40 @@ int main(int argc, char** argv) {
                 continue;
             }
             // directory reference
-            if (strcmp(argv[i], "-range-matching") == 0) {
+            if (strcmp(argv[i], "-pca-nb-eigens") == 0) {
                 i++;
                 if (i < argc) {
-                    rangeMatching = atoi(argv[i]);
+                    pca_nb_eigens = atoi(argv[i]);
                 } else {
                     throw ERR_DIR_MISSING;
                 }
                 continue;
             }
             // directory reference
-            if (strcmp(argv[i], "-queue-bg-size") == 0) {
+            if (strcmp(argv[i], "-filtre-doc-min") == 0) {
                 i++;
                 if (i < argc) {
-                    queueSize = atoi(argv[i]);
+                    filtre_doc_min = atoi(argv[i]);
                 } else {
                     throw ERR_DIR_MISSING;
                 }
                 continue;
             }
             // directory reference
-            if (strcmp(argv[i], "-segment-block-size") == 0) {
+            if (strcmp(argv[i], "-filtre-doc-max") == 0) {
                 i++;
                 if (i < argc) {
-                    segmblocksize = atoi(argv[i]);
+                    filtre_doc_max = atof(argv[i]);
                 } else {
                     throw ERR_DIR_MISSING;
                 }
                 continue;
             }
             // directory reference
-            if (strcmp(argv[i], "-num-neighbor") == 0) {
+            if (strcmp(argv[i], "-filtre-freq") == 0) {
                 i++;
                 if (i < argc) {
-                    numberNeighbor = atoi(argv[i]);
+                    filtre_freq = atoi(argv[i]);
                 } else {
                     throw ERR_DIR_MISSING;
                 }
@@ -138,6 +149,13 @@ int main(int argc, char** argv) {
         }
         cout << refFilePath << endl;
         wordindexer windexer;
+	windexer.out_dir=out_dir;
+        //windexer.trackingType =0;
+	windexer.pca_nb_eigens = pca_nb_eigens;
+	windexer.filtre_doc_min = filtre_doc_min;
+	windexer.filtre_doc_max = filtre_doc_max;
+	windexer.filtre_freq = filtre_freq;
+
         if (typeOfFunction==TYPE_TRAIN) {
             windexer.indexer(refFileDir,refFilePath,dictFilePath,true);
         } else {

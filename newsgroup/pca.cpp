@@ -59,46 +59,50 @@ void PCAConverter::import(vector<category>& categorylist,vector<string>& dict,Ma
     }
 
 }
-void PCAConverter::calculatePCA(Mat& data){
-  // pca to convert
-  maxComponent=300;//height-1;
-  cout<<"max component:"<<maxComponent<<endl;
-  PCA pca(data,Mat(),CV_PCA_DATA_AS_ROW,maxComponent);
-  cout<<"end pca"<<endl;
-  eigenVectors=pca.eigenvectors.clone();  
-  mean=pca.mean.clone();
-  Scalar sumeigen=sum(pca.eigenvalues);
-  cout<<"description:"<<sumeigen[0]<<"="<<sumeigen[0]/4647<<endl;
+void PCAConverter::calculatePCA(Mat& data) {
+    // pca to convert
+    maxComponent=maxComponent<height-1?maxComponent:height-1;
+    cout<<"max component:"<<maxComponent<<endl;
+    PCA pca(data,Mat(),CV_PCA_DATA_AS_ROW,maxComponent);
+    cout<<"end pca"<<endl;
+    eigenVectors=pca.eigenvectors.clone();
+    mean=pca.mean.clone();
+    Scalar sumeigen=sum(pca.eigenvalues);
+    cout<<"description:"<<sumeigen[0]<<"="<<sumeigen[0]/4647<<endl;
 }
 void PCAConverter::loadSimple()
 {
-  FileStorage pcafile("pcaoutput.xml",FileStorage::READ);
-  cv::read(pcafile["eigenVectors"],eigenVectors);
-  cv::read(pcafile["mean"],mean);
-  pcafile.release();
+    char infilestr[255];
+    sprintf(infilestr,"%s/pcaoutput.xml",outdir);
+    FileStorage pcafile(infilestr,FileStorage::READ);
+    cv::read(pcafile["eigenVectors"],eigenVectors);
+    cv::read(pcafile["mean"],mean);
+    pcafile.release();
 }
 void PCAConverter::saveSimple()
 {
-  FileStorage pcafile("pcaoutput.xml",FileStorage::WRITE);
-  cv::write(pcafile,"eigenVectors",eigenVectors);
-  cv::write(pcafile,"mean",mean);
-  pcafile.release();
+    char outfilestr[255];
+    sprintf(outfilestr,"%s/pcaoutput.xml",outdir);
+    FileStorage pcafile(outfilestr,FileStorage::WRITE);
+    cv::write(pcafile,"eigenVectors",eigenVectors);
+    cv::write(pcafile,"mean",mean);
+    pcafile.release();
 }
 void PCAConverter::getProjection(Mat& data,Mat& dataproject)
 {
-   Mat substraction=data.clone();
-   for(int i=0; i<data.rows; i++){
-    for(int j=0; j<data.cols; j++){
-      substraction.at<float>(i,j)-=mean.at<float>(0,j);
+    Mat substraction=data.clone();
+    for (int i=0; i<data.rows; i++) {
+        for (int j=0; j<data.cols; j++) {
+            substraction.at<float>(i,j)-=mean.at<float>(0,j);
+        }
     }
-   }
-   Mat eigenTrans;
-   transpose(eigenVectors,eigenTrans);
-   cout<<substraction.rows<<"*"<<substraction.cols<<endl;
-   cout<<eigenTrans.rows<<"*"<<eigenTrans.cols<<endl;
-   //matMulDeriv();
-   //multiply(substraction,eigenTrans,dataproject);
-   dataproject=substraction*eigenTrans;
+    Mat eigenTrans;
+    transpose(eigenVectors,eigenTrans);
+    cout<<substraction.rows<<"*"<<substraction.cols<<endl;
+    cout<<eigenTrans.rows<<"*"<<eigenTrans.cols<<endl;
+    //matMulDeriv();
+    //multiply(substraction,eigenTrans,dataproject);
+    dataproject=substraction*eigenTrans;
 }
 #define NUMBER_EIGENS nEigens
 void PCAConverter::calculatePCA(IplImage** data)
@@ -117,9 +121,9 @@ void PCAConverter::calculatePCA(IplImage** data)
     faceImgSize.height = data[0]->height;
     cout<<faceImgSize.width<<"*"<<faceImgSize.height<<endl;
     eigenVectArr = (IplImage**) cvAlloc(sizeof (IplImage*) * nEigens);
-    for (i = 0; i < nEigens; i++){
-      cout<<i<<" ";
-      eigenVectArr[i] = cvCreateImage(faceImgSize, IPL_DEPTH_32F, 1);
+    for (i = 0; i < nEigens; i++) {
+        cout<<i<<" ";
+        eigenVectArr[i] = cvCreateImage(faceImgSize, IPL_DEPTH_32F, 1);
     }
 
     // allocate the eigenvalue array
@@ -134,7 +138,7 @@ void PCAConverter::calculatePCA(IplImage** data)
     // compute average image, eigenvalues, and eigenvectors
     cvCalcEigenObjects(
         ndocs,
-	(void*) data,
+        (void*) data,
         (void*) eigenVectArr,
         CV_EIGOBJ_NO_CALLBACK,
         0,
@@ -185,8 +189,8 @@ void PCAConverter::import(vector< category >& categorylist, vector< string >& di
             int itemIndex=0;
             dataRowIndex++;
             document* doc=&categorylist[i].documentList[j];
-	    IplImage* docimage = cvCreateImage(cvSize(width, 1), IPL_DEPTH_32F, 1);
-	    //personNumTruthMat[dataRowIndex]=categorylist[i].categoryid;
+            IplImage* docimage = cvCreateImage(cvSize(width, 1), IPL_DEPTH_32F, 1);
+            //personNumTruthMat[dataRowIndex]=categorylist[i].categoryid;
             for (int colIndex=0; colIndex<dict.size(); colIndex++) {
                 if (itemIndex >= doc->word.size()) {
                     //cout<<itemIndex<<"end of doc"<<endl;
@@ -207,9 +211,9 @@ void PCAConverter::import(vector< category >& categorylist, vector< string >& di
                         docimage->imageData[colIndex]=doc->tfidf[itemIndex];
                         itemIndex++;
                     } else {
-		      //data.at<float>(dataRowIndex,colIndex)=0;
-		      docimage->imageData[colIndex]=0;
-		    }
+                        //data.at<float>(dataRowIndex,colIndex)=0;
+                        docimage->imageData[colIndex]=0;
+                    }
                 } else {
                     //data.at<float>(dataRowIndex,colIndex)=0;
                     docimage->imageData[colIndex]=0;
@@ -219,7 +223,7 @@ void PCAConverter::import(vector< category >& categorylist, vector< string >& di
         }
     }
     cout<<data[0]->width<<"*"<<data[0]->height<<endl;
-    
+
 }
 
 void PCAConverter::load()
