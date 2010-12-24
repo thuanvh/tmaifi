@@ -66,12 +66,16 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
 //     cout<<endl;
     Mat pcaProjection;
     //CvMat* pcaProjection;
+    char dictFileStr[255];
+    sprintf(dictFileStr,"%s/%s",out_dir,dictFile);
     if (createDictFile) {
-        // out to dictfile
-        ofstream dictFilsStream(dictFile);
+        // out to dictfile        
+        ofstream dictFilsStream(dictFileStr);
         writeDict(dictFilsStream);
         dictFilsStream.close();
         PCAConverter pcaCvt;
+        pcaCvt.maxComponent=pca_nb_eigens;
+        pcaCvt.outdir=out_dir;
         Mat data;
         //IplImage** data;
         cout<<"import"<<endl;
@@ -83,10 +87,11 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
         cout<<"projection"<<endl;
         pcaCvt.getProjection(data,pcaProjection);
     } else {
-        ifstream idictfile(dictFile);
+      ifstream idictfile(dictFileStr);
         readDict(idictfile,dict);
         idictfile.close();
         PCAConverter pcaCvt;
+        pcaCvt.outdir=out_dir;
         Mat data;
         //IplImage** data;
         pcaCvt.import(categoryList,dict,data);
@@ -94,7 +99,9 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
         pcaCvt.getProjection(data,pcaProjection);
     }
     // out to fileout
-    ofstream outfile(fileout);
+    char fileoutstr[255];
+    sprintf(fileoutstr,"%s/%s",out_dir,fileout);
+    ofstream outfile(fileoutstr);
 //     writeARFFHeader(outfile);
     writeARFFHeaderPCA(outfile,pcaProjection.cols);
     //writeARFFHeaderPCA(outfile,pcaProjection->cols);
@@ -110,9 +117,9 @@ void wordindexer::indexer(char* folder, char* fileout, char* dictFile,bool creat
 }
 void wordindexer::filtreDict()
 {
-#define NUMBER_FREQ_MIN 10
-#define NUMBER_DOC_MIN 10
-#define NUMBER_DOC_MAX (numberOfDoc/2)
+#define NUMBER_FREQ_MIN filtre_freq
+#define NUMBER_DOC_MIN filtre_doc_min
+#define NUMBER_DOC_MAX (numberOfDoc*filtre_doc_max)
     cout<<"Numofdoc:"<<numberOfDoc<<endl;
     cout<<"Before:"<<dict.size()<<endl;
     vector<string>::iterator dictPtr=dict.begin();

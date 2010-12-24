@@ -17,64 +17,78 @@ using namespace cv;
 #define TYPE_TEST 1
 
 
-class document{
+class document {
 public:
-  int documentId;
-  string documentName;
-  string documentPath;
-  vector<string> word;
-  vector<int> countInDoc;
-  vector<double> tf;
-  vector<double> tfidf;
-  int wordtotal;
-  void indexer();
-  void write(ostream& os,const vector<string>& dict);
-  void writePCA(ostream& os,Mat& mat, int rowindex);
-  void writePCA(ostream& os,CvMat* mat, int rowindex);
+    int documentId;
+    string documentName;
+    string documentPath;
+    vector<string> word;
+    vector<int> countInDoc;
+    vector<double> tf;
+    vector<double> tfidf;
+    int wordtotal;
+    void indexer();
+    void write(ostream& os,const vector<string>& dict);
+    void writePCA(ostream& os,Mat& mat, int rowindex);
+    void writePCA(ostream& os,CvMat* mat, int rowindex);
 //   void write(Mat& mat,const vector<string>& dict);
-  void calculateTfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
+    void calculateTfIdf(const vector<string>& catword,const vector<int>& catDocCount,int catNumberOfDoc);
 };
 
-class category{
+class category {
 public:
-  int categoryid;
-  vector<string> word;
-  vector<int> docCountInCat;
-  vector<int> freqCountInCat;
-  vector<document> documentList;
-  int numberOfDoc;
-  string path;
-  void indexer();
-  void write(ostream& os,const vector<string>& dict);
-  void writePCA(ostream& os,Mat& mat, int rowindex);
-  void writePCA(ostream& os,CvMat* mat, int rowindex);
+    int categoryid;
+    vector<string> word;
+    vector<int> docCountInCat;
+    vector<int> freqCountInCat;
+    vector<document> documentList;
+    int numberOfDoc;
+    string path;
+    void indexer();
+    void write(ostream& os,const vector<string>& dict);
+    void writePCA(ostream& os,Mat& mat, int rowindex);
+    void writePCA(ostream& os,CvMat* mat, int rowindex);
 //   void write(Mat& mat,const vector<string>& dict);
 };
-class dictionary{
+class dictionary {
 public:
-  vector<string> list;
+    vector<string> list;
 };
-class wordindexer{
+class wordindexer {
 public:
-  //dictionary dict;
-  vector<string> dict;
-  vector<int> dictDocCount;
-  vector<int> dictFreqCount;
-  int numberOfDoc;
-  vector<category> categoryList;
-  void indexer(char* folder,char* fileout,char* dictFile,bool createDictFile);
-  void writeARFFHeader(ostream& outfile);
-  void writeARFFHeaderPCA(ostream& outfile,int axesNumber);
-  void writeDict(ostream& dictFile);
-  void readDict(istream& dictFile,vector<string>& dict);
-  void mergeToDict(category& cat);
-  void filtreDict();
+  char* out_dir;
+    //int trackingType;
+    int pca_nb_eigens;
+    int filtre_doc_min;
+    float filtre_doc_max ;
+    int filtre_freq;
+    wordindexer() {
+        out_dir=NULL;
+        //trackingType =0;
+	pca_nb_eigens = 5;
+	filtre_doc_min = 5;
+	filtre_doc_max = 0.5;
+	filtre_freq = 5;
+    }
+    //dictionary dict;
+    vector<string> dict;
+    vector<int> dictDocCount;
+    vector<int> dictFreqCount;
+    int numberOfDoc;
+    vector<category> categoryList;
+    void indexer(char* folder,char* fileout,char* dictFile,bool createDictFile);
+    void writeARFFHeader(ostream& outfile);
+    void writeARFFHeaderPCA(ostream& outfile,int axesNumber);
+    void writeDict(ostream& dictFile);
+    void readDict(istream& dictFile,vector<string>& dict);
+    void mergeToDict(category& cat);
+    void filtreDict();
 };
-class utils{
+class utils {
 public:
-  static void insert(vector<string>& dict,string word,int& position, bool& success);
-  static void merge(vector<string>& dict,const vector<string>& a);
-  static void normalizeitem(string& item,vector<string>& list);
-  static bool isValid(const string& item);
+    static void insert(vector<string>& dict,string word,int& position, bool& success);
+    static void merge(vector<string>& dict,const vector<string>& a);
+    static void normalizeitem(string& item,vector<string>& list);
+    static bool isValid(const string& item);
 };
 #endif

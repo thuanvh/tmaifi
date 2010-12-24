@@ -9,7 +9,7 @@ class PCAConverter {
       Mat mean;
 //     IplImage* eigenVectors;
 //     IplImage* mean;
-    int maxComponent;
+   
     int width;
     int height;
 
@@ -31,6 +31,8 @@ class PCAConverter {
 //     CvCapture* camera ; // The camera device.
 
 public:
+  char* outdir;
+  int maxComponent;
   void import(vector<category>& categorylist,vector<string>& dict,Mat& data);
   void calculatePCA(Mat& data);
   void saveSimple();
