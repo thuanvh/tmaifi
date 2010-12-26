@@ -47,6 +47,7 @@ int main(int argc,char **argv)
   glutMouseFunc(mousePress);
   glutMotionFunc(MouseMotion);
   
+  
   /* Entre dans la boucle principale glut */
   glutMainLoop();
   return 0;
@@ -91,6 +92,22 @@ void display()
   glTranslated(0,0,0.8);
   glColor3f(1.0,1.0,0);
   glutWireSphere(0.2,20,20);
+  /* eyes */
+  glPushMatrix();
+  glPopMatrix(); // eye 1
+  glPushMatrix();
+  glTranslated(0.1,0.2,0.1);
+  glColor3f(1.0,0,0);
+  //glutWireTorus(0.02,0.5,10,10);
+  glutWireSphere(0.05,20,20);
+  glPopMatrix(); // eye 2
+  glPushMatrix();
+  glTranslated(0.1,-0.2,0.1);
+  glColor3f(1.0,0,0);
+  //glutWireTorus(0.02,0.5,10,10);
+  glutWireSphere(0.05,20,20);
+  glPopMatrix(); //end eye
+  
   /* arm 1*/
   glPopMatrix();
   glPushMatrix();
@@ -162,23 +179,54 @@ void display()
   /* end robot */
   glPopMatrix();
   
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(5,-1,5);
-  glRotated(-90,1,0,0);
-  glColor3f(1.0,1.0,1.0);
-  glutWireCone(1,2,20,1);
+//   glPopMatrix();
+//   glPushMatrix();
+//   glTranslated(5,-1,5);
+//   glRotated(-90,1,0,0);
+//   glColor3f(1.0,1.0,1.0);
+//   glutWireCone(1,2,20,1);
   
   glPopMatrix();
   glPushMatrix();
   glTranslated(-5,0,5);
   glutWireTorus(0.2,0.8,20,30);
   
+  /* box */
   glPopMatrix();
   glPushMatrix();
   glTranslated(5,0,-5);
-  glutWireCube(2);
+  glRotated(-90,1,0,0);
+  glutSolidCube(0.8);
+  glTranslated(0,0,0.4);
+  glColor3f(0,0.5,1.0);
+  gluCylinder(gluNewQuadric(),0.2,0.1,0.5,5,5);
+  glTranslated(0,0,0.5);
+  glColor3f(0.0,0.0,1.0);
+  gluCylinder(gluNewQuadric(),0.01,0.01,1,5,5);
+  glTranslated(0,0,1);
+  glColor3f(1.0,0,1.0);
+  glutSolidSphere(0.05,10,10);
   
+  /* chair */
+  glPopMatrix();
+  glPushMatrix();
+  glTranslated(7,0,-2.5);
+  glRotated(-90,1,0,0);
+  gluCylinder(gluNewQuadric(),2,2,0.5,5,5);;
+  
+  glPushMatrix(); // chair leg
+  glColor3f(0,0.5,1.0);
+  int posx[4]={1,1,-1,-1};
+  int posy[4]={-1,1,-1,1};
+  for(int i=0; i<4; i++){
+    glPopMatrix();
+    glPushMatrix();
+    glTranslated(posx[i],posy[i],-2);  
+    gluCylinder(gluNewQuadric(),0.2,0.2,2,4,4);
+  }
+  glPopMatrix(); // end chair
+  
+  /* bubble */
   glPopMatrix();
   glTranslated(-5,0,-5);
   glutWireSphere(1,20,20);
