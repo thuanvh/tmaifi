@@ -1,17 +1,14 @@
-/********************************************************/
-/*                     ballade.c                        */
-/********************************************************/
-/* Petite ballade dans un monde (reduit) en fil de fer  */
-/********************************************************/
-
-/* inclusion des fichiers d'entete Glut */
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <GL/glut.h>
 #include <math.h>
-
+#include <curses.h>
+#include <iostream>
+using namespace std;
 void display();
+void keyspecial(int key,int x,int y);
 void keyboard(unsigned char key,int x, int y);
 void mousePress(int bouton,int state,int x,int y);
 void MouseMotion(int x,int y);
@@ -22,6 +19,51 @@ void changePerspective();
 float pz=0.0,px=0.0,Sin[360],Cos[360],theta=50;
 int xold,r=0;
 
+float angle_armxl0_corp=45;
+float angle_armxr0_corp=45;
+float angle_armyl0_corp=-45;
+float angle_armyr0_corp=-45;
+float angle_armzl0_corp=45;
+float angle_armzr0_corp=45;
+
+float angle_armxl1_corp=45;
+float angle_armxr1_corp=45;
+float angle_armyl1_corp=-45;
+float angle_armyr1_corp=-45;
+float angle_armzl1_corp=45;
+float angle_armzr1_corp=45;
+
+float angle_armxl2_corp=45;
+float angle_armxr2_corp=45;
+float angle_armyl2_corp=-45;
+float angle_armyr2_corp=-45;
+float angle_armzl2_corp=45;
+float angle_armzr2_corp=45;
+
+float angle_legxl0_corp=45;
+float angle_legxr0_corp=45;
+float angle_legyl0_corp=-45;
+float angle_legyr0_corp=-45;
+float angle_legzl0_corp=45;
+float angle_legzr0_corp=45;
+
+float angle_legxl1_corp=45;
+float angle_legxr1_corp=45;
+float angle_legyl1_corp=-45;
+float angle_legyr1_corp=-45;
+float angle_legzl1_corp=45;
+float angle_legzr1_corp=45;
+
+float angle_legxl2_corp=45;
+float angle_legxr2_corp=45;
+float angle_legyl2_corp=-45;
+float angle_legyr2_corp=-45;
+float angle_legzl2_corp=45;
+float angle_legzr2_corp=45;
+
+float angle_headx_corp=0;
+float angle_heady_corp=0;
+float angle_headz_corp=0;
 
 int main(int argc,char **argv)
 {
@@ -44,6 +86,7 @@ int main(int argc,char **argv)
   /* enregistrement des fonctions de rappel */
   glutDisplayFunc(display);
   glutKeyboardFunc(keyboard);
+  glutSpecialFunc(keyspecial);
   glutMouseFunc(mousePress);
   glutMotionFunc(MouseMotion);
   
@@ -90,6 +133,9 @@ void display()
   glPopMatrix();
   glPushMatrix();
   glTranslated(0,0,0.8);
+  glRotatef(angle_headx_corp,-1,0,0);//angle of head with the body
+  glRotatef(angle_heady_corp,0,-1,0);//angle of head with the body
+  glRotatef(angle_headz_corp,0,0,-1);//angle of head with the body
   glColor3f(1.0,1.0,0);
   glutWireSphere(0.2,20,20);
   /* eyes */
@@ -108,11 +154,13 @@ void display()
   glutWireSphere(0.05,20,20);
   glPopMatrix(); //end eye
   
-  /* arm 1*/
+  /* arm 1eft*/
   glPopMatrix();
   glPushMatrix();
   glTranslated(0,0.2,0.5);
-  glRotatef(-45,0,-1,0);//angle of arm with the body
+  glRotatef(angle_armyl0_corp,0,-1,0);//angle of arm with the body
+  glRotatef(angle_armzl0_corp,0,0,-1);//angle of arm with the body
+  glRotatef(angle_armxl0_corp,-1,0,0);//angle of arm with the body
   glColor3f(1.0,0.5,1.0);
   gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
   glTranslated(0,0,0.3);
@@ -125,11 +173,13 @@ void display()
   glRotatef(-45,0,-1,0);
   glColor3f(0.5,1,0.5);
   glutWireCone(0.1,0.1,20,1);//hand
-  /* arm 2*/
+  /* arm right*/
   glPopMatrix();
   glPushMatrix();
   glTranslated(0,-0.2,0.5);
-  glRotatef(-45,0,-1,0);//angle of arm with the body
+  glRotatef(angle_armyr0_corp,0,-1,0);//angle of arm with the body
+  glRotatef(angle_armzr0_corp,0,0,-1);//angle of arm with the body
+  glRotatef(angle_armxr0_corp,-1,0,0);//angle of arm with the body
   glColor3f(1.0,0.5,1.0);
   gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
   glTranslated(0,0,0.3);
@@ -237,13 +287,133 @@ void display()
   glutSwapBuffers();
 }
 
-
+bool isArm=false;
+bool isLeg=false;
+bool isHead=false;
+bool isRight=false;
+bool isLeft=false;
+int  elementId=-1;
+bool isX=false;
+bool isY=false;
+bool isZ=false;
+void reset(){
+  isArm=false;
+  isLeft=false;
+  isLeg=false;
+  isRight=false;
+  isHead=false;
+}
+void keyspecial(int key,int x,int y){
+  switch(key){
+    case GLUT_KEY_UP:
+      isX=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armxl_corp+=10;
+	}else if(isRight){
+	  angle_armxr_corp+=10;
+	}
+      }else if(isHead){
+	angle_headx_corp+=10;
+      }      
+      glutPostRedisplay();
+      break;
+    case GLUT_KEY_DOWN:
+      isX=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armxl_corp-=10;
+	}else if(isRight){
+	  angle_armxr_corp-=10;
+	}
+      }else if(isHead){
+	angle_headx_corp-=10;
+      }
+      glutPostRedisplay();
+      break;
+    case GLUT_KEY_LEFT:
+      isY=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armyl_corp+=10;
+	}else if(isRight){
+	  angle_armyr_corp+=10;
+	}
+      }else if(isHead){
+	angle_heady_corp+=10;
+      }
+      glutPostRedisplay();
+      break;
+    case GLUT_KEY_RIGHT:
+      isY=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armyl_corp-=10;
+	}else if(isRight){
+	  angle_armyr_corp-=10;
+	}
+      }else if(isHead){
+	angle_heady_corp-=10;
+      }
+      glutPostRedisplay();
+      break;
+    case GLUT_KEY_PAGE_UP:
+      isZ=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armzl_corp+=10;
+	}else if(isRight){
+	  angle_armzr_corp+=10;
+	}
+      }else if(isHead){
+	angle_headz_corp+=10;
+      }
+      glutPostRedisplay();
+      break;
+    case GLUT_KEY_PAGE_DOWN:
+      isZ=true;
+      if(isArm){
+	if(isLeft){
+	  angle_armzl_corp-=10;
+	}else if(isRight){
+	  angle_armzr_corp-=10;
+	}
+      }else if(isHead){
+	angle_headz_corp-=10;
+      }
+      glutPostRedisplay();
+      break;
+  }
+}
 void keyboard(unsigned char key,int x, int y)
 {
+  cout<<key<<" = "<<(int)key<<endl;
   switch (key)
   {
     case 'q':
       exit(0);
+    case 'a':
+      reset();
+      isArm=true;      
+      break;
+    case 'f':
+      reset();
+      isLeg=true;
+      break;
+    case 'l':
+      isLeft=true;
+      break;
+    case 'r':
+      isRight=true;
+      break;
+    case 'h':
+      isHead=true;
+      break;
+    case '0':
+    case '1':
+    case '2':
+      elementId=key-'0';
+      break;
     case 'z':
       pz-=0.5*Cos[r];
       px+=0.5*Sin[r];
@@ -270,6 +440,7 @@ void keyboard(unsigned char key,int x, int y)
       changePerspective();
       glutPostRedisplay();
       break;
+    
   }
 }
 
@@ -329,3 +500,5 @@ void changePerspective()
   gluPerspective(theta,1.0,0.1,40.0);
   glMatrixMode(GL_MODELVIEW);
 }
+
+
