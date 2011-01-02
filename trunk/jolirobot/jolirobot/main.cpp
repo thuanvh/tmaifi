@@ -15,55 +15,60 @@ void MouseMotion(int x,int y);
 void calcCosSinTable();
 void testPosition();
 void changePerspective();
+void initLight();
 
 float pz=0.0,px=0.0,Sin[360],Cos[360],theta=50;
 int xold,r=0;
 
-float angle_armxl0_corp=-195;
-float angle_armxr0_corp=-5;
-float angle_armyl0_corp=-45;
-float angle_armyr0_corp=-215;
+float angle_armxl0_corp=180;
+float angle_armxr0_corp=180;
+float angle_armyl0_corp=0;
+float angle_armyr0_corp=0;
 float angle_armzl0_corp=45;
 float angle_armzr0_corp=45;
 
-float angle_armxl1_corp=-115;
-float angle_armxr1_corp=45;
-float angle_armyl1_corp=-85;
-float angle_armyr1_corp=-55;
-float angle_armzl1_corp=45;
-float angle_armzr1_corp=45;
+float angle_armxl1_corp=0;
+float angle_armxr1_corp=0;
+float angle_armyl1_corp=0;
+float angle_armyr1_corp=0;
+float angle_armzl1_corp=0;
+float angle_armzr1_corp=0;
 
-float angle_armxl2_corp=175;
-float angle_armxr2_corp=45;
-float angle_armyl2_corp=-45;
-float angle_armyr2_corp=-45;
-float angle_armzl2_corp=45;
-float angle_armzr2_corp=45;
+float angle_armxl2_corp=180;
+float angle_armxr2_corp=180;
+float angle_armyl2_corp=0;
+float angle_armyr2_corp=0;
+float angle_armzl2_corp=0;
+float angle_armzr2_corp=0;
 
-float angle_legxl0_corp=45;
-float angle_legxr0_corp=45;
-float angle_legyl0_corp=-45;
-float angle_legyr0_corp=-45;
-float angle_legzl0_corp=45;
-float angle_legzr0_corp=45;
+float angle_legxl0_corp=180;
+float angle_legxr0_corp=180;
+float angle_legyl0_corp=0;
+float angle_legyr0_corp=0;
+float angle_legzl0_corp=0;
+float angle_legzr0_corp=0;
 
-float angle_legxl1_corp=45;
-float angle_legxr1_corp=45;
-float angle_legyl1_corp=-45;
-float angle_legyr1_corp=-45;
-float angle_legzl1_corp=45;
-float angle_legzr1_corp=45;
+float angle_legxl1_corp=0;
+float angle_legxr1_corp=0;
+float angle_legyl1_corp=0;
+float angle_legyr1_corp=0;
+float angle_legzl1_corp=0;
+float angle_legzr1_corp=0;
 
-float angle_legxl2_corp=45;
-float angle_legxr2_corp=45;
-float angle_legyl2_corp=-45;
-float angle_legyr2_corp=-45;
-float angle_legzl2_corp=45;
-float angle_legzr2_corp=45;
+float angle_legxl2_corp=180;
+float angle_legxr2_corp=180;
+float angle_legyl2_corp=0;
+float angle_legyr2_corp=0;
+float angle_legzl2_corp=0;
+float angle_legzr2_corp=0;
 
 float angle_headx_corp=0;
 float angle_heady_corp=0;
 float angle_headz_corp=0;
+
+float angle_bodyx_corp=0;
+float angle_bodyy_corp=0;
+float angle_bodyz_corp=0;
 
 int main(int argc,char **argv)
 {
@@ -71,11 +76,11 @@ int main(int argc,char **argv)
   /* initialisation de glut et creation
    *    de la fenetre */
   glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE);
+  glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
   glutInitWindowPosition(200,200);
   glutInitWindowSize(500,500);
   glutCreateWindow("29");
-  
+  initLight();
   /* Initialisation d'OpenGL */
   glClearColor(0.0,0.0,0.0,0.0);
   changePerspective();
@@ -95,7 +100,53 @@ int main(int argc,char **argv)
   glutMainLoop();
   return 0;
 }
-
+GLfloat L0pos[]={ 0.0,2.0,-1.0};
+GLfloat L0dif[]={ 0.3,0.3,0.8};
+GLfloat L1pos[]={ 2.0,2.0,2.0};
+GLfloat L1dif[]={ 0.5,0.5,0.5};
+GLfloat Mspec[]={0.5,0.5,0.5};
+GLfloat Mshiny=50;
+/*  Initialize material property, light source, lighting model,
+ *  and depth buffer.
+ */
+void initLight() 
+{
+  /* Paramétrage des lumières */
+  
+  glShadeModel(GL_SMOOTH);//FLAT
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_TRUE);
+  glEnable(GL_LIGHTING);
+//   glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHT1);
+//   glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
+//   glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
+  glLightfv(GL_LIGHT1,GL_DIFFUSE,L1dif);
+  glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif); 
+  
+  /* Paramétrage du matériau */
+  glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Mspec);
+  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Mshiny);
+  
+}
+void setMaterial(float r,float g,float b){
+  glColor3f(r,g,b);
+  GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
+  //GLfloat mat_ambient_color[] = { 0.8, 0.8, 0.2, 1.0 };
+  GLfloat mat_ambient_color[] = { r, g, b, 1.0 };
+  //GLfloat mat_diffuse[] = { 1, 0.5, 0.8, 1.0 };
+  GLfloat mat_diffuse[] = { r, g, b, 1.0 };
+  GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat no_shininess[] = { 0.0 };
+  GLfloat low_shininess[] = { 5.0 };
+  GLfloat high_shininess[] = { 100.0 };
+  GLfloat mat_emission[] = {0.3, 0.2, 0.2, 0.0};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
+}
 void display()
 {
   /* effacement de l'image avec la couleur de fond */
@@ -111,158 +162,187 @@ void display()
   glPushMatrix();
   /* Dessin des objets */
   /* Mur */
-  glTranslatef(0,1.5,0);
-  glScalef(1.0,0.25,1.0);
-  glColor3d(1,0,0);
-  glutWireCube(20);
+//   glTranslatef(0,1.5,0);
+//   glScalef(1.0,0.25,1.0);
+//   setMaterial(1,0,0);
+//   glutSolidCube(20);
   
   /* robot */
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(2,-1,3);
-  glRotated(-90,1,0,0);
-  glColor3f(1.0,1.0,1.0);
-//  glRotated(-90,1,0,0);
-  //body
-  gluCylinder(gluNewQuadric(),0.1,0.2,0.5,20,20);  
-  glPushMatrix();
-  /* neck */
-  glTranslated(0,0,0.5);
-  glColor3f(1.0,0,1.0);
-  gluCylinder(gluNewQuadric(),0.1,0.1,0.2,20,20);  
-  /* head */
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(0,0,0.8);
-  glRotatef(angle_headx_corp,-1,0,0);//angle of head with the body
-  glRotatef(angle_heady_corp,0,-1,0);//angle of head with the body
-  glRotatef(angle_headz_corp,0,0,-1);//angle of head with the body
-  glColor3f(1.0,1.0,0);
-  glutWireSphere(0.2,20,20);
-  /* eyes */
-  glPushMatrix();
   {
-    glPopMatrix(); // eye 1
+    glPopMatrix();
     glPushMatrix();
-    glTranslated(0.1,0.2,0.1);
-    glColor3f(1.0,0,0);
-    //glutWireTorus(0.02,0.5,10,10);
-    glutWireSphere(0.05,20,20);
-    glPopMatrix(); // eye 2
+    //glTranslated(2,-1,4);
+    glTranslated(0,0,-5);
+    glRotated(-90,1,0,0);
+    //glColor3f(1.0,1.0,1.0);
+    setMaterial(1.0,1.0,1.0);
+  //  glRotated(-90,1,0,0);
+    //body
     glPushMatrix();
-    glTranslated(0.1,-0.2,0.1);
-    glColor3f(1.0,0,0);
-    //glutWireTorus(0.02,0.5,10,10);
-    glutWireSphere(0.05,20,20);
+    glRotatef(angle_bodyx_corp,-1,0,0);//angle of head with the body
+    glRotatef(angle_bodyy_corp,0,-1,0);//angle of head with the body
+    glRotatef(angle_bodyz_corp,0,0,-1);//angle of head with the body
+    gluCylinder(gluNewQuadric(),0.1,0.2,0.5,20,20);  
+    
+    glPushMatrix();
+    {
+      /* neck */
+      glTranslated(0,0,0.5);
+      glRotatef(angle_headx_corp,-1,0,0);//angle of head with the body
+      glRotatef(angle_heady_corp,0,-1,0);//angle of head with the body
+      glRotatef(angle_headz_corp,0,0,-1);//angle of head with the body
+      //glColor3f(1.0,0,1.0);
+      setMaterial(1.0,0,1.0);
+      gluCylinder(gluNewQuadric(),0.1,0.1,0.2,20,20);  
+      glPushMatrix();
+      {
+	/* head */
+	glPopMatrix();
+	glPushMatrix();
+	glTranslated(0,0,0.3);  
+	//glColor3f(1.0,1.0,0);
+	setMaterial(1.0,1.0,0);
+	glutSolidSphere(0.2,20,20);
+	/* eyes */
+	glPushMatrix();
+	{
+	  glPopMatrix(); // eye 1
+	  glPushMatrix();
+	  glTranslated(0.1,0.2,0.1);
+	  setMaterial(1.0,0,0);
+	  //glutWireTorus(0.02,0.5,10,10);
+	  glutSolidSphere(0.05,20,20);
+	  
+	  glPopMatrix(); // eye 2
+	  glPushMatrix();
+	  glTranslated(-0.1,0.2,0.1);
+	  //glColor3f(1.0,0,0);
+	  setMaterial(1.0,0,0);
+	  //glutWireTorus(0.02,0.5,10,10);
+	  glutSolidSphere(0.05,20,20);
+	}
+	glPopMatrix(); //end eye and head
+      }
+      glPopMatrix();// end neck and head
+      
+      /* arm 1eft*/
+      glPopMatrix();
+      glPushMatrix();  
+      glTranslated(0.2,0,0.5);
+      glRotatef(angle_armxl0_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyl0_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzl0_corp,0,0,-1);//angle of arm with the body    
+      //glColor3f(1.0,0.5,1.0);
+      setMaterial(1.0,0.5,1.0);
+      gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+      glTranslated(0,0,0.3);
+      //glColor3f(0.5,0.5,0.2);
+      setMaterial(0.5,0.5,0.2);
+      glutSolidSphere(0.05,20,20);
+      //glRotatef(-45,0,-1,0);//angle of arm with the body
+      //glColor3f(0.5,0.5,1);
+      setMaterial(0.5,0.5,1);
+      glRotatef(angle_armxl1_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyl1_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzl1_corp,0,0,-1);//angle of arm with the body  
+      
+      gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+      glTranslated(0,0,0.3);
+      //glRotatef(-45,0,-1,0);
+      glRotatef(angle_armxl2_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyl2_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzl2_corp,0,0,-1);//angle of arm with the body  
+      //glColor3f(0.5,1,0.5);
+      setMaterial(0.5,1,0.5);
+      glutSolidCone(0.1,0.1,20,1);//hand
+      /* arm right*/
+      glPopMatrix();
+      glPushMatrix();
+      glTranslated(-0.2,0,0.5);
+      glRotatef(angle_armxr0_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyr0_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzr0_corp,0,0,-1);//angle of arm with the body  
+      //glColor3f(1.0,0.5,1.0);
+      setMaterial(1.0,0.5,1.0);
+      gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+      glTranslated(0,0,0.3);
+      //glColor3f(0.5,0.5,0.2);
+      setMaterial(0.5,0.5,0.2);
+      glutSolidSphere(0.05,20,20);
+      //glRotatef(-45,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armxr1_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyr1_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzr1_corp,0,0,-1);//angle of arm with the body  
+      //glColor3f(0.5,0.5,1);
+      setMaterial(0.5,0.5,1);
+      gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+      glTranslated(0,0,0.3);
+    //  glRotatef(-45,0,-1,0);
+      glRotatef(angle_armxr2_corp,-1,0,0);//angle of arm with the body
+      glRotatef(angle_armyr2_corp,0,-1,0);//angle of arm with the body
+      glRotatef(angle_armzr2_corp,0,0,-1);//angle of arm with the body  
+      //glColor3f(0.5,1,0.5);
+      setMaterial(0.5,1,0.5);
+      glutSolidCone(0.1,0.1,20,1);//hand
+    }
+    glPopMatrix();//end body and up
+    
+    /* leg left*/
+    glPopMatrix();
+    glPushMatrix();
+    glTranslated(0.1,0,0);
+    //glRotatef(135,0,1,0);//angle of arm with the body
+    glRotatef(angle_legxl0_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyl0_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzl0_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(1.0,0.5,1.0);
+    gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+    glTranslated(0,0,0.3);
+    setMaterial(0.5,0.5,0.2);
+    glutSolidSphere(0.05,20,20);
+    //glRotatef(-45,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legxl1_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyl1_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzl1_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(0.5,0.5,1);
+    gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+    glTranslated(0,0,0.3);
+    //glRotatef(-45,0,-1,0);
+    glRotatef(angle_legxl2_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyl2_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzl2_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(0.5,1,0.5);
+    glutSolidCone(0.1,0.1,20,1);//foot  
+    
+    /* leg 2*/
+    glPopMatrix();
+    glPushMatrix();
+    glTranslated(-0.1,0,0);
+    //glRotatef(135,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legxr0_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyr0_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzr0_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(1.0,0.5,1.0);
+    gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+    glTranslated(0,0,0.3);
+    setMaterial(0.5,0.5,0.2);
+    glutSolidSphere(0.05,20,20);
+    //glRotatef(-45,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legxr1_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyr1_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzr1_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(0.5,0.5,1);
+    gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
+    glTranslated(0,0,0.3);
+    //glRotatef(-90,1,0,0);
+    glRotatef(angle_legxr2_corp,-1,0,0);//angle of arm with the body
+    glRotatef(angle_legyr2_corp,0,-1,0);//angle of arm with the body
+    glRotatef(angle_legzr2_corp,0,0,-1);//angle of arm with the body  
+    setMaterial(0.5,1,0.5);
+    glutSolidCone(0.1,0.1,20,1);//foot  
+    /* end robot */
+    glPopMatrix();
   }
-  glPopMatrix(); //end eye and head
-  
-  /* arm 1eft*/
-  glPopMatrix();
-  glPushMatrix();  
-  glTranslated(0,0.2,0.5);
-  glRotatef(angle_armxl0_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyl0_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzl0_corp,0,0,-1);//angle of arm with the body    
-  glColor3f(1.0,0.5,1.0);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  glColor3f(0.5,0.5,0.2);
-  glutWireSphere(0.05,20,20);
-  //glRotatef(-45,0,-1,0);//angle of arm with the body
-  glColor3f(0.5,0.5,1);
-  glRotatef(angle_armxl1_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyl1_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzl1_corp,0,0,-1);//angle of arm with the body  
-  
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  //glRotatef(-45,0,-1,0);
-  glRotatef(angle_armxl2_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyl2_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzl2_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,1,0.5);
-  glutWireCone(0.1,0.1,20,1);//hand
-  /* arm right*/
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(0,-0.2,0.5);
-  glRotatef(angle_armxr0_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyr0_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzr0_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(1.0,0.5,1.0);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  glColor3f(0.5,0.5,0.2);
-  glutWireSphere(0.05,20,20);
-  //glRotatef(-45,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armxr1_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyr1_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzr1_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,0.5,1);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-//  glRotatef(-45,0,-1,0);
-  glRotatef(angle_armxr2_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_armyr2_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_armzr2_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,1,0.5);
-  glutWireCone(0.1,0.1,20,1);//hand
-  /* leg left*/
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(0,0.2,0);
-  //glRotatef(135,0,1,0);//angle of arm with the body
-  glRotatef(angle_legxl0_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyl0_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzl0_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(1.0,0.5,1.0);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  glColor3f(0.5,0.5,0.2);
-  glutWireSphere(0.05,20,20);
-  //glRotatef(-45,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legxl1_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyl1_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzl1_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,0.5,1);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  //glRotatef(-45,0,-1,0);
-  glRotatef(angle_legxl2_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyl2_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzl2_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,1,0.5);
-  glutWireCone(0.1,0.1,20,1);//foot  
-  /* leg 2*/
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(0,-0.2,0);
-  //glRotatef(135,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legxr0_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyr0_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzr0_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(1.0,0.5,1.0);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  glColor3f(0.5,0.5,0.2);
-  glutWireSphere(0.05,20,20);
-  //glRotatef(-45,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legxr1_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyr1_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzr1_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,0.5,1);
-  gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-  glTranslated(0,0,0.3);
-  //glRotatef(-90,1,0,0);
-  glRotatef(angle_legxr2_corp,-1,0,0);//angle of arm with the body
-  glRotatef(angle_legyr2_corp,0,-1,0);//angle of arm with the body
-  glRotatef(angle_legzr2_corp,0,0,-1);//angle of arm with the body  
-  glColor3f(0.5,1,0.5);
-  glutWireCone(0.1,0.1,20,1);//foot  
-  /* end robot */
-  glPopMatrix();
-  
 //   glPopMatrix();
 //   glPushMatrix();
 //   glTranslated(5,-1,5);
@@ -273,7 +353,7 @@ void display()
   glPopMatrix();
   glPushMatrix();
   glTranslated(-5,0,5);
-  glutWireTorus(0.2,0.8,20,30);
+  glutSolidTorus(0.2,0.8,20,30);
   
   /* box */
   glPopMatrix();
@@ -282,13 +362,13 @@ void display()
   glRotated(-90,1,0,0);
   glutSolidCube(0.8);
   glTranslated(0,0,0.4);
-  glColor3f(0,0.5,1.0);
+  setMaterial(0,0.5,1.0);
   gluCylinder(gluNewQuadric(),0.2,0.1,0.5,5,5);
   glTranslated(0,0,0.5);
-  glColor3f(0.0,0.0,1.0);
+  setMaterial(0.0,0.0,1.0);
   gluCylinder(gluNewQuadric(),0.01,0.01,1,5,5);
   glTranslated(0,0,1);
-  glColor3f(1.0,0,1.0);
+  setMaterial(1.0,0,1.0);
   glutSolidSphere(0.05,10,10);
   
   /* chair */
@@ -296,10 +376,10 @@ void display()
   glPushMatrix();
   glTranslated(7,0,-2.5);
   glRotated(-90,1,0,0);
-  gluCylinder(gluNewQuadric(),2,2,0.5,5,5);;
+  gluCylinder(gluNewQuadric(),2,2,0.5,5,5);
   
   glPushMatrix(); // chair leg
-  glColor3f(0,0.5,1.0);
+  setMaterial(0,0.5,1.0);
   int posx[4]={1,1,-1,-1};
   int posy[4]={-1,1,-1,1};
   for(int i=0; i<4; i++){
@@ -313,7 +393,7 @@ void display()
   /* bubble */
   glPopMatrix();
   glTranslated(-5,0,-5);
-  glutWireSphere(1,20,20);
+  glutSolidSphere(1,20,20);
   
   
   /* on force l'affichage du resultat */
@@ -324,6 +404,7 @@ void display()
 bool isArm=false;
 bool isLeg=false;
 bool isHead=false;
+bool isBody=false;
 bool isRight=false;
 bool isLeft=false;
 int  elementId=-1;
@@ -383,6 +464,10 @@ void printOutConfigure(){
   cout<<" angle_headx_corp:"<< angle_headx_corp<<endl;
   cout<<" angle_heady_corp:"<< angle_heady_corp<<endl;
   cout<<" angle_headz_corp:"<< angle_headz_corp<<endl;
+  
+  cout<<" angle_bodyx_corp:"<< angle_bodyx_corp<<endl;
+  cout<<" angle_bodyy_corp:"<< angle_bodyy_corp<<endl;
+  cout<<" angle_bodyz_corp:"<< angle_bodyz_corp<<endl;
 }
 void normaliseAngle(float& angle,int min,int max){
   angle=(int)angle%360;
@@ -414,8 +499,8 @@ void normaliseAllAngle(){
   normaliseAngle(angle_armzl2_corp,0,0);
   normaliseAngle(angle_armzr2_corp,0,0);
   
-  normaliseAngle(angle_legxl0_corp,0,90);
-  normaliseAngle(angle_legxr0_corp,0,90);
+  normaliseAngle(angle_legxl0_corp,0,200);
+  normaliseAngle(angle_legxr0_corp,0,200);
   normaliseAngle(angle_legyl0_corp,0,70);
   normaliseAngle(angle_legyr0_corp,0,70);
   normaliseAngle(angle_legzl0_corp,0,0);
@@ -438,6 +523,10 @@ void normaliseAllAngle(){
   normaliseAngle(angle_headx_corp,0,360);
   normaliseAngle(angle_heady_corp,0,360);
   normaliseAngle(angle_headz_corp,0,360);
+  
+  normaliseAngle(angle_bodyx_corp,0,360);
+  normaliseAngle(angle_bodyy_corp,0,360);
+  normaliseAngle(angle_bodyz_corp,0,360);
 }
 void keyspecial(int key,int x,int y){
   switch(key){
@@ -455,6 +544,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_headx_corp+=10;
+      }else if(isBody){
+	angle_bodyx_corp+=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legxl0_corp+=10;
@@ -482,6 +573,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_headx_corp-=10;
+      }else if(isBody){
+	angle_bodyx_corp-=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legxl0_corp-=10;
@@ -509,6 +602,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_heady_corp+=10;
+      }else if(isBody){
+	angle_bodyy_corp+=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legyl0_corp+=10;
@@ -536,6 +631,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_heady_corp-=10;
+      }else if(isBody){
+	angle_bodyy_corp-=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legyl0_corp-=10;
@@ -563,6 +660,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_headz_corp+=10;
+      }else if(isBody){
+	angle_bodyz_corp+=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legzl0_corp+=10;
@@ -590,6 +689,8 @@ void keyspecial(int key,int x,int y){
 	}
       }else if(isHead){
 	angle_headz_corp-=10;
+      }else if(isBody){
+	angle_bodyz_corp-=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legzl0_corp-=10;
@@ -632,6 +733,10 @@ void keyboard(unsigned char key,int x, int y)
       reset();
       isHead=true;
       break;
+    case 'b':
+      reset();
+      isBody=true;
+      break;
     case '0':
     case '1':
     case '2':
@@ -649,7 +754,7 @@ void keyboard(unsigned char key,int x, int y)
       testPosition();
       glutPostRedisplay();
       break;
-    case 'b':
+    case 't':      
       theta+=1;
       if (theta>180)
 	theta=180;
