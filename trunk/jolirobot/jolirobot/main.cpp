@@ -1,9 +1,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <jpeglib.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <tiffio.h>
 #include <curses.h>
 #include <iostream>
 using namespace std;
@@ -16,6 +17,14 @@ void calcCosSinTable();
 void testPosition();
 void changePerspective();
 void initLight();
+void printOutConfigure();
+
+void initTexture();
+void chargeTextureJpeg(char *fichier,int numtex);
+void chargeTextureTiff(char *fichier,int numtex);
+void chargeTextureProc(int numtex);
+int fonctionTexture(int x,int y);
+void displayRoom();
 
 float pz=0.0,px=0.0,Sin[360],Cos[360],theta=50;
 int xold,r=0;
@@ -70,13 +79,17 @@ float angle_bodyx_corp=0;
 float angle_bodyy_corp=0;
 float angle_bodyz_corp=0;
 
+int IdTex[3]; /* tableau d'Id pour les 2 textures */
+float decalage=0; /* décalage de la texture procedurale pour l'animation */
+
 int main(int argc,char **argv)
 {
+  
   
   /* initialisation de glut et creation
    *    de la fenetre */
   glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+  glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
   glutInitWindowPosition(200,200);
   glutInitWindowSize(500,500);
   glutCreateWindow("29");
@@ -84,6 +97,14 @@ int main(int argc,char **argv)
   /* Initialisation d'OpenGL */
   glClearColor(0.0,0.0,0.0,0.0);
   changePerspective();
+  initTexture();
+  /* Chargement de la texture */
+  
+  /* Chargement des textures */
+  glGenTextures(2,(GLuint*)IdTex);
+    chargeTextureTiff("texture.tif",IdTex[0]);
+    chargeTextureProc(IdTex[1]);
+    chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
   
   /* Precalcul des sinus et cosinus */
   calcCosSinTable();
@@ -100,9 +121,13 @@ int main(int argc,char **argv)
   glutMainLoop();
   return 0;
 }
-GLfloat L0pos[]={ 0.0,2.0,-1.0};
+void initTexture(){
+ 
+  glEnable(GL_TEXTURE_2D);
+}
+GLfloat L0pos[]={ 5.0,2.0,-5.0};
 GLfloat L0dif[]={ 0.3,0.3,0.8};
-GLfloat L1pos[]={ 2.0,2.0,2.0};
+GLfloat L1pos[]={ 0,0,5.0};
 GLfloat L1dif[]={ 0.5,0.5,0.5};
 GLfloat Mspec[]={0.5,0.5,0.5};
 GLfloat Mshiny=50;
@@ -116,12 +141,15 @@ void initLight()
   glShadeModel(GL_SMOOTH);//FLAT
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_TRUE);
   glEnable(GL_LIGHTING);
-//   glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHT0);
   glEnable(GL_LIGHT1);
-//   glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
-//   glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
+  glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
+  glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
+  glLightfv(GL_LIGHT0,GL_POSITION,L0pos);
+  
   glLightfv(GL_LIGHT1,GL_DIFFUSE,L1dif);
-  glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif); 
+  glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif);
+  glLightfv(GL_LIGHT1,GL_POSITION,L1pos);
   
   /* Paramétrage du matériau */
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Mspec);
@@ -147,8 +175,10 @@ void setMaterial(float r,float g,float b){
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
   glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
 }
+
 void display()
 {
+  
   /* effacement de l'image avec la couleur de fond */
   glClear(GL_COLOR_BUFFER_BIT);
   glLoadIdentity();
@@ -161,11 +191,8 @@ void display()
   
   glPushMatrix();
   /* Dessin des objets */
-  /* Mur */
-//   glTranslatef(0,1.5,0);
-//   glScalef(1.0,0.25,1.0);
-//   setMaterial(1,0,0);
-//   glutSolidCube(20);
+  /* Mur */  
+  displayRoom();
   
   /* robot */
   {
@@ -182,7 +209,7 @@ void display()
     glRotatef(angle_bodyx_corp,-1,0,0);//angle of head with the body
     glRotatef(angle_bodyy_corp,0,-1,0);//angle of head with the body
     glRotatef(angle_bodyz_corp,0,0,-1);//angle of head with the body
-    gluCylinder(gluNewQuadric(),0.1,0.2,0.5,20,20);  
+    gluCylinder(gluNewQuadric(),0.15,0.25,0.5,20,20);  
     
     glPushMatrix();
     {
@@ -228,7 +255,7 @@ void display()
       /* arm 1eft*/
       glPopMatrix();
       glPushMatrix();  
-      glTranslated(0.2,0,0.5);
+      glTranslated(0.25,0,0.5);
       glRotatef(angle_armxl0_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyl0_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzl0_corp,0,0,-1);//angle of arm with the body    
@@ -258,7 +285,7 @@ void display()
       /* arm right*/
       glPopMatrix();
       glPushMatrix();
-      glTranslated(-0.2,0,0.5);
+      glTranslated(-0.25,0,0.5);
       glRotatef(angle_armxr0_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyr0_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr0_corp,0,0,-1);//angle of arm with the body  
@@ -393,14 +420,102 @@ void display()
   /* bubble */
   glPopMatrix();
   glTranslated(-5,0,-5);
-  glutSolidSphere(1,20,20);
+//   glBindTexture(GL_TEXTURE_2D,IdTex[2]);
+//   glutSolidSphere(1,20,20);
+//   gluSphere(gluNewQuadric(), 0.35f, 32, 16);
+  glBindTexture(GL_TEXTURE_2D, IdTex[2]);				// Select Texture 3 (2)
+  glColor4f(1.0f, 1.0f, 1.0f, 0.2f);					// Set Color To White With 40% Alpha
+  glEnable(GL_BLEND);							// Enable Blending
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);					// Set Blending Mode To Mix Based On SRC Alpha
+  glEnable(GL_TEXTURE_GEN_S);						// Enable Sphere Mapping
+  glEnable(GL_TEXTURE_GEN_T);						// Enable Sphere Mapping
   
+  gluSphere(gluNewQuadric(), 0.35f, 32, 16);						// Draw Another Sphere Using New Texture
+  // Textures Will Mix Creating A MultiTexture Effect (Reflection)
+  glDisable(GL_TEXTURE_GEN_S);						// Disable Sphere Mapping
+  glDisable(GL_TEXTURE_GEN_T);						// Disable Sphere Mapping
+  glDisable(GL_BLEND);							// Disable Blending
   
   /* on force l'affichage du resultat */
   glFlush();
   glutSwapBuffers();
 }
 
+void displayRoom(){
+  float boxsize=10;
+  glTranslatef(0,1.5,0);
+  glScalef(1.0,0.25,1.0);
+  setMaterial(1,0.6,0.2);
+  //glBindTexture(GL_TEXTURE_CUBE_MAP,IdTex[0]);
+  //glutSolidCube(20);  
+    
+//     /* Positionnement de l'observateur (ou de l'objet) */
+//     glLoadIdentity();
+//     gluLookAt(0.0,0.0,distance,0.0,0.0,0.0,0.0,1.0,0.0);
+//     glRotatef(angley,1.0,0.0,0.0);
+//     glRotatef(anglex,0.0,1.0,0.0);
+    
+    /* Description de l'obet */
+    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBegin(GL_POLYGON);
+    glNormal3f(0.0,0.0,-1.0);
+    glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize, boxsize);
+    glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f( boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f( boxsize, boxsize, boxsize);
+    glEnd();
+    
+    
+    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    glBegin(GL_POLYGON); 
+    glNormal3f(-1.0,0.0,0.0);
+    glTexCoord2f(0.0,1.0);   glVertex3f( boxsize, boxsize, boxsize);
+    glTexCoord2f(0.0,0.0);   glVertex3f( boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f( boxsize,-boxsize,-boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
+    glEnd();
+    
+    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBegin(GL_POLYGON);
+    glNormal3f(0.0,0.0,1.0);
+    glTexCoord2f(0.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
+    glTexCoord2f(0.0,0.0);   glVertex3f( boxsize,-boxsize,-boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f(-boxsize,-boxsize,-boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
+    glEnd();
+    
+    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    glBegin(GL_POLYGON);
+    glNormal3f(1.0,0.0,0.0);
+    glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
+    glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize,-boxsize,-boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f(-boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f(-boxsize, boxsize, boxsize);
+    glEnd();
+    
+    // ceiling
+    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBegin(GL_POLYGON);
+    glNormal3f(0.0,-1.0,0.0);
+    glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
+    glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize, boxsize, boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f( boxsize, boxsize, boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
+    glEnd();
+    
+    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    glBegin(GL_POLYGON);
+    glNormal3f(0.0,1.0,0.0);
+    glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize,-boxsize,-boxsize);
+    glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,1.0);   glVertex3f( boxsize,-boxsize, boxsize);
+    glTexCoord2f(1.0,0.0);   glVertex3f( boxsize,-boxsize,-boxsize);
+    glEnd();
+    
+    /*  echange de tampon (double buffering)*/
+    glutSwapBuffers();
+  
+}
 bool isArm=false;
 bool isLeg=false;
 bool isHead=false;
@@ -417,6 +532,18 @@ void reset(){
   isLeg=false;
   isRight=false;
   isHead=false;
+}
+void go(){
+#define NUM_ACT 3
+  float legleft[NUM_ACT]={};
+  float legright0[NUM_ACT]={180,135,180};
+  for(int i=0; i<NUM_ACT; i++){
+    angle_legxr0_corp= legright0[i];
+    printOutConfigure();
+    glutSwapBuffers();
+    glutPostRedisplay();
+    sleep(1);
+  }  
 }
 void printOutConfigure(){
   cout<<" angle_armxl0_corp:"<< angle_armxl0_corp<<endl;
@@ -477,6 +604,7 @@ void normaliseAngle(float& angle,int min,int max){
   if(angle>max)
     angle=max;
 }
+
 void normaliseAllAngle(){
   normaliseAngle(angle_armxl0_corp,5,355);
   normaliseAngle(angle_armxr0_corp,5,355);
@@ -528,6 +656,7 @@ void normaliseAllAngle(){
   normaliseAngle(angle_bodyy_corp,0,360);
   normaliseAngle(angle_bodyz_corp,0,360);
 }
+
 void keyspecial(int key,int x,int y){
   switch(key){
     case GLUT_KEY_UP:
@@ -708,6 +837,9 @@ void keyspecial(int key,int x,int y){
   normaliseAllAngle();
   printOutConfigure();
 }
+
+
+
 void keyboard(unsigned char key,int x, int y)
 {
 //   cout<<key<<" = "<<(int)key<<endl;
@@ -736,6 +868,10 @@ void keyboard(unsigned char key,int x, int y)
     case 'b':
       reset();
       isBody=true;
+      break;
+    case 'g':
+      reset();
+      go();
       break;
     case '0':
     case '1':
@@ -829,4 +965,157 @@ void changePerspective()
   glMatrixMode(GL_MODELVIEW);
 }
 
+void chargeTextureJpeg(char *fichier,int numtex)
+{
+//   unsigned char image[256*256*3];
+//   unsigned char texture[256][256][3];
+  struct jpeg_decompress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+  FILE *file;	
+  unsigned char *ligne;
+  int i,j;
+  
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_decompress(&cinfo);
+  if ((file=fopen(fichier,"rb"))==NULL)
+  {
+    fprintf(stderr,"Erreur : impossible d'ouvrir le fichier texture.jpg\n");
+    exit(1);
+  }
+  jpeg_stdio_src(&cinfo, file);
+  jpeg_read_header(&cinfo, TRUE);
+  
+  unsigned char image[cinfo.image_width*cinfo.image_height*3];
+  unsigned char texture[cinfo.image_height][cinfo.image_width][3];
+//   if ((cinfo.image_width!=256)||(cinfo.image_height!=256)) {
+//     fprintf(stdout,"Erreur : l'image doit etre de taille 256x256\n");
+//     exit(1);
+//   }
+  if (cinfo.jpeg_color_space==JCS_GRAYSCALE) {
+    fprintf(stdout,"Erreur : l'image doit etre de type RGB\n");
+    exit(1);
+  }
+  
+  jpeg_start_decompress(&cinfo);
+  ligne=image;
+  while (cinfo.output_scanline<cinfo.output_height)
+  {
+    ligne=image+3*256*cinfo.output_scanline;
+    jpeg_read_scanlines(&cinfo,&ligne,1);
+  }
+  jpeg_finish_decompress(&cinfo);
+  jpeg_destroy_decompress(&cinfo);
+  
+  for (i=0;i<cinfo.image_height;i++)
+    for (j=0;j<cinfo.image_width;j++) {
+      texture[i][j][0]=image[i*cinfo.image_width*3+j*3];
+      texture[i][j][1]=image[i*cinfo.image_width*3+j*3+1];
+      texture[i][j][2]=image[i*cinfo.image_width*3+j*3+2];
+    }
+    /* Parametrage du placage de textures */
+    glBindTexture(GL_TEXTURE_2D,numtex);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,
+	       GL_RGB,GL_UNSIGNED_BYTE,texture);
+}
 
+/****************************************************/
+/* void chargeTextureTiff(char *fichier,int numtex) */
+/****************************************************/
+/* chargement de l'image tif 'fichier' et placement */
+/* dans la texture de numero 'numtex'               */
+/****************************************************/
+
+void chargeTextureTiff(char *fichier,int numtex)
+{
+  
+  uint32 l, h;
+  int i,j;
+  size_t npixels;
+  uint32* raster;
+  
+  /* chargement de l'image TIF */
+  TIFF* tif = TIFFOpen(fichier, "r");
+  if (tif) {
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &l);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h); 
+    npixels = l * h;
+    raster = (uint32*) _TIFFmalloc(npixels * sizeof (uint32)); 
+    unsigned char image[h][l][3];
+    if (raster != NULL) {
+      /* lecture de l'image */
+      if (TIFFReadRGBAImage(tif, l, h, raster, 1)) {
+	/* transfert de l'image vers le tableau 'image' */
+	for (i=0;i<h;i++)
+	  for (j=0;j<l;j++) {
+	    image[i][j][0]=((unsigned char *)raster)[i*l*4+j*4+0];
+	    image[i][j][1]=((unsigned char *)raster)[i*l*4+j*4+1];
+	    image[i][j][2]=((unsigned char *)raster)[i*l*4+j*4+2];
+	  }
+      }
+      else {
+	printf("erreur de chargement du fichier %s\n",fichier);
+	exit(0);
+      }
+      _TIFFfree(raster); 
+    }
+    TIFFClose(tif);
+    
+    /*      paramétrage de la texture */
+    glBindTexture(GL_TEXTURE_2D,numtex);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,
+		 GL_RGB,GL_UNSIGNED_BYTE,image);
+  }
+  
+}
+
+/**************************************/
+/* void chargeTextureProc(int numtex) */
+/**************************************/
+/* Création de la texture procedurale */
+/* de numero 'numtex'                 */
+/**************************************/
+
+void chargeTextureProc(int numtex)
+{
+  unsigned char image[256][256][3];
+  int i,j;
+  int a;
+  
+  /* calcule de l'image */
+  for (i=0;i<256;i++)
+    for (j=0;j<256;j++) {
+      a=fonctionTexture(i,j);
+      image[i][j][0]=a;
+      image[i][j][1]=128;
+      image[i][j][2]=128;
+    }
+    
+    /* Paramètrage de la texture */
+    glBindTexture(GL_TEXTURE_2D,numtex);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,
+	       GL_RGB,GL_UNSIGNED_BYTE,image);
+}
+
+
+
+/*****************************************************/
+/* int fonctionTexture(int x,int y)                  */
+/*****************************************************/
+/* Calcule et renvoie la valeur de la fonction       */
+/* utilisee pour la texture procedurale au point x,y */
+/*****************************************************/
+
+int fonctionTexture(int x,int y)
+{
+  float dx=(128.0-(float)x)/255.0*40.0;
+  float dy=(128.0-(float)y)/255.0*40.0;
+  float a=cos(sqrt(dx*dx+dy*dy)+decalage);
+  return (int)((a+1.0)/2.0*255);
+  
+}
