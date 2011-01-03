@@ -419,23 +419,28 @@ void display()
   
   /* bubble */
   glPopMatrix();
+  glPopMatrix();
+//   glPushMatrix();
   glTranslated(-5,0,-5);
 //   glBindTexture(GL_TEXTURE_2D,IdTex[2]);
 //   glutSolidSphere(1,20,20);
 //   gluSphere(gluNewQuadric(), 0.35f, 32, 16);
   glBindTexture(GL_TEXTURE_2D, IdTex[2]);				// Select Texture 3 (2)
-  glColor4f(1.0f, 1.0f, 1.0f, 0.2f);					// Set Color To White With 40% Alpha
-  glEnable(GL_BLEND);							// Enable Blending
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);					// Set Blending Mode To Mix Based On SRC Alpha
+  glColor4f(1.0f, 1.0f, 1.0f, 0.0f);					// Set Color To White With 40% Alpha
+//   glEnable(GL_BLEND);							// Enable Blending
+//   glBlendFunc(GL_SRC_ALPHA, GL_ONE);					// Set Blending Mode To Mix Based On SRC Alpha
   glEnable(GL_TEXTURE_GEN_S);						// Enable Sphere Mapping
   glEnable(GL_TEXTURE_GEN_T);						// Enable Sphere Mapping
-  
-  gluSphere(gluNewQuadric(), 0.35f, 32, 16);						// Draw Another Sphere Using New Texture
+  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+  glutSolidSphere(0.35f,20,20);
+  //gluSphere(gluNewQuadric(), 0.35f, 32, 16);						// Draw Another Sphere Using New Texture
   // Textures Will Mix Creating A MultiTexture Effect (Reflection)
   glDisable(GL_TEXTURE_GEN_S);						// Disable Sphere Mapping
   glDisable(GL_TEXTURE_GEN_T);						// Disable Sphere Mapping
-  glDisable(GL_BLEND);							// Disable Blending
+//   glDisable(GL_BLEND);							// Disable Blending
   
+//   glPopMatrix();
   /* on force l'affichage du resultat */
   glFlush();
   glutSwapBuffers();
