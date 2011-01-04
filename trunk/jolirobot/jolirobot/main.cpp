@@ -18,7 +18,7 @@ void testPosition();
 void changePerspective();
 void initLight();
 void printOutConfigure();
-
+void normaliseAngle(float& angle,int min,int max);
 void initTexture();
 void chargeTextureJpeg(char *fichier,int numtex);
 void chargeTextureTiff(char *fichier,int numtex);
@@ -108,7 +108,9 @@ int main(int argc,char **argv)
   glGenTextures(5,(GLuint*)IdTex);
   chargeTextureTiff("texture.tif",IdTex[0]);
   chargeTextureProc(IdTex[1]);
-  chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
+//   chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
+  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);
+  
   chargeTextureJpeg("brick.jpg",IdTex[3]);
   chargeTextureJpeg("floor.jpg",IdTex[4]);
   
@@ -206,8 +208,8 @@ void display()
     glPushMatrix();
     //glTranslated(2,-1,4);
     glTranslated(0,0,-5);
-    glRotated(-90,1,0,0);
-    glTranslated(robot_posx,robot_posy,0);
+    glTranslated(robot_posx,0,robot_posy);
+    glRotated(-90,1,0,0);    
     glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
     
     //glColor3f(1.0,1.0,1.0);
@@ -434,6 +436,7 @@ void display()
 //   glBindTexture(GL_TEXTURE_2D,IdTex[2]);
 //   glutSolidSphere(1,20,20);
 //   gluSphere(gluNewQuadric(), 0.35f, 32, 16);
+  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, IdTex[2]);				// Select Texture 3 (2)
   glColor4f(1.0f, 1.0f, 1.0f, 0.0f);					// Set Color To White With 40% Alpha
 //   glEnable(GL_BLEND);							// Enable Blending
@@ -448,7 +451,7 @@ void display()
   glDisable(GL_TEXTURE_GEN_S);						// Disable Sphere Mapping
   glDisable(GL_TEXTURE_GEN_T);						// Disable Sphere Mapping
 //   glDisable(GL_BLEND);							// Disable Blending
-  
+  glDisable(GL_TEXTURE_2D);
 //   glPopMatrix();
   /* on force l'affichage du resultat */
   glFlush();
@@ -499,7 +502,9 @@ void displayRoom(){
     glTexCoord2f(1.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
     glEnd();
     
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D,IdTex[3]);
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBegin(GL_POLYGON);
     glNormal3f(1.0,0.0,0.0);
     glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
@@ -509,7 +514,9 @@ void displayRoom(){
     glEnd();
     
     // ceiling
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,-1.0,0.0);
     glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
@@ -519,7 +526,9 @@ void displayRoom(){
     glEnd();
     
     //floor
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D,IdTex[4]);
+//     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,1.0,0.0);
     glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize,-boxsize,-boxsize);
@@ -559,18 +568,42 @@ void go(){
 //   float legright0[NUM_ACT]={160,160,180,200,180};
   float legleft0[NUM_ACT]={0,1,0,-1,-1,0};
   float legright0[NUM_ACT]={-1,-1,0,0,1,0};
-  int angle_leg=45;
+//   float legleft1[NUM_ACT]={};
+//   float legright1[NUM_ACT]={};
+  int angle_leg=80;
   int small=5;
+  int angle_leg2=90;
   int angle_small=angle_leg/small;
+  int angle_small2=angle_leg2/small*2;
   float veloc=Sin[angle_small]*0.3;
   for(int k=0; k<NUM_FOOT; k++){
     for(int i=0; i<NUM_ACT; i++){
       for(int l=1; l<=small; l++){
-	angle_legxr0_corp= 180+legright0[i]*angle_small;
-	angle_legxl0_corp= 180+legleft0[i]*angle_small;
-	robot_posy-=veloc*Cos[(int)angle_allz_corp];
+	
+	angle_legxr0_corp= (180+legright0[i]*angle_small);
+	angle_legxl0_corp= (180+legleft0[i]*angle_small);
+	normaliseAngle(angle_legxl0_corp,0,360);
+	normaliseAngle(angle_legxr0_corp,0,360);
+	
+	int delta_angle2=0;
+	if(l-1>small/2)
+	  delta_angle2=(small-l)*angle_small2;
+	else
+	  delta_angle2=(l-1)*angle_small2;
+	if(legright0[i]<0) 
+	  angle_legxr1_corp= 0+delta_angle2;
+	else
+	  angle_legxr1_corp=0;
+	if(legleft0[i]<0) 
+	  angle_legxl1_corp= 0+delta_angle2;
+	else
+	  angle_legxl1_corp=0;
+	//cout<<angle_legxr1_corp<<"-"<<angle_legxl1_corp<<" ";
+	
+	robot_posy+=veloc*Cos[(int)angle_allz_corp];
 	robot_posx+=veloc*Sin[(int)angle_allz_corp];
-	//cout<<robot_posy<<endl;
+	
+	//cout<<angle_allz_corp<<endl;
 	//printOutConfigure();
 	display();
 	glFlush();
@@ -1059,12 +1092,23 @@ void chargeTextureJpeg(char *fichier,int numtex)
       texture[i][j][1]=image[i*cinfo.image_width*3+j*3+1];
       texture[i][j][2]=image[i*cinfo.image_width*3+j*3+2];
     }
-    /* Parametrage du placage de textures */
-    glBindTexture(GL_TEXTURE_2D,numtex);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  /* Parametrage du placage de textures */
+  glBindTexture(GL_TEXTURE_2D,numtex);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,
-	       GL_RGB,GL_UNSIGNED_BYTE,texture);
+//   if (useMipmaps) {
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+//     gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 256, 256,GL_RGB, GL_UNSIGNED_BYTE, texture);
+//   } else {
+//     if (linearFiltering) {
+//       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//     } else {
+//       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//     }
+//     glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,GL_RGB, GL_UNSIGNED_BYTE, floorTexture);
+//   }
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
+//    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
 }
 
 /****************************************************/
