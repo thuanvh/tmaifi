@@ -79,7 +79,11 @@ float angle_bodyx_corp=0;
 float angle_bodyy_corp=0;
 float angle_bodyz_corp=0;
 
-int IdTex[3]; /* tableau d'Id pour les 2 textures */
+float angle_allz_corp=0;
+float robot_posx=0;
+float robot_posy=0;
+
+int IdTex[5]; /* tableau d'Id pour les 2 textures */
 float decalage=0; /* décalage de la texture procedurale pour l'animation */
 
 int main(int argc,char **argv)
@@ -101,10 +105,12 @@ int main(int argc,char **argv)
   /* Chargement de la texture */
   
   /* Chargement des textures */
-  glGenTextures(2,(GLuint*)IdTex);
-    chargeTextureTiff("texture.tif",IdTex[0]);
-    chargeTextureProc(IdTex[1]);
-    chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
+  glGenTextures(5,(GLuint*)IdTex);
+  chargeTextureTiff("texture.tif",IdTex[0]);
+  chargeTextureProc(IdTex[1]);
+  chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
+  chargeTextureJpeg("brick.jpg",IdTex[3]);
+  chargeTextureJpeg("floor.jpg",IdTex[4]);
   
   /* Precalcul des sinus et cosinus */
   calcCosSinTable();
@@ -201,6 +207,9 @@ void display()
     //glTranslated(2,-1,4);
     glTranslated(0,0,-5);
     glRotated(-90,1,0,0);
+    glTranslated(robot_posx,robot_posy,0);
+    glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
+    
     //glColor3f(1.0,1.0,1.0);
     setMaterial(1.0,1.0,1.0);
   //  glRotated(-90,1,0,0);
@@ -447,6 +456,7 @@ void display()
 }
 
 void displayRoom(){
+  glEnable(GL_TEXTURE_2D);
   float boxsize=10;
   glTranslatef(0,1.5,0);
   glScalef(1.0,0.25,1.0);
@@ -461,7 +471,7 @@ void displayRoom(){
 //     glRotatef(anglex,0.0,1.0,0.0);
     
     /* Description de l'obet */
-    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBindTexture(GL_TEXTURE_2D,IdTex[3]);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,0.0,-1.0);
     glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize, boxsize);
@@ -471,7 +481,7 @@ void displayRoom(){
     glEnd();
     
     
-    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    glBindTexture(GL_TEXTURE_2D,IdTex[3]);
     glBegin(GL_POLYGON); 
     glNormal3f(-1.0,0.0,0.0);
     glTexCoord2f(0.0,1.0);   glVertex3f( boxsize, boxsize, boxsize);
@@ -480,7 +490,7 @@ void displayRoom(){
     glTexCoord2f(1.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
     glEnd();
     
-    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBindTexture(GL_TEXTURE_2D,IdTex[3]);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,0.0,1.0);
     glTexCoord2f(0.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
@@ -489,7 +499,7 @@ void displayRoom(){
     glTexCoord2f(1.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
     glEnd();
     
-    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    glBindTexture(GL_TEXTURE_2D,IdTex[3]);
     glBegin(GL_POLYGON);
     glNormal3f(1.0,0.0,0.0);
     glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
@@ -499,7 +509,7 @@ void displayRoom(){
     glEnd();
     
     // ceiling
-    glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,-1.0,0.0);
     glTexCoord2f(0.0,1.0);   glVertex3f(-boxsize, boxsize,-boxsize);
@@ -508,7 +518,8 @@ void displayRoom(){
     glTexCoord2f(1.0,1.0);   glVertex3f( boxsize, boxsize,-boxsize);
     glEnd();
     
-    glBindTexture(GL_TEXTURE_2D,IdTex[1]);
+    //floor
+    glBindTexture(GL_TEXTURE_2D,IdTex[4]);
     glBegin(GL_POLYGON);
     glNormal3f(0.0,1.0,0.0);
     glTexCoord2f(0.0,0.0);   glVertex3f(-boxsize,-boxsize,-boxsize);
@@ -517,8 +528,8 @@ void displayRoom(){
     glTexCoord2f(1.0,0.0);   glVertex3f( boxsize,-boxsize,-boxsize);
     glEnd();
     
-    /*  echange de tampon (double buffering)*/
-    glutSwapBuffers();
+    
+    glDisable(GL_TEXTURE_2D);
   
 }
 bool isArm=false;
@@ -527,6 +538,7 @@ bool isHead=false;
 bool isBody=false;
 bool isRight=false;
 bool isLeft=false;
+bool isTotal=false;
 int  elementId=-1;
 bool isX=false;
 bool isY=false;
@@ -537,18 +549,38 @@ void reset(){
   isLeg=false;
   isRight=false;
   isHead=false;
+  isBody=false;
+  isTotal=false;
 }
 void go(){
-#define NUM_ACT 3
-  float legleft[NUM_ACT]={};
-  float legright0[NUM_ACT]={180,135,180};
-  for(int i=0; i<NUM_ACT; i++){
-    angle_legxr0_corp= legright0[i];
-    printOutConfigure();
-    glutSwapBuffers();
-    glutPostRedisplay();
-    sleep(1);
-  }  
+#define NUM_ACT 6
+#define NUM_FOOT 5
+//   float legleft0[NUM_ACT]={180,200,180,160,180};
+//   float legright0[NUM_ACT]={160,160,180,200,180};
+  float legleft0[NUM_ACT]={0,1,0,-1,-1,0};
+  float legright0[NUM_ACT]={-1,-1,0,0,1,0};
+  int angle_leg=45;
+  int small=5;
+  int angle_small=angle_leg/small;
+  float veloc=Sin[angle_small]*0.3;
+  for(int k=0; k<NUM_FOOT; k++){
+    for(int i=0; i<NUM_ACT; i++){
+      for(int l=1; l<=small; l++){
+	angle_legxr0_corp= 180+legright0[i]*angle_small;
+	angle_legxl0_corp= 180+legleft0[i]*angle_small;
+	robot_posy-=veloc*Cos[(int)angle_allz_corp];
+	robot_posx+=veloc*Sin[(int)angle_allz_corp];
+	//cout<<robot_posy<<endl;
+	//printOutConfigure();
+	display();
+	glFlush();
+	glutSwapBuffers();
+	//glutPostRedisplay();
+	//glDrawBuffer(GL_BACK);
+	//sleep(1);
+      }
+    }  
+  }
 }
 void printOutConfigure(){
   cout<<" angle_armxl0_corp:"<< angle_armxl0_corp<<endl;
@@ -660,6 +692,8 @@ void normaliseAllAngle(){
   normaliseAngle(angle_bodyx_corp,0,360);
   normaliseAngle(angle_bodyy_corp,0,360);
   normaliseAngle(angle_bodyz_corp,0,360);
+  
+  normaliseAngle(angle_allz_corp,0,360);
 }
 
 void keyspecial(int key,int x,int y){
@@ -796,6 +830,8 @@ void keyspecial(int key,int x,int y){
 	angle_headz_corp+=10;
       }else if(isBody){
 	angle_bodyz_corp+=10;
+      }else if(isTotal){
+	angle_allz_corp+=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legzl0_corp+=10;
@@ -825,6 +861,8 @@ void keyspecial(int key,int x,int y){
 	angle_headz_corp-=10;
       }else if(isBody){
 	angle_bodyz_corp-=10;
+      }else if(isTotal){
+	angle_allz_corp-=10;
       }else if(isLeg){
 	if(isLeft){
 	  if(elementId==0) angle_legzl0_corp-=10;
@@ -877,6 +915,10 @@ void keyboard(unsigned char key,int x, int y)
     case 'g':
       reset();
       go();
+      break;
+    case 'c':
+      reset();
+      isTotal=true;
       break;
     case '0':
     case '1':
