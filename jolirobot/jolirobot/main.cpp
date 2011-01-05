@@ -86,9 +86,20 @@ float robot_posy=0;
 int IdTex[5]; /* tableau d'Id pour les 2 textures */
 float decalage=0; /* décalage de la texture procedurale pour l'animation */
 
+#define NUM_LIGHT_SOURCE 2
+int lightSourceId=0;
+bool lightEnableAll;
+bool lightControlAll;
+bool lightEnable[NUM_LIGHT_SOURCE];
+bool isLight;
+#define NUM_LIGHT_COLOR 4
+int lightColor[NUM_LIGHT_SOURCE];
+#define MATERIAL_LAMBERT true
+#define MATERIAL_GOURAUD false
+bool materialMode;
+
 int main(int argc,char **argv)
 {
-  
   
   /* initialisation de glut et creation
    *    de la fenetre */
@@ -123,7 +134,7 @@ int main(int argc,char **argv)
   glutSpecialFunc(keyspecial);
   glutMouseFunc(mousePress);
   glutMotionFunc(MouseMotion);
-  
+  //glutTimerFunc();
   
   /* Entre dans la boucle principale glut */
   glutMainLoop();
@@ -133,35 +144,51 @@ void initTexture(){
  
   glEnable(GL_TEXTURE_2D);
 }
-GLfloat L0pos[]={ 5.0,2.0,-5.0};
-GLfloat L0dif[]={ 0.3,0.3,0.8};
-GLfloat L1pos[]={ 0,0,5.0};
-GLfloat L1dif[]={ 0.5,0.5,0.5};
-GLfloat Mspec[]={0.5,0.5,0.5};
-GLfloat Mshiny=50;
+
 /*  Initialize material property, light source, lighting model,
  *  and depth buffer.
  */
 void initLight() 
 {
   /* Paramétrage des lumières */
-  
+  GLfloat L0pos[]={ 5.0,2.0,-5.0};
+  GLfloat L0dif[]={ 0.3,0.3,0.8};
+  GLfloat L1pos[]={ 0,0,5.0};
+  GLfloat L1dif[]={ 0.5,0.5,0.5};
+  GLfloat Mspec[]={ 0.5,0.5,0.5};
+  GLfloat Mshiny=50;
   glShadeModel(GL_SMOOTH);//FLAT
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_TRUE);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_LIGHT1);
-  glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
-  glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
-  glLightfv(GL_LIGHT0,GL_POSITION,L0pos);
-  
-  glLightfv(GL_LIGHT1,GL_DIFFUSE,L1dif);
-  glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif);
-  glLightfv(GL_LIGHT1,GL_POSITION,L1pos);
+  if(lightEnableAll){
+    glEnable(GL_LIGHTING);
+    if(lightEnable[0]){
+      glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
+      glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
+      glLightfv(GL_LIGHT0,GL_POSITION,L0pos);
+    }
+    else{
+      glDisable(GL_LIGHT0);
+    }
+    if(lightEnable[1]){
+      glEnable(GL_LIGHT1);
+      glLightfv(GL_LIGHT1,GL_DIFFUSE,L1dif);
+      glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif);
+      glLightfv(GL_LIGHT1,GL_POSITION,L1pos);
+    }else{
+      glDisable(GL_LIGHT1);
+    }
+    
+  }else{
+    glDisable(GL_LIGHTING);    
+  }
   
   /* Paramétrage du matériau */
-  glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Mspec);
-  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Mshiny);
+//   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Mspec);
+//   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Mshiny);
+  
+  glMaterialfv(GL_FRONT,GL_SPECULAR,Mspec);
+  glMaterialf(GL_FRONT,GL_SHININESS,Mshiny);
   
 }
 void setMaterial(float r,float g,float b){
@@ -177,11 +204,16 @@ void setMaterial(float r,float g,float b){
   GLfloat low_shininess[] = { 5.0 };
   GLfloat high_shininess[] = { 100.0 };
   GLfloat mat_emission[] = {0.3, 0.2, 0.2, 0.0};
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
+  glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+  glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+  glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
 }
 
 void display()
@@ -552,6 +584,7 @@ int  elementId=-1;
 bool isX=false;
 bool isY=false;
 bool isZ=false;
+
 void reset(){
   isArm=false;
   isLeft=false;
@@ -561,6 +594,7 @@ void reset(){
   isBody=false;
   isTotal=false;
 }
+
 void go(){
 #define NUM_ACT 6
 #define NUM_FOOT 5
@@ -615,6 +649,7 @@ void go(){
     }  
   }
 }
+
 void printOutConfigure(){
   cout<<" angle_armxl0_corp:"<< angle_armxl0_corp<<endl;
   cout<<" angle_armxr0_corp:"<< angle_armxr0_corp<<endl;
@@ -666,6 +701,7 @@ void printOutConfigure(){
   cout<<" angle_bodyy_corp:"<< angle_bodyy_corp<<endl;
   cout<<" angle_bodyz_corp:"<< angle_bodyz_corp<<endl;
 }
+
 void normaliseAngle(float& angle,int min,int max){
   angle=(int)angle%360;
   if(angle<0) angle=360+angle;
@@ -953,10 +989,29 @@ void keyboard(unsigned char key,int x, int y)
       reset();
       isTotal=true;
       break;
+    case 'o':
+      reset();
+      isLight=true;
+      lightControlAll=true;
+      break;
+    case ' ':
+      if(isLight){
+	if(lightControlAll){
+	  lightEnableAll=!lightEnableAll;
+	}else{
+	  lightEnable[elementId]=!lightEnable[elementId];
+	}
+	initLight();
+	glutPostRedisplay();
+      }
+      break;
     case '0':
     case '1':
     case '2':
       elementId=key-'0';
+      if(isLight){
+	lightControlAll=false;
+      }
       break;
     case 'z':
       pz-=0.5*Cos[r];
