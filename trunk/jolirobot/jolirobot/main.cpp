@@ -32,10 +32,10 @@ int xold,r=0;
 
 float angle_armxl0_corp=180;
 float angle_armxr0_corp=180;
-float angle_armyl0_corp=0;
-float angle_armyr0_corp=0;
-float angle_armzl0_corp=45;
-float angle_armzr0_corp=45;
+float angle_armyl0_corp=5;
+float angle_armyr0_corp=355;
+float angle_armzl0_corp=0;
+float angle_armzr0_corp=0;
 
 float angle_armxl1_corp=0;
 float angle_armxr1_corp=0;
@@ -125,15 +125,7 @@ int main(int argc,char **argv)
   initTexture();
   /* Chargement de la texture */
   
-  /* Chargement des textures */
-  glGenTextures(5,(GLuint*)IdTex);
-  //chargeTextureTiff("texture.tif",IdTex[0]);
-  chargeTextureJpeg("texture.jpg",IdTex[0]);
-  chargeTextureProc(IdTex[1]);
-//   chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
-  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);  
-  chargeTextureJpeg("cinder-blocks-texture.jpg",IdTex[3]);
-  chargeTextureJpeg("floor.jpg",IdTex[4]);
+  
   
   /* Precalcul des sinus et cosinus */
   calcCosSinTable();
@@ -151,7 +143,15 @@ int main(int argc,char **argv)
   return 0;
 }
 void initTexture(){
- 
+/* Chargement des textures */
+  glGenTextures(5,(GLuint*)IdTex);
+  //chargeTextureTiff("texture.tif",IdTex[0]);
+  chargeTextureJpeg("texture.jpg",IdTex[0]);
+  chargeTextureProc(IdTex[1]);
+//   chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
+  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);  
+  chargeTextureJpeg("cinder-blocks-texture.jpg",IdTex[3]);
+  chargeTextureJpeg("floor.jpg",IdTex[4]); 
   glEnable(GL_TEXTURE_2D);
 }
 
@@ -225,14 +225,23 @@ void setMaterial(float r,float g,float b,int shademode,Material material){
 //   glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
   glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient_color);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+  
   switch(material){
+    case Plastic:
+      glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+      glMaterialfv(GL_FRONT, GL_EMISSION, no_mat); 
+      glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
+      break;
     case Rubic:
       glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
       glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);  
+      glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+      break;
     case Normal:
       glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
       glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);  
+      glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+      break;
   }
   glShadeModel(shademode);
 }
@@ -343,12 +352,12 @@ void display()
       //glRotatef(-45,0,-1,0);//angle of arm with the body
       //glColor3f(0.5,0.5,1);
       glTranslated(0,0,0.02);
-      setMaterial(0.5,0.5,1);
+      setMaterial(0.5,0.5,1,GL_SMOOTH,Plastic);
       glRotatef(angle_armxl1_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyl1_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzl1_corp,0,0,-1);//angle of arm with the body        
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-      glTranslated(0,0,0.3);
+      glTranslated(0,0,0.35);
       //glRotatef(-45,0,-1,0);
       glRotatef(angle_armxl2_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyl2_corp,0,-1,0);//angle of arm with the body
@@ -377,9 +386,9 @@ void display()
       glRotatef(angle_armyr1_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr1_corp,0,0,-1);//angle of arm with the body  
       //glColor3f(0.5,0.5,1);
-      setMaterial(0.5,0.5,1);
+      setMaterial(0.5,0.5,1,GL_SMOOTH,Plastic);
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-      glTranslated(0,0,0.3);
+      glTranslated(0,0,0.35);
     //  glRotatef(-45,0,-1,0);
       glRotatef(angle_armxr2_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyr2_corp,0,-1,0);//angle of arm with the body
@@ -410,7 +419,7 @@ void display()
     glRotatef(angle_legzl1_corp,0,0,-1);//angle of arm with the body  
     setMaterial(0.5,0.5,1);
     gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-    glTranslated(0,0,0.3);
+    glTranslated(0,0,0.35);
     //glRotatef(-45,0,-1,0);
     glRotatef(angle_legxl2_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyl2_corp,0,-1,0);//angle of arm with the body
@@ -438,7 +447,7 @@ void display()
     glRotatef(angle_legzr1_corp,0,0,-1);//angle of arm with the body  
     setMaterial(0.5,0.5,1);
     gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-    glTranslated(0,0,0.3);
+    glTranslated(0,0,0.35);
     //glRotatef(-90,1,0,0);
     glRotatef(angle_legxr2_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyr2_corp,0,-1,0);//angle of arm with the body
@@ -485,7 +494,7 @@ void display()
   glPushMatrix();
   glTranslated(7,0,-2.5);
   glRotated(-90,1,0,0);
-  gluCylinder(gluNewQuadric(),2,2,0.5,5,5);
+  gluCylinder(gluNewQuadric(),2,2,0.5,4,4);
   
   glPushMatrix(); // chair leg
   setMaterial(0,0.5,1.0);
@@ -750,21 +759,26 @@ void printOutConfigure(){
 }
 
 void normaliseAngle(float& angle,int min,int max){
+  
+  if(angle<min && min<=max)
+    angle=min;
+  else if(angle>max && max>=min)
+    angle=max;
+  else if(angle<max && max<=min)
+    angle=max;
+  else if(angle>min && min>=max)
+    angle=min;
   angle=(int)angle%360;
   if(angle<0) angle=360+angle;
-  if(angle<min)
-    angle=min;
-  if(angle>max)
-    angle=max;
 }
 
 void normaliseAllAngle(){
-  normaliseAngle(angle_armxl0_corp,5,355);
-  normaliseAngle(angle_armxr0_corp,5,355);
+  normaliseAngle(angle_armxl0_corp,90,350);
+  normaliseAngle(angle_armxr0_corp,90,350);
   normaliseAngle(angle_armyl0_corp,5,100);
-  normaliseAngle(angle_armyr0_corp,5,100);
-  normaliseAngle(angle_armzl0_corp,275,55);
-  normaliseAngle(angle_armzr0_corp,275,55);
+  normaliseAngle(angle_armyr0_corp,355,260);
+  normaliseAngle(angle_armzl0_corp,275,0);
+  normaliseAngle(angle_armzr0_corp,275,0);
   
   normaliseAngle(angle_armxl1_corp,0,150);
   normaliseAngle(angle_armxr1_corp,0,150);
@@ -1031,16 +1045,18 @@ void keyboard(unsigned char key,int x, int y)
       isLeg=true;
       break;
     case 'l':
-      if(isArm || isLeg)
+      if(isArm || isLeg){
 	isLeft=true;
-      else if(isLight && !lightControlAll){
+	isRight=false;
+      }else if(isLight && !lightControlAll){
 	lightChangeMode=LIGHT_POSITION;
       }
       break;
     case 'r':
-      if(isArm || isLeg)
+      if(isArm || isLeg){
 	isRight=true;
-      else if(isLight && !lightControlAll){
+	isLeft=false;
+      }else if(isLight && !lightControlAll){
 	lightChangeMode=LIGHT_ROTATION;
       }
       break;
@@ -1250,7 +1266,7 @@ void chargeTextureJpeg(char *fichier,int numtex)
 //     glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,GL_RGB, GL_UNSIGNED_BYTE, floorTexture);
 //   }
 //   glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
-//    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
+//     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
   // build our texture mipmaps
   gluBuild2DMipmaps( GL_TEXTURE_2D, 3, 256, 256, GL_RGB, GL_UNSIGNED_BYTE, texture );
 }
