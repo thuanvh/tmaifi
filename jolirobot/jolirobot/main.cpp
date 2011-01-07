@@ -261,6 +261,7 @@ void display()
     glPushMatrix();
     //glTranslated(2,-1,4);
     glTranslated(0,0,-5);
+//     glViewport(2,2,5,5);
     glTranslated(robot_posx,0,robot_posy);
     glRotated(-90,1,0,0);    
     glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
@@ -300,14 +301,14 @@ void display()
 	{
 	  glPopMatrix(); // eye 1
 	  glPushMatrix();
-	  glTranslated(0.1,0.15,0.1);
+	  glTranslated(0.1,-0.15,0.1);
 	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
 	  //glutWireTorus(0.02,0.5,10,10);
 	  glutSolidSphere(0.05,10,10);
 	  
 	  glPopMatrix(); // eye 2
 	  glPushMatrix();
-	  glTranslated(-0.1,0.15,0.1);
+	  glTranslated(-0.1,-0.15,0.1);
 	  //glColor3f(1.0,0,0);
 	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
 	  //glutWireTorus(0.02,0.5,10,10);
@@ -315,7 +316,7 @@ void display()
 	  
 	  glPopMatrix(); // mouth
 	  glPushMatrix();
-	  glTranslated(0,0.15,-0.1);
+	  glTranslated(0,-0.15,-0.1);
 	  //glColor3f(1.0,0,0);
 	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
 	  //glutWireTorus(0.02,0.5,10,10);
@@ -328,24 +329,24 @@ void display()
       /* arm 1eft*/
       glPopMatrix();
       glPushMatrix();  
-      glTranslated(0.25,0,0.5);
+      glTranslated(-0.25,0,0.5);
       glRotatef(angle_armxl0_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyl0_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzl0_corp,0,0,-1);//angle of arm with the body    
       //glColor3f(1.0,0.5,1.0);
       setMaterial(1.0,0.5,1.0);
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-      glTranslated(0,0,0.3);
+      glTranslated(0,0,0.32);
       //glColor3f(0.5,0.5,0.2);
-      setMaterial(0.5,0.5,1,GL_FLAT,Rubic);
-      glutSolidSphere(0.05,20,20);
+      setMaterial(0.2,0.5,0.2,GL_FLAT,Rubic);
+      glutSolidSphere(0.06,20,20);
       //glRotatef(-45,0,-1,0);//angle of arm with the body
       //glColor3f(0.5,0.5,1);
+      glTranslated(0,0,0.02);
       setMaterial(0.5,0.5,1);
       glRotatef(angle_armxl1_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyl1_corp,0,-1,0);//angle of arm with the body
-      glRotatef(angle_armzl1_corp,0,0,-1);//angle of arm with the body  
-      
+      glRotatef(angle_armzl1_corp,0,0,-1);//angle of arm with the body        
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
       glTranslated(0,0,0.3);
       //glRotatef(-45,0,-1,0);
@@ -359,18 +360,19 @@ void display()
       /* arm right*/
       glPopMatrix();
       glPushMatrix();
-      glTranslated(-0.25,0,0.5);
+      glTranslated(0.25,0,0.5);
       glRotatef(angle_armxr0_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyr0_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr0_corp,0,0,-1);//angle of arm with the body  
       //glColor3f(1.0,0.5,1.0);
       setMaterial(1.0,0.5,1.0);
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-      glTranslated(0,0,0.3);
+      glTranslated(0,0,0.32);
       //glColor3f(0.5,0.5,0.2);
-      setMaterial(0.5,0.5,0.2,GL_FLAT,Rubic);
-      glutSolidSphere(0.05,20,20);
+      setMaterial(0.2,0.5,0.2,GL_FLAT,Rubic);
+      glutSolidSphere(0.06,20,20);
       //glRotatef(-45,0,-1,0);//angle of arm with the body
+      glTranslated(0,0,0.02);
       glRotatef(angle_armxr1_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyr1_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr1_corp,0,0,-1);//angle of arm with the body  
@@ -391,17 +393,18 @@ void display()
     /* leg left*/
     glPopMatrix();
     glPushMatrix();
-    glTranslated(0.1,0,0);
+    glTranslated(-0.1,0,0);
     //glRotatef(135,0,1,0);//angle of arm with the body
     glRotatef(angle_legxl0_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyl0_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzl0_corp,0,0,-1);//angle of arm with the body  
     setMaterial(1.0,0.5,1.0);
     gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-    glTranslated(0,0,0.3);
+    glTranslated(0,0,0.32);
     setMaterial(0.5,0.5,0.2);
-    glutSolidSphere(0.05,20,20);
+    glutSolidSphere(0.06,20,20);
     //glRotatef(-45,0,-1,0);//angle of arm with the body
+    glTranslated(0,0,0.02);
     glRotatef(angle_legxl1_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyl1_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzl1_corp,0,0,-1);//angle of arm with the body  
@@ -418,17 +421,18 @@ void display()
     /* leg 2*/
     glPopMatrix();
     glPushMatrix();
-    glTranslated(-0.1,0,0);
+    glTranslated(0.1,0,0);
     //glRotatef(135,0,-1,0);//angle of arm with the body
     glRotatef(angle_legxr0_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyr0_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzr0_corp,0,0,-1);//angle of arm with the body  
     setMaterial(1.0,0.5,1.0);
     gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
-    glTranslated(0,0,0.3);
+    glTranslated(0,0,0.32);
     setMaterial(0.5,0.5,0.2);
-    glutSolidSphere(0.05,20,20);
+    glutSolidSphere(0.06,20,20);
     //glRotatef(-45,0,-1,0);//angle of arm with the body
+    glTranslated(0,0,0.02);
     glRotatef(angle_legxr1_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyr1_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzr1_corp,0,0,-1);//angle of arm with the body  
@@ -454,6 +458,7 @@ void display()
   glPopMatrix();
   glPushMatrix();
   glTranslated(-5,0,5);
+  glRotated(180,0,0,1);
   glutSolidTorus(0.2,0.8,20,30);
   
   /* box */
