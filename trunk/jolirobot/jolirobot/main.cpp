@@ -25,7 +25,8 @@ void chargeTextureTiff(char *fichier,int numtex);
 void chargeTextureProc(int numtex);
 int fonctionTexture(int x,int y);
 void displayRoom();
-
+enum Material{ Rubic,Metal,Plastic, Mat,Normal};
+void setMaterial(float r,float g,float b,int shademode=GL_SMOOTH,Material material=Normal);
 float pz=0.0,px=0.0,Sin[360],Cos[360],theta=50;
 int xold,r=0;
 
@@ -91,7 +92,14 @@ int lightSourceId=0;
 bool lightEnableAll;
 bool lightControlAll;
 bool lightEnable[NUM_LIGHT_SOURCE];
+float lightSourcePos[NUM_LIGHT_SOURCE][3]={
+  5.0,2.0,5.0,
+  0,0,5.0};
 bool isLight;
+#define LIGHT_POSITION 0
+#define LIGHT_ROTATION 1
+int lightChangeMode;
+
 #define NUM_LIGHT_COLOR 4
 int lightColor[NUM_LIGHT_SOURCE];
 #define MATERIAL_LAMBERT true
@@ -104,25 +112,27 @@ int main(int argc,char **argv)
   /* initialisation de glut et creation
    *    de la fenetre */
   glutInit(&argc,argv);
-  glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
+  glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
   glutInitWindowPosition(200,200);
-  glutInitWindowSize(500,500);
+  glutInitWindowSize(700,700);
   glutCreateWindow("29");
   initLight();
   /* Initialisation d'OpenGL */
   glClearColor(0.0,0.0,0.0,0.0);
+  
+  glEnable(GL_DEPTH_TEST);
   changePerspective();
   initTexture();
   /* Chargement de la texture */
   
   /* Chargement des textures */
   glGenTextures(5,(GLuint*)IdTex);
-  chargeTextureTiff("texture.tif",IdTex[0]);
+  //chargeTextureTiff("texture.tif",IdTex[0]);
+  chargeTextureJpeg("texture.jpg",IdTex[0]);
   chargeTextureProc(IdTex[1]);
 //   chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
-  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);
-  
-  chargeTextureJpeg("brick.jpg",IdTex[3]);
+  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);  
+  chargeTextureJpeg("cinder-blocks-texture.jpg",IdTex[3]);
   chargeTextureJpeg("floor.jpg",IdTex[4]);
   
   /* Precalcul des sinus et cosinus */
@@ -151,11 +161,12 @@ void initTexture(){
 void initLight() 
 {
   /* Paramétrage des lumières */
-  GLfloat L0pos[]={ 5.0,2.0,-5.0};
+  GLfloat L0pos[]={ lightSourcePos[0][0],lightSourcePos[0][1],lightSourcePos[0][2]};
   GLfloat L0dif[]={ 0.3,0.3,0.8};
-  GLfloat L1pos[]={ 0,0,5.0};
+  GLfloat L1pos[]={ lightSourcePos[1][0],lightSourcePos[1][1],lightSourcePos[1][2]};
   GLfloat L1dif[]={ 0.5,0.5,0.5};
-  GLfloat Mspec[]={ 0.5,0.5,0.5};
+  GLfloat Mspec[]={ 1,1,1};
+  GLfloat Mambi[]={ 0.1,0.1,0.1};
   GLfloat Mshiny=50;
   glShadeModel(GL_SMOOTH);//FLAT
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER,GL_TRUE);
@@ -163,6 +174,7 @@ void initLight()
     glEnable(GL_LIGHTING);
     if(lightEnable[0]){
       glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0,GL_AMBIENT,Mambi);
       glLightfv(GL_LIGHT0,GL_DIFFUSE,L0dif);
       glLightfv(GL_LIGHT0,GL_SPECULAR,L0dif);
       glLightfv(GL_LIGHT0,GL_POSITION,L0pos);
@@ -172,6 +184,7 @@ void initLight()
     }
     if(lightEnable[1]){
       glEnable(GL_LIGHT1);
+      glLightfv(GL_LIGHT1,GL_AMBIENT,Mambi);
       glLightfv(GL_LIGHT1,GL_DIFFUSE,L1dif);
       glLightfv(GL_LIGHT1,GL_SPECULAR,L1dif);
       glLightfv(GL_LIGHT1,GL_POSITION,L1pos);
@@ -191,7 +204,8 @@ void initLight()
   glMaterialf(GL_FRONT,GL_SHININESS,Mshiny);
   
 }
-void setMaterial(float r,float g,float b){
+
+void setMaterial(float r,float g,float b,int shademode,Material material){
   glColor3f(r,g,b);
   GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
   GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
@@ -209,21 +223,28 @@ void setMaterial(float r,float g,float b){
 //   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 //   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
 //   glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, no_mat);
-  glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+  glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient_color);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
-  glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+  switch(material){
+    case Rubic:
+      glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+      glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);  
+    case Normal:
+      glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+      glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);  
+  }
+  glShadeModel(shademode);
 }
 
 void display()
 {
   
   /* effacement de l'image avec la couleur de fond */
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-  
-  
+  initLight();
+  glDisable(GL_TEXTURE_2D);
   /*Application des transfos de visualisation */
   glRotated(r,0.0,1.0,0.0);
   glTranslatef(-px,0.0,-pz); /* fixer y */
@@ -245,7 +266,7 @@ void display()
     glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
     
     //glColor3f(1.0,1.0,1.0);
-    setMaterial(1.0,1.0,1.0);
+    setMaterial(0,1.0,0);
   //  glRotated(-90,1,0,0);
     //body
     glPushMatrix();
@@ -274,22 +295,31 @@ void display()
 	setMaterial(1.0,1.0,0);
 	glutSolidSphere(0.2,20,20);
 	/* eyes */
+	
 	glPushMatrix();
 	{
 	  glPopMatrix(); // eye 1
 	  glPushMatrix();
-	  glTranslated(0.1,0.2,0.1);
-	  setMaterial(1.0,0,0);
+	  glTranslated(0.1,0.15,0.1);
+	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
 	  //glutWireTorus(0.02,0.5,10,10);
-	  glutSolidSphere(0.05,20,20);
+	  glutSolidSphere(0.05,10,10);
 	  
 	  glPopMatrix(); // eye 2
 	  glPushMatrix();
-	  glTranslated(-0.1,0.2,0.1);
+	  glTranslated(-0.1,0.15,0.1);
 	  //glColor3f(1.0,0,0);
-	  setMaterial(1.0,0,0);
+	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
 	  //glutWireTorus(0.02,0.5,10,10);
-	  glutSolidSphere(0.05,20,20);
+	  glutSolidSphere(0.05,10,10);
+	  
+	  glPopMatrix(); // mouth
+	  glPushMatrix();
+	  glTranslated(0,0.15,-0.1);
+	  //glColor3f(1.0,0,0);
+	  setMaterial(1.0,0,0,GL_FLAT,Rubic);
+	  //glutWireTorus(0.02,0.5,10,10);
+	  glutSolidCube(0.05);
 	}
 	glPopMatrix(); //end eye and head
       }
@@ -307,7 +337,7 @@ void display()
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
       glTranslated(0,0,0.3);
       //glColor3f(0.5,0.5,0.2);
-      setMaterial(0.5,0.5,0.2);
+      setMaterial(0.5,0.5,1,GL_FLAT,Rubic);
       glutSolidSphere(0.05,20,20);
       //glRotatef(-45,0,-1,0);//angle of arm with the body
       //glColor3f(0.5,0.5,1);
@@ -323,8 +353,9 @@ void display()
       glRotatef(angle_armyl2_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzl2_corp,0,0,-1);//angle of arm with the body  
       //glColor3f(0.5,1,0.5);
-      setMaterial(0.5,1,0.5);
-      glutSolidCone(0.1,0.1,20,1);//hand
+      setMaterial(0.5,1,0.5,GL_FLAT,Rubic);
+      glutSolidCone(0.1,0.1,10,1);//hand
+      
       /* arm right*/
       glPopMatrix();
       glPushMatrix();
@@ -337,7 +368,7 @@ void display()
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
       glTranslated(0,0,0.3);
       //glColor3f(0.5,0.5,0.2);
-      setMaterial(0.5,0.5,0.2);
+      setMaterial(0.5,0.5,0.2,GL_FLAT,Rubic);
       glutSolidSphere(0.05,20,20);
       //glRotatef(-45,0,-1,0);//angle of arm with the body
       glRotatef(angle_armxr1_corp,-1,0,0);//angle of arm with the body
@@ -352,8 +383,8 @@ void display()
       glRotatef(angle_armyr2_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr2_corp,0,0,-1);//angle of arm with the body  
       //glColor3f(0.5,1,0.5);
-      setMaterial(0.5,1,0.5);
-      glutSolidCone(0.1,0.1,20,1);//hand
+      setMaterial(0.5,1,0.5,GL_FLAT,Rubic);
+      glutSolidCone(0.1,0.1,10,1);//hand
     }
     glPopMatrix();//end body and up
     
@@ -381,8 +412,8 @@ void display()
     glRotatef(angle_legxl2_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyl2_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzl2_corp,0,0,-1);//angle of arm with the body  
-    setMaterial(0.5,1,0.5);
-    glutSolidCone(0.1,0.1,20,1);//foot  
+    setMaterial(0.5,1,0.5,GL_FLAT);
+    glutSolidCone(0.1,0.1,10,1);//foot  
     
     /* leg 2*/
     glPopMatrix();
@@ -408,8 +439,8 @@ void display()
     glRotatef(angle_legxr2_corp,-1,0,0);//angle of arm with the body
     glRotatef(angle_legyr2_corp,0,-1,0);//angle of arm with the body
     glRotatef(angle_legzr2_corp,0,0,-1);//angle of arm with the body  
-    setMaterial(0.5,1,0.5);
-    glutSolidCone(0.1,0.1,20,1);//foot  
+    setMaterial(0.5,1,0.5,GL_FLAT);
+    glutSolidCone(0.1,0.1,10,1);//foot  
     /* end robot */
     glPopMatrix();
   }
@@ -430,9 +461,12 @@ void display()
   glPushMatrix();
   glTranslated(5,0,-5);
   glRotated(-90,1,0,0);
-  glutSolidCube(0.8);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D,IdTex[0]);
+  glutSolidCube(0.8);  
+  glDisable(GL_TEXTURE_2D);
   glTranslated(0,0,0.4);
-  setMaterial(0,0.5,1.0);
+  setMaterial(0,0.5,1.0);  
   gluCylinder(gluNewQuadric(),0.2,0.1,0.5,5,5);
   glTranslated(0,0,0.5);
   setMaterial(0.0,0.0,1.0);
@@ -700,6 +734,14 @@ void printOutConfigure(){
   cout<<" angle_bodyx_corp:"<< angle_bodyx_corp<<endl;
   cout<<" angle_bodyy_corp:"<< angle_bodyy_corp<<endl;
   cout<<" angle_bodyz_corp:"<< angle_bodyz_corp<<endl;
+  cout<<" light position:"<<endl;
+  for(int i=0; i<NUM_LIGHT_SOURCE; i++){
+    cout<<i<<": ";
+    for(int j=0; j<3; j++){
+      cout<<lightSourcePos[i][j]<<" ";
+    }
+    cout<<endl;
+  }
 }
 
 void normaliseAngle(float& angle,int min,int max){
@@ -793,8 +835,10 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legxr1_corp+=10;
 	  else if(elementId==2) angle_legxr2_corp+=10;
 	}
-      }      
-      glutPostRedisplay();
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][0]+=1;
+      }
+      
       break;
     case GLUT_KEY_DOWN:
       isX=true;
@@ -822,8 +866,10 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legxr1_corp-=10;
 	  else if(elementId==2) angle_legxr2_corp-=10;
 	}
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][0]-=1;
       }
-      glutPostRedisplay();
+      
       break;
     case GLUT_KEY_LEFT:
       isY=true;
@@ -851,8 +897,10 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legyr1_corp+=10;
 	  else if(elementId==2) angle_legyr2_corp+=10;
 	}
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][1]+=1;
       }
-      glutPostRedisplay();
+     
       break;
     case GLUT_KEY_RIGHT:
       isY=true;
@@ -880,8 +928,10 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legyr1_corp-=10;
 	  else if(elementId==2) angle_legyr2_corp-=10;
 	}
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][1]-=1;
       }
-      glutPostRedisplay();
+      
       break;
     case GLUT_KEY_PAGE_UP:
       isZ=true;
@@ -911,8 +961,10 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legzr1_corp+=10;
 	  else if(elementId==2) angle_legzr2_corp+=10;
 	}
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][2]+=1;
       }
-      glutPostRedisplay();
+      
       break;
     case GLUT_KEY_PAGE_DOWN:
       isZ=true;
@@ -942,10 +994,16 @@ void keyspecial(int key,int x,int y){
 	  else if(elementId==1) angle_legzr1_corp-=10;
 	  else if(elementId==2) angle_legzr2_corp-=10;
 	}
+      }else if(isLight && !lightControlAll){
+	lightSourcePos[elementId][2]-=1;
       }
-      glutPostRedisplay();
+      
       break;
   }
+  if(isLight && !lightControlAll){
+    initLight();
+  }
+  glutPostRedisplay();
   normaliseAllAngle();
   printOutConfigure();
 }
@@ -968,10 +1026,18 @@ void keyboard(unsigned char key,int x, int y)
       isLeg=true;
       break;
     case 'l':
-      isLeft=true;
+      if(isArm || isLeg)
+	isLeft=true;
+      else if(isLight && !lightControlAll){
+	lightChangeMode=LIGHT_POSITION;
+      }
       break;
     case 'r':
-      isRight=true;
+      if(isArm || isLeg)
+	isRight=true;
+      else if(isLight && !lightControlAll){
+	lightChangeMode=LIGHT_ROTATION;
+      }
       break;
     case 'h':
       reset();
@@ -1149,8 +1215,24 @@ void chargeTextureJpeg(char *fichier,int numtex)
     }
   /* Parametrage du placage de textures */
   glBindTexture(GL_TEXTURE_2D,numtex);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  // select modulate to mix texture with color for shading
+  glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+  
+  // when texture area is small, bilinear filter the closest mipmap
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+		   GL_LINEAR_MIPMAP_NEAREST );
+  // when texture area is large, bilinear filter the first mipmap
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  bool wrap=true;
+  // if wrap is true, the texture wraps over at the edges (repeat)
+  //       ... false, the texture ends at the edges (clamp)
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+		   wrap ? GL_REPEAT : GL_CLAMP );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+		   wrap ? GL_REPEAT : GL_CLAMP );
+//   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+//   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  
 //   if (useMipmaps) {
 //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 //     gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 256, 256,GL_RGB, GL_UNSIGNED_BYTE, texture);
@@ -1162,8 +1244,10 @@ void chargeTextureJpeg(char *fichier,int numtex)
 //     }
 //     glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,GL_RGB, GL_UNSIGNED_BYTE, floorTexture);
 //   }
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
+//   glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
 //    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
+  // build our texture mipmaps
+  gluBuild2DMipmaps( GL_TEXTURE_2D, 3, 256, 256, GL_RGB, GL_UNSIGNED_BYTE, texture );
 }
 
 /****************************************************/
