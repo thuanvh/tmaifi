@@ -25,6 +25,8 @@ void chargeTextureTiff(char *fichier,int numtex);
 void chargeTextureProc(int numtex);
 int fonctionTexture(int x,int y);
 void displayRoom();
+void go(int para);
+static void timerCallback (int value);
 enum Material{ Rubic,Metal,Plastic, Mat,Normal};
 void setMaterial(float r,float g,float b,int shademode=GL_SMOOTH,Material material=Normal);
 float pz=0.0,px=0.0,Sin[360],Cos[360],theta=50;
@@ -136,7 +138,7 @@ int main(int argc,char **argv)
   glutSpecialFunc(keyspecial);
   glutMouseFunc(mousePress);
   glutMotionFunc(MouseMotion);
-  //glutTimerFunc();
+  glutTimerFunc(500,timerCallback,NULL);
   
   /* Entre dans la boucle principale glut */
   glutMainLoop();
@@ -254,7 +256,7 @@ void displayRobot(){
     glTranslated(0,0,-5);
     //     glViewport(2,2,5,5);
     glTranslated(robot_posx,0,robot_posy);
-    glRotated(-90,1,0,0);    
+    glRotated(-90,1,0,0);        
     glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
     
     //glColor3f(1.0,1.0,1.0);
@@ -659,6 +661,7 @@ int  elementId=-1;
 bool isX=false;
 bool isY=false;
 bool isZ=false;
+bool isGoing=false;
 
 void reset(){
   isArm=false;
@@ -669,8 +672,20 @@ void reset(){
   isBody=false;
   isTotal=false;
 }
-
-void go(){
+int robot_go_iter=0;
+static void timerCallback (int value)
+{
+  /* Do timer processing */
+  /* maybe glutPostRedisplay(), if necessary */
+  go(value);
+  /* call back again after elapsedUSecs have passed */
+  glutTimerFunc (500, timerCallback, value);
+}
+void go(int para){
+  if(!isGoing)
+    return;  
+    
+  cout<<"go"<<endl;
 #define NUM_ACT 6
 #define NUM_FOOT 5
 //   float legleft0[NUM_ACT]={180,200,180,160,180};
@@ -685,33 +700,36 @@ void go(){
   int angle_small=angle_leg/small;
   int angle_small2=angle_leg2/small*2;
   float veloc=Sin[angle_small]*0.3;
-  for(int k=0; k<NUM_FOOT; k++){
-    for(int i=0; i<NUM_ACT; i++){
-      for(int l=1; l<=small; l++){
+//   for(int k=0; k<NUM_FOOT; k++){
+  int i=robot_go_iter;///small;
+  int l=(robot_go_iter%small)+1;
+//     for(int i=0; i<NUM_ACT; i++){
+//       for(int l=1; l<=small; l++){
 	
-	angle_legxr0_corp= (180+legright0[i]*angle_small);
-	angle_legxl0_corp= (180+legleft0[i]*angle_small);
+	angle_legxr0_corp= (180-legright0[i]*angle_small);
+	angle_legxl0_corp= (180-legleft0[i]*angle_small);
 	normaliseAngle(angle_legxl0_corp,0,360);
 	normaliseAngle(angle_legxr0_corp,0,360);
 	
-	int delta_angle2=0;
-	if(l-1>small/2)
-	  delta_angle2=(small-l)*angle_small2;
-	else
-	  delta_angle2=(l-1)*angle_small2;
-	if(legright0[i]<0) 
-	  angle_legxr1_corp= 0+delta_angle2;
-	else
-	  angle_legxr1_corp=0;
-	if(legleft0[i]<0) 
-	  angle_legxl1_corp= 0+delta_angle2;
-	else
-	  angle_legxl1_corp=0;
-	//cout<<angle_legxr1_corp<<"-"<<angle_legxl1_corp<<" ";
+// 	int delta_angle2=0;
+// 	if(l-1>small/2)
+// 	  delta_angle2=(small-l)*angle_small2;
+// 	else
+// 	  delta_angle2=(l-1)*angle_small2;
+// 	if(legright0[i]<0) 
+// 	  angle_legxr1_corp= 360-delta_angle2;
+// 	else
+// 	  angle_legxr1_corp=0;
+// 	if(legleft0[i]<0) 
+// 	  angle_legxl1_corp= 360-delta_angle2;
+// 	else
+// 	  angle_legxl1_corp=0;
+// 	cout<<angle_legxr1_corp<<"-"<<angle_legxl1_corp<<" ";
 	
 	robot_posy+=veloc*Cos[(int)angle_allz_corp];
-	robot_posx+=veloc*Sin[(int)angle_allz_corp];
-	
+	robot_posx-=veloc*Sin[(int)angle_allz_corp];
+	robot_go_iter++;
+	robot_go_iter%=(NUM_ACT);
 	//cout<<angle_allz_corp<<endl;
 	//printOutConfigure();
 	display();
@@ -720,9 +738,10 @@ void go(){
 	//glutPostRedisplay();
 	//glDrawBuffer(GL_BACK);
 	//sleep(1);
-      }
-    }  
-  }
+//       }
+//     }  
+//   }
+  
 }
 
 void printOutConfigure(){
@@ -775,6 +794,9 @@ void printOutConfigure(){
   cout<<" angle_bodyx_corp:"<< angle_bodyx_corp<<endl;
   cout<<" angle_bodyy_corp:"<< angle_bodyy_corp<<endl;
   cout<<" angle_bodyz_corp:"<< angle_bodyz_corp<<endl;
+
+  cout<<" angle_totalz_corp:"<< angle_allz_corp<<endl;
+  
   cout<<" light position:"<<endl;
   for(int i=0; i<NUM_LIGHT_SOURCE; i++){
     cout<<i<<": ";
@@ -786,10 +808,14 @@ void printOutConfigure(){
 }
 
 void normaliseAngle(float& angle,int min,int max){
+  if(min!=max && min%360==max%360){
+    angle=(int)angle%360;
+    if(angle<0) angle=360+angle;
+    return;
+  }
   min=min%360;
   max=max%360;
-  
-  
+    
 //   angle=(int)angle%360;
   if(min==290) cout<<angle<<endl;
   if(max<min) {
@@ -843,8 +869,8 @@ void normaliseAllAngle(){
   normaliseAngle(angle_armzl2_corp,0,0);
   normaliseAngle(angle_armzr2_corp,0,0);
   
-  normaliseAngle(angle_legxl0_corp,0,200);
-  normaliseAngle(angle_legxr0_corp,0,200);
+  normaliseAngle(angle_legxl0_corp,135,270);
+  normaliseAngle(angle_legxr0_corp,135,270);
   normaliseAngle(angle_legyl0_corp,0,70);
   normaliseAngle(angle_legyr0_corp,290,0);
   normaliseAngle(angle_legzl0_corp,0,0);
@@ -1117,9 +1143,15 @@ void keyboard(unsigned char key,int x, int y)
       reset();
       isBody=true;
       break;
+    case 'G':
+      reset();
+      isGoing=false;
+      break;
     case 'g':
       reset();
-      go();
+      cout<<"set to go"<<endl;
+      isGoing=true;
+      //go();
       break;
     case 'c':
       reset();
