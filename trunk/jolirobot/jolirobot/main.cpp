@@ -85,7 +85,7 @@ float robot_posx=0;
 float robot_posy=0;
 
 int IdTex[5]; /* tableau d'Id pour les 2 textures */
-float decalage=0; /* décalage de la texture procedurale pour l'animation */
+float decalage=5; /* décalage de la texture procedurale pour l'animation */
 
 #define NUM_LIGHT_SOURCE 2
 int lightSourceId=0;
@@ -146,11 +146,11 @@ void initTexture(){
 /* Chargement des textures */
   glGenTextures(5,(GLuint*)IdTex);
   //chargeTextureTiff("texture.tif",IdTex[0]);
-  chargeTextureJpeg("texture.jpg",IdTex[0]);
+  chargeTextureJpeg("daisy.jpg",IdTex[0]);
   chargeTextureProc(IdTex[1]);
-//   chargeTextureJpeg("BasketballColor.jpg",IdTex[2]);
-  chargeTextureJpeg("BeachBallColor.jpg",IdTex[2]);  
-  chargeTextureJpeg("cinder-blocks-texture.jpg",IdTex[3]);
+//   chargeTextureJpeg("ball.jpg",IdTex[2]);
+  chargeTextureJpeg("golf.jpg",IdTex[2]);  
+  chargeTextureJpeg("brick.256.jpg",IdTex[3]);
   chargeTextureJpeg("floor.jpg",IdTex[4]); 
   glEnable(GL_TEXTURE_2D);
 }
@@ -162,9 +162,9 @@ void initLight()
 {
   /* Paramétrage des lumières */
   GLfloat L0pos[]={ lightSourcePos[0][0],lightSourcePos[0][1],lightSourcePos[0][2]};
-  GLfloat L0dif[]={ 0.3,0.3,0.8};
+  GLfloat L0dif[]={ 0.5,0.5,0.5};
   GLfloat L1pos[]={ lightSourcePos[1][0],lightSourcePos[1][1],lightSourcePos[1][2]};
-  GLfloat L1dif[]={ 0.5,0.5,0.5};
+  GLfloat L1dif[]={ 0.2,0.2,0.8};
   GLfloat Mspec[]={ 1,1,1};
   GLfloat Mambi[]={ 0.1,0.1,0.1};
   GLfloat Mshiny=50;
@@ -245,39 +245,21 @@ void setMaterial(float r,float g,float b,int shademode,Material material){
   }
   glShadeModel(shademode);
 }
-
-void display()
-{
-  
-  /* effacement de l'image avec la couleur de fond */
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glLoadIdentity();
-  initLight();
-  glDisable(GL_TEXTURE_2D);
-  /*Application des transfos de visualisation */
-  glRotated(r,0.0,1.0,0.0);
-  glTranslatef(-px,0.0,-pz); /* fixer y */
-  
-  
-  glPushMatrix();
-  /* Dessin des objets */
-  /* Mur */  
-  displayRoom();
-  
+void displayRobot(){
   /* robot */
   {
     glPopMatrix();
     glPushMatrix();
     //glTranslated(2,-1,4);
     glTranslated(0,0,-5);
-//     glViewport(2,2,5,5);
+    //     glViewport(2,2,5,5);
     glTranslated(robot_posx,0,robot_posy);
     glRotated(-90,1,0,0);    
     glRotatef(angle_allz_corp,0,0,-1);//angle of head with the body
     
     //glColor3f(1.0,1.0,1.0);
     setMaterial(0,1.0,0);
-  //  glRotated(-90,1,0,0);
+    //  glRotated(-90,1,0,0);
     //body
     glPushMatrix();
     glRotatef(angle_bodyx_corp,-1,0,0);//angle of head with the body
@@ -389,7 +371,7 @@ void display()
       setMaterial(0.5,0.5,1,GL_SMOOTH,Plastic);
       gluCylinder(gluNewQuadric(),0.05,0.05,0.3,20,20);
       glTranslated(0,0,0.35);
-    //  glRotatef(-45,0,-1,0);
+      //  glRotatef(-45,0,-1,0);
       glRotatef(angle_armxr2_corp,-1,0,0);//angle of arm with the body
       glRotatef(angle_armyr2_corp,0,-1,0);//angle of arm with the body
       glRotatef(angle_armzr2_corp,0,0,-1);//angle of arm with the body  
@@ -457,6 +439,108 @@ void display()
     /* end robot */
     glPopMatrix();
   }
+}
+void displayBox(){
+  /* box */
+  glPopMatrix();
+  glPushMatrix();
+  glTranslated(5,0,-5);
+  glRotated(-90,1,0,0);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D,IdTex[0]);  
+  glutSolidCube(1.5);  
+  glDisable(GL_TEXTURE_2D);
+  glTranslated(0,0,0.7);
+  setMaterial(0,0.5,1.0);  
+  gluCylinder(gluNewQuadric(),0.2,0.1,0.5,5,5);
+  glPushMatrix();
+  int angle[3]={0,45,-45};
+  for(int i=0; i<3; i++){
+    glPopMatrix();
+    glPushMatrix();
+    glTranslated(0,0,0.5);
+    glRotatef(angle[i],1,0,0);
+    setMaterial(0.0,0.0,1.0);    
+    
+    gluCylinder(gluNewQuadric(),0.01,0.01,1,5,5);
+    glTranslated(0,0,1);
+    setMaterial(1.0,0,1.0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D,IdTex[2]);  
+    glutSolidSphere(0.1,10,10);    
+    glDisable(GL_TEXTURE_2D);
+    
+  }
+  glPopMatrix();
+}
+void displayChair(){
+  /* chair */
+  glPopMatrix();
+  glPushMatrix();
+  glTranslated(7,0,-2.5);
+  glRotated(-90,1,0,0);
+  glScalef(0.5,0.5,0.5);
+  setMaterial(0.7,0.5,0.2,GL_SMOOTH,Plastic);
+  gluCylinder(gluNewQuadric(),2,2,0.5,25,25);
+  
+  glPushMatrix(); // chair leg  
+  setMaterial(0,0.5,1.0,GL_SMOOTH,Plastic);
+  int posx[4]={1,1,-1,-1};
+  int posy[4]={-1,1,-1,1};
+  for(int i=0; i<4; i++){
+    glPopMatrix();
+    glPushMatrix();
+    glTranslated(posx[i],posy[i],-2);  
+    gluCylinder(gluNewQuadric(),0.2,0.2,2,10,10);
+  }
+  glPopMatrix(); // end chair
+}
+void displayBall(){
+  /* bubble */
+  glPopMatrix();
+  glPopMatrix();
+  //   glPushMatrix();
+  glTranslated(-5,0,-5);
+  //   glBindTexture(GL_TEXTURE_2D,IdTex[2]);
+  //   glutSolidSphere(1,20,20);
+  //   gluSphere(gluNewQuadric(), 0.35f, 32, 16);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, IdTex[2]);				// Select Texture 3 (2)
+  glColor4f(1.0f, 1.0f, 1.0f, 0.0f);					// Set Color To White With 40% Alpha
+  //   glEnable(GL_BLEND);							// Enable Blending
+  //   glBlendFunc(GL_SRC_ALPHA, GL_ONE);					// Set Blending Mode To Mix Based On SRC Alpha
+  glEnable(GL_TEXTURE_GEN_S);						// Enable Sphere Mapping
+  glEnable(GL_TEXTURE_GEN_T);						// Enable Sphere Mapping
+  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+  glutSolidSphere(0.5f,20,20);
+  //gluSphere(gluNewQuadric(), 0.35f, 32, 16);						// Draw Another Sphere Using New Texture
+  // Textures Will Mix Creating A MultiTexture Effect (Reflection)
+  glDisable(GL_TEXTURE_GEN_S);						// Disable Sphere Mapping
+  glDisable(GL_TEXTURE_GEN_T);						// Disable Sphere Mapping
+  //   glDisable(GL_BLEND);							// Disable Blending
+  glDisable(GL_TEXTURE_2D);
+  //   glPopMatrix();
+}
+void display()
+{
+  
+  /* effacement de l'image avec la couleur de fond */
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glLoadIdentity();
+  initLight();
+  glDisable(GL_TEXTURE_2D);
+  /*Application des transfos de visualisation */
+  glRotated(r,0.0,1.0,0.0);
+  glTranslatef(-px,0.0,-pz); /* fixer y */
+  
+  
+  glPushMatrix();
+  /* Dessin des objets */
+  /* Mur */  
+  displayRoom();
+  
+  displayRobot();
 //   glPopMatrix();
 //   glPushMatrix();
 //   glTranslated(5,-1,5);
@@ -470,69 +554,11 @@ void display()
   glRotated(180,0,0,1);
   glutSolidTorus(0.2,0.8,20,30);
   
-  /* box */
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(5,0,-5);
-  glRotated(-90,1,0,0);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D,IdTex[0]);
-  glutSolidCube(0.8);  
-  glDisable(GL_TEXTURE_2D);
-  glTranslated(0,0,0.4);
-  setMaterial(0,0.5,1.0);  
-  gluCylinder(gluNewQuadric(),0.2,0.1,0.5,5,5);
-  glTranslated(0,0,0.5);
-  setMaterial(0.0,0.0,1.0);
-  gluCylinder(gluNewQuadric(),0.01,0.01,1,5,5);
-  glTranslated(0,0,1);
-  setMaterial(1.0,0,1.0);
-  glutSolidSphere(0.05,10,10);
+  displayBox();
   
-  /* chair */
-  glPopMatrix();
-  glPushMatrix();
-  glTranslated(7,0,-2.5);
-  glRotated(-90,1,0,0);
-  gluCylinder(gluNewQuadric(),2,2,0.5,4,4);
+  displayChair();
   
-  glPushMatrix(); // chair leg
-  setMaterial(0,0.5,1.0);
-  int posx[4]={1,1,-1,-1};
-  int posy[4]={-1,1,-1,1};
-  for(int i=0; i<4; i++){
-    glPopMatrix();
-    glPushMatrix();
-    glTranslated(posx[i],posy[i],-2);  
-    gluCylinder(gluNewQuadric(),0.2,0.2,2,4,4);
-  }
-  glPopMatrix(); // end chair
-  
-  /* bubble */
-  glPopMatrix();
-  glPopMatrix();
-//   glPushMatrix();
-  glTranslated(-5,0,-5);
-//   glBindTexture(GL_TEXTURE_2D,IdTex[2]);
-//   glutSolidSphere(1,20,20);
-//   gluSphere(gluNewQuadric(), 0.35f, 32, 16);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, IdTex[2]);				// Select Texture 3 (2)
-  glColor4f(1.0f, 1.0f, 1.0f, 0.0f);					// Set Color To White With 40% Alpha
-//   glEnable(GL_BLEND);							// Enable Blending
-//   glBlendFunc(GL_SRC_ALPHA, GL_ONE);					// Set Blending Mode To Mix Based On SRC Alpha
-  glEnable(GL_TEXTURE_GEN_S);						// Enable Sphere Mapping
-  glEnable(GL_TEXTURE_GEN_T);						// Enable Sphere Mapping
-  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-  glutSolidSphere(0.35f,20,20);
-  //gluSphere(gluNewQuadric(), 0.35f, 32, 16);						// Draw Another Sphere Using New Texture
-  // Textures Will Mix Creating A MultiTexture Effect (Reflection)
-  glDisable(GL_TEXTURE_GEN_S);						// Disable Sphere Mapping
-  glDisable(GL_TEXTURE_GEN_T);						// Disable Sphere Mapping
-//   glDisable(GL_BLEND);							// Disable Blending
-  glDisable(GL_TEXTURE_2D);
-//   glPopMatrix();
+  displayBall();
   /* on force l'affichage du resultat */
   glFlush();
   glutSwapBuffers();
@@ -543,7 +569,8 @@ void displayRoom(){
   float boxsize=10;
   glTranslatef(0,1.5,0);
   glScalef(1.0,0.25,1.0);
-  setMaterial(1,0.6,0.2);
+//   glTranslatef(0,boxsize/10,0);
+  setMaterial(0.3,0.3,0.3);
   //glBindTexture(GL_TEXTURE_CUBE_MAP,IdTex[0]);
   //glutSolidCube(20);  
     
@@ -759,15 +786,37 @@ void printOutConfigure(){
 }
 
 void normaliseAngle(float& angle,int min,int max){
+  min=min%360;
+  max=max%360;
   
-  if(angle<min && min<=max)
-    angle=min;
-  else if(angle>max && max>=min)
-    angle=max;
-  else if(angle<max && max<=min)
-    angle=max;
-  else if(angle>min && min>=max)
-    angle=min;
+  
+//   angle=(int)angle%360;
+  if(min==290) cout<<angle<<endl;
+  if(max<min) {
+    if(angle<min)
+      angle=angle+360;
+    max=max+360;
+//     int a=max;
+//     max=min;
+//     min=a;
+  }
+  if(min==290)
+    cout<<angle<<"-"<<max<<"-"<<min<<endl;
+  if(angle>max || angle<min) {
+    //angle=abs(max-angle)%360<abs(angle-min)%360?max:min;
+    if(abs((int)angle%360-min%360)<=10)
+      angle=min;
+    else angle=max;
+  } 
+  if(min==290) cout<<angle<<endl;
+//   if(angle<min && min<=max)
+//     angle=min;
+//   else if(angle>max && max>=min)
+//     angle=max;
+//   else if(angle<max && max<=min)
+//     angle=max;
+//   else if(angle>min && min>=max)
+//     angle=min;
   angle=(int)angle%360;
   if(angle<0) angle=360+angle;
 }
@@ -776,7 +825,7 @@ void normaliseAllAngle(){
   normaliseAngle(angle_armxl0_corp,90,350);
   normaliseAngle(angle_armxr0_corp,90,350);
   normaliseAngle(angle_armyl0_corp,5,100);
-  normaliseAngle(angle_armyr0_corp,355,260);
+  normaliseAngle(angle_armyr0_corp,260,355);
   normaliseAngle(angle_armzl0_corp,275,0);
   normaliseAngle(angle_armzr0_corp,275,0);
   
@@ -787,41 +836,41 @@ void normaliseAllAngle(){
   normaliseAngle(angle_armzl1_corp,0,180);
   normaliseAngle(angle_armzr1_corp,0,180);
   
-  normaliseAngle(angle_armxl2_corp,0,90);
-  normaliseAngle(angle_armxr2_corp,0,90);
-  normaliseAngle(angle_armyl2_corp,0,90);
-  normaliseAngle(angle_armyr2_corp,0,90);
+  normaliseAngle(angle_armxl2_corp,135,225);
+  normaliseAngle(angle_armxr2_corp,135,225);
+  normaliseAngle(angle_armyl2_corp,315,45);
+  normaliseAngle(angle_armyr2_corp,315,45);
   normaliseAngle(angle_armzl2_corp,0,0);
   normaliseAngle(angle_armzr2_corp,0,0);
   
   normaliseAngle(angle_legxl0_corp,0,200);
   normaliseAngle(angle_legxr0_corp,0,200);
   normaliseAngle(angle_legyl0_corp,0,70);
-  normaliseAngle(angle_legyr0_corp,0,70);
+  normaliseAngle(angle_legyr0_corp,290,0);
   normaliseAngle(angle_legzl0_corp,0,0);
   normaliseAngle(angle_legzr0_corp,0,0);
   
-  normaliseAngle(angle_legxl1_corp,0,90);
-  normaliseAngle(angle_legxr1_corp,0,90);
+  normaliseAngle(angle_legxl1_corp,270,0);
+  normaliseAngle(angle_legxr1_corp,270,0);
   normaliseAngle(angle_legyl1_corp,0,0);
   normaliseAngle(angle_legyr1_corp,0,0);
   normaliseAngle(angle_legzl1_corp,0,0);
   normaliseAngle(angle_legzr1_corp,0,0);
   
-  normaliseAngle(angle_legxl2_corp,0,90);
-  normaliseAngle(angle_legxr2_corp,0,90);
-  normaliseAngle(angle_legyl2_corp,0,70);
-  normaliseAngle(angle_legyr2_corp,0,70);
+  normaliseAngle(angle_legxl2_corp,135,225);
+  normaliseAngle(angle_legxr2_corp,135,225);
+  normaliseAngle(angle_legyl2_corp,315,45);
+  normaliseAngle(angle_legyr2_corp,315,45);
   normaliseAngle(angle_legzl2_corp,0,0);
   normaliseAngle(angle_legzr2_corp,0,0);
   
-  normaliseAngle(angle_headx_corp,0,360);
-  normaliseAngle(angle_heady_corp,0,360);
-  normaliseAngle(angle_headz_corp,0,360);
+  normaliseAngle(angle_headx_corp,315,45);
+  normaliseAngle(angle_heady_corp,315,45);
+  normaliseAngle(angle_headz_corp,315,45);
   
-  normaliseAngle(angle_bodyx_corp,0,360);
-  normaliseAngle(angle_bodyy_corp,0,360);
-  normaliseAngle(angle_bodyz_corp,0,360);
+  normaliseAngle(angle_bodyx_corp,240,5);
+  normaliseAngle(angle_bodyy_corp,315,45);
+  normaliseAngle(angle_bodyz_corp,315,45);
   
   normaliseAngle(angle_allz_corp,0,360);
 }
@@ -1222,7 +1271,7 @@ void chargeTextureJpeg(char *fichier,int numtex)
   ligne=image;
   while (cinfo.output_scanline<cinfo.output_height)
   {
-    ligne=image+3*256*cinfo.output_scanline;
+    ligne=image+3*cinfo.image_width*cinfo.output_scanline;
     jpeg_read_scanlines(&cinfo,&ligne,1);
   }
   jpeg_finish_decompress(&cinfo);
@@ -1239,11 +1288,11 @@ void chargeTextureJpeg(char *fichier,int numtex)
   // select modulate to mix texture with color for shading
   glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
   
-  // when texture area is small, bilinear filter the closest mipmap
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		   GL_LINEAR_MIPMAP_NEAREST );
-  // when texture area is large, bilinear filter the first mipmap
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+//   // when texture area is small, bilinear filter the closest mipmap
+//   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+// 		   GL_LINEAR_MIPMAP_NEAREST );
+//   // when texture area is large, bilinear filter the first mipmap
+//   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   bool wrap=true;
   // if wrap is true, the texture wraps over at the edges (repeat)
   //       ... false, the texture ends at the edges (clamp)
@@ -1251,8 +1300,8 @@ void chargeTextureJpeg(char *fichier,int numtex)
 		   wrap ? GL_REPEAT : GL_CLAMP );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
 		   wrap ? GL_REPEAT : GL_CLAMP );
-//   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-//   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
   
 //   if (useMipmaps) {
 //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
@@ -1266,9 +1315,9 @@ void chargeTextureJpeg(char *fichier,int numtex)
 //     glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,GL_RGB, GL_UNSIGNED_BYTE, floorTexture);
 //   }
 //   glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
-//     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
+//      glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,cinfo.image_width,cinfo.image_height,0,GL_RGB,GL_UNSIGNED_BYTE,texture);
   // build our texture mipmaps
-  gluBuild2DMipmaps( GL_TEXTURE_2D, 3, 256, 256, GL_RGB, GL_UNSIGNED_BYTE, texture );
+  gluBuild2DMipmaps( GL_TEXTURE_2D, 3, cinfo.image_width,cinfo.image_height, GL_RGB, GL_UNSIGNED_BYTE, texture );
 }
 
 /****************************************************/
