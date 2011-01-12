@@ -111,13 +111,19 @@ public:
   void detectPlan(char* folder);
 };
 class matrixConfusion{
-  int* matrix;
+private:
+  int matrix[2][2];  
+  int* ref;
+  int reflength;
+  double recall[3];
+  double precision[3];
 public:  
-  matrixConfusion(int size);
+  matrixConfusion();
   void setReference(int* arrayRef,int length);
   void setValue(int frameInputId,bool isPlan);
   void calculate();
   void print();
+  
 };
 #endif	/* PLANDECTECTER_H */
   
