@@ -73,7 +73,7 @@ double likelihoodRatioMethod::calculateDistance(Mat& image1, Mat& image2)
   int sizew=8;
   int nrow=image1.rows/sizew;
   int ncol=image1.cols/sizew;
-  Mat dcut=Mat::zeros(nrow,ncol,CV_32FC1);
+  Mat dcut=Mat::zeros(nrow,ncol,CV_8UC1);
   for (int irow=0; irow<nrow; irow++) {
     for (int icol=0; icol<ncol; icol++) {
       Mat subimage1;
@@ -86,7 +86,10 @@ double likelihoodRatioMethod::calculateDistance(Mat& image1, Mat& image2)
       //Scalar mean2=mean(subimage2);
       meanStdDev(subimage1,mean1,sd1);
       meanStdDev(subimage2,mean2,sd2);
-      dcut.at<float>(irow,icol) = pow((sd1[0] + sd2[0]) / 2 + pow(( mean1[0] - mean2[0] )/2,2),2) / (sd1[0]*sd2[0]);
+      double dcutr = pow((sd1[0] + sd2[0]) / 2 + pow(( mean1[0] - mean2[0] )/2,2),2) / (sd1[0]*sd2[0]);
+      double dcutg = pow((sd1[1] + sd2[1]) / 2 + pow(( mean1[1] - mean2[1] )/2,2),2) / (sd1[1]*sd2[1]);
+      double dcutb = pow((sd1[2] + sd2[2]) / 2 + pow(( mean1[2] - mean2[2] )/2,2),2) / (sd1[2]*sd2[2]);
+      dcut.at<uchar>(irow,icol)= (dcutb+dcutg+dcutr)/3>seuil_h?1:0;
     }
   }
   //threshold(dcut,dcut,seuil_h,1,THRESH_BINARY);
@@ -334,6 +337,7 @@ void thresholdAdaptifAlgo::detectPlan(char* folder)
   cout <<endl;
   delete algo;
 }
+
 void thresholdAdaptifAlgo::deviceMat2(const Mat& mat,Mat& left,Mat& right,Mat& matN){
   int size=mat.cols/2;
   for(int i=0; i<size; i++){
@@ -341,5 +345,75 @@ void thresholdAdaptifAlgo::deviceMat2(const Mat& mat,Mat& left,Mat& right,Mat& m
     right.at<float>(0,i)=mat.at<float>(0,size+1+i);
     matN.at<float>(0,i)=mat.at<float>(0,i);
     matN.at<float>(0,size+i)=mat.at<float>(0,size+1+i);
+  }
+}
+void matrixConfusion::calculate()
+{
+  recall[0]=matrix[0][1]/(double)(matrix[0][0]+matrix[0][1]);
+  recall[1]=matrix[1][0]/(double)(matrix[1][0]+matrix[1][1]);
+  recall[2]=0.5*(recall[0]+recall[1]);
+  
+  precision[0]=matrix[1][0]/(double)(matrix[0][0]+matrix[1][0]);
+  precision[1]=matrix[0][1]/(double)(matrix[0][1]+matrix[1][1]);
+  precision[2]=0.5*(precision[0]+precision[1]);
+}
+
+matrixConfusion::matrixConfusion()
+{
+  for(int i=0; i<2; i++)
+    for(int j=0; j<2; j++)
+      matrix[i][j]=0;  
+}
+void matrixConfusion::print()
+{
+  calculate();
+  cout<<"Confusion Matrix:"<<endl;
+  cout<<"\tPlan\tNoPlan"<<endl;
+  for(int i=0; i<2; i++){
+    if(i==0) cout<<"Plan:\t";
+    else cout<<"NoPlan:\t";
+    for(int j=0; j<2; j++){
+      cout<<matrix[i][j]<<"\t";
+    }
+    cout<<endl;
+  }
+  cout<<"Statistics:"<<endl;
+  cout<<"Recall:\t";
+  cout<<"Plan:\t"<<recall[0];
+  cout<<"NoPlan:\t"<<recall[1];
+  cout<<"Average:\t"<<recall[2];
+  cout<<endl;
+  cout<<"Precision:\t";
+  cout<<"Plan:\t"<<precision[0];
+  cout<<"NoPlan:\t"<<precision[1];
+  cout<<"Average:\t"<<precision[2];
+  cout<<endl;
+}
+void matrixConfusion::setReference(int* arrayRef, int length)
+{
+  this->ref=new int[length];
+  this->reflength=length;
+  memcpy(ref,arrayRef,length*sizeof(int));
+}
+void matrixConfusion::setValue(int frameInputId, bool isPlan)
+{
+  bool found=false;
+  for(int i=0; i<this->reflength; i++){
+    if(this->ref[i]<frameInputId)
+      break;
+    if(this->ref[i]==frameInputId){
+      found=true;
+    }
+  }
+  if(found==true){
+    if(isPlan==true){
+      this->matrix[0][0]++;
+    }else
+      this->matrix[0][1]++;
+  }else{
+    if(isPlan==true){
+      this->matrix[1][0]++;
+    }else
+      this->matrix[1][1]++;
   }
 }
