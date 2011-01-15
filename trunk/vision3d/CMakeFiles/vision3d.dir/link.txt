@@ -1,0 +1,1 @@
+/usr/bin/g++   -g3 -gdwarf-2   CMakeFiles/vision3d.dir/main.cpp.o CMakeFiles/vision3d.dir/vision.cpp.o  -o vision3d -rdynamic -lcxcore -lcv -lhighgui -lcvaux -lml 
