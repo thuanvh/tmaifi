@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/thuanvh/s1/computer_vision/tp4/vision3d/vision.cpp
+/home/thuanvh/s1/computer_vision/tp4/vision3d/main.cpp
 stdlib.h
 -
 opencv/cv.h
@@ -20,16 +20,6 @@ string
 cstring
 -
 stdio.h
--
-ctype.h
--
-stdio.h
--
-stdlib.h
--
-iostream
--
-vector
 -
 vision.h
 /home/thuanvh/s1/computer_vision/tp4/vision3d/vision.h
