@@ -23,7 +23,7 @@ private:
             const vector<float>& model_descriptors, int start, int length,double& distance);
     double compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, double best, int start1, int start2, int length);
     bool isNear(const KeyPoint& kp1, const KeyPoint& kp2);
-    double drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw);
+    double drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw, bool circle=false);
     double drawMatching2Image(const vector<int>& pointIndex,
             const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
             Mat& image1, Mat& image2, Mat& imageDraw);
@@ -32,8 +32,8 @@ private:
             Mat& image1, Mat& imageDraw);
     void calculateFondamentalMatrix(const vector<int>& pointIndex,
             const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
-            const Mat& image1, const Mat& image2);
-    void displayEpipoleLine(const Mat& fundMatr, const Mat& image, const Mat& points, int startImage, int numPoints, const Mat& pointsThisImage,const char* windowName);
+            const Mat& image1, const Mat& image2, char* outimage);
+    void displayEpipoleLine(const Mat& fundMatr, const Mat& image, const Mat& points, int startImage, int numPoints, const Mat& pointsThisImage,const char* windowName, char* outimage);
 public:
     int range;
     bool isQuiet;

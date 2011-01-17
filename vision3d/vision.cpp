@@ -24,10 +24,10 @@
 using namespace std;
 using namespace cv;
 
-void fromMat2Array(const Mat& mat,vector<float>& array){
-  for(int i=0; i<mat.rows; i++){
-    for(int j=0; j<mat.cols; j++){
-      array.push_back(mat.at<float>(i,j));
+void fromMat2Array(const Mat& mat, vector<float>& array) {
+  for (int i = 0; i < mat.rows; i++) {
+    for (int j = 0; j < mat.cols; j++) {
+      array.push_back(mat.at<float>(i, j));
     }
   }
 }
@@ -47,10 +47,10 @@ void FeatureVision3d::matching(char* strimage1, char* strimage2, char* outimage)
   int size;
   if (method == USE_SURF) {
     SURF surf;
-    surf.hessianThreshold = 0.05;
-    surf.nOctaveLayers = 4;
-    surf.nOctaves = 4;
-    surf.extended = 2;
+    //    surf.hessianThreshold = 0.05;
+    //    surf.nOctaveLayers = 4;
+    //    surf.nOctaves = 4;
+    //    surf.extended = 2;
     size = surf.descriptorSize();
     surf(imagegray1, Mat(), keypoints1, descriptors1);
     surf(imagegray2, Mat(), keypoints2, descriptors2);
@@ -61,22 +61,30 @@ void FeatureVision3d::matching(char* strimage1, char* strimage2, char* outimage)
     size = sift.descriptorSize();
     sift(imagegray1, Mat(), keypoints1, matdescriptors1);
     sift(imagegray2, Mat(), keypoints2, matdescriptors2);
-//    cout << size << endl;
-//    cout << keypoints1.size() << endl;
-//    cout << matdescriptors1.rows << "*" << matdescriptors1.cols << endl;
-//    cout << "chanel:" << matdescriptors1.channels() << endl;
-//    cout << "type:" << matdescriptors1.type() << endl;
-//    getchar();
-    fromMat2Array(matdescriptors1,descriptors1);
-    fromMat2Array(matdescriptors2,descriptors2);
+    //    cout << size << endl;
+    //    cout << keypoints1.size() << endl;
+    //    cout << matdescriptors1.rows << "*" << matdescriptors1.cols << endl;
+    //    cout << "chanel:" << matdescriptors1.channels() << endl;
+    //    cout << "type:" << matdescriptors1.type() << endl;
+    //    getchar();
+    fromMat2Array(matdescriptors1, descriptors1);
+    fromMat2Array(matdescriptors2, descriptors2);
   }
+  Mat imagedraw1;
+  Mat imagedraw2;
+  Mat imagedraw1point;
+  Mat imagedraw2point;
+  drawPoint(keypoints1, image1, imagedraw1, true);
+  drawPoint(keypoints2, image2, imagedraw2, true);
+  drawPoint(keypoints1, image1, imagedraw1point, false);
+  drawPoint(keypoints2, image2, imagedraw2point, false);
   if (!isQuiet) {
-    Mat imagedraw1;
-    Mat imagedraw2;
-    drawPoint(keypoints1, image1, imagedraw1);
-    drawPoint(keypoints2, image2, imagedraw2);
-    imshow("image1", imagedraw1);
-    imshow("image2", imagedraw2);
+
+    imshow("image1 circle", imagedraw1);
+    imshow("image2 circle", imagedraw2);
+
+    imshow("image1 point", imagedraw1point);
+    imshow("image2 point", imagedraw2point);
   }
 
   vector<int> ptpairs;
@@ -94,9 +102,19 @@ void FeatureVision3d::matching(char* strimage1, char* strimage2, char* outimage)
 
   }
   if (outimage != NULL) {
-    imwrite(outimage, imagedraw1i);
+    char imagename[255];
+    sprintf(imagename, "%s.%s.png", outimage, method == USE_SURF ? "surf" : "sift");
+    imwrite(imagename, imagedraw1i);
+    sprintf(imagename, "%s.%s.circle.png", outimage, method == USE_SURF ? "surf" : "sift");
+    imwrite(imagename, imagedraw1);
+    sprintf(imagename, "%s.%s.circle2.png", outimage, method == USE_SURF ? "surf" : "sift");
+    imwrite(imagename, imagedraw2);
+    sprintf(imagename, "%s.%s.point.png", outimage, method == USE_SURF ? "surf" : "sift");
+    imwrite(imagename, imagedraw1point);
+    sprintf(imagename, "%s.%s.point2.png", outimage, method == USE_SURF ? "surf" : "sift");
+    imwrite(imagename, imagedraw2point);
   }
-  calculateFondamentalMatrix(ptpairs, keypoints1, keypoints2, image1, image2);
+  calculateFondamentalMatrix(ptpairs, keypoints1, keypoints2, image1, image2,outimage);
   if (!isQuiet) {
     waitKey();
   }
@@ -205,12 +223,14 @@ double FeatureVision3d::compareSURFDescriptors(const vector<float>& d1, const ve
   return total_cost;
 }
 
-double FeatureVision3d::drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw) {
+double FeatureVision3d::drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw, bool iscircle) {
   image.copyTo(imageDraw);
   for (int i = 0; i < objectKeypoints.size(); i++) {
     KeyPoint k = objectKeypoints[i];
-    
-    circle(imageDraw, k.pt, (int)k.size, Scalar(0, 0, 255), 1, 8, 0);
+    if (iscircle)
+      circle(imageDraw, k.pt, (int) k.size, Scalar(0, 0, 255), 1, 8, 0);
+    else
+      circle(imageDraw, k.pt, 1, Scalar(0, 0, 255), 1, 8, 0);
   }
 }
 
@@ -255,7 +275,7 @@ double FeatureVision3d::drawMatchingDeltaImage(const vector<int>& pointIndex,
 
 void FeatureVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
   const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
-  const Mat& image1, const Mat& image2) {
+  const Mat& image1, const Mat& image2, char* outimage) {
 
   //create the output fundamental matrix
   int numPoints = point_count < pointIndex.size() ? point_count : pointIndex.size();
@@ -286,12 +306,12 @@ void FeatureVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
     cout << endl;
   }
 
-  displayEpipoleLine(fundMatr, image1, points2, 2, numPoints, points1, "image epipole 1");
-  displayEpipoleLine(fundMatr, image2, points1, 1, numPoints, points2, "image epipole 2");
+  displayEpipoleLine(fundMatr, image1, points2, 2, numPoints, points1, "epipole1", outimage);
+  displayEpipoleLine(fundMatr, image2, points1, 1, numPoints, points2, "epipole2", outimage);
 }
 
 void FeatureVision3d::displayEpipoleLine(const Mat& fundMatr, const Mat& image, const Mat& points,
-  int startImage, int numPoints, const Mat& pointsThisImage, const char* windowName) {
+  int startImage, int numPoints, const Mat& pointsThisImage, const char* windowName, char* outimage) {
   //now visualize the fundamental matrix
 
   vector<Vec3f> corrLines;
@@ -341,6 +361,12 @@ void FeatureVision3d::displayEpipoleLine(const Mat& fundMatr, const Mat& image, 
     circle(imgcpy, Point(((float*) pointsThisImage.data)[i1 * 2], ((float*) pointsThisImage.data)[i1 * 2 + 1]), 2, Scalar(0, 0, 255), 1, 8, 0);
     line(imgcpy, epipolarLinePoint[0], epipolarLinePoint[1], CV_RGB(0, 255, 0));
 
+  }
+
+  if (outimage != NULL) {
+    char imagename[255];
+    sprintf(imagename, "%s.%s.%s.png", outimage, method == USE_SURF ? "surf" : "sift",windowName);
+    imwrite(imagename, imgcpy);
   }
   imshow(windowName, imgcpy);
 }
