@@ -3,177 +3,24 @@
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <df name="vision3d" root=".">
       <df name="CMakeFiles">
-        <df name=".svn">
-          <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-            <in>CMakeDetermineCompilerABI_C.bin.svn-base</in>
-            <in>CMakeDetermineCompilerABI_CXX.bin.svn-base</in>
-          </df>
-          <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-          </df>
-          <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-            <in>CMakeCCompiler.cmake.svn-base</in>
-            <in>CMakeCXXCompiler.cmake.svn-base</in>
-            <in>CMakeDetermineCompilerABI_C.bin.svn-base</in>
-            <in>CMakeDetermineCompilerABI_CXX.bin.svn-base</in>
-            <in>CMakeDirectoryInformation.cmake.svn-base</in>
-            <in>CMakeOutput.log.svn-base</in>
-            <in>CMakeSystem.cmake.svn-base</in>
-            <in>Makefile.cmake.svn-base</in>
-            <in>Makefile2.svn-base</in>
-            <in>TargetDirectories.txt.svn-base</in>
-            <in>cmake.check_cache.svn-base</in>
-            <in>progress.marks.svn-base</in>
-          </df>
-          <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-            <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-          </df>
-          <in>all-wcprops</in>
-          <in>entries</in>
-        </df>
         <df name="CMakeTmp" kind="SOURCE_LOGICAL_FOLDER">
-          <df name=".svn">
-            <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-              <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-            </df>
-            <in>all-wcprops</in>
-            <in>entries</in>
-          </df>
           <df name="CMakeFiles" kind="SOURCE_LOGICAL_FOLDER">
-            <df name=".svn">
-              <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-                <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-                <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-                <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-              </df>
-              <in>all-wcprops</in>
-              <in>entries</in>
-            </df>
             <df name="cmTryCompileExec.dir" kind="SOURCE_LOGICAL_FOLDER">
-              <df name=".svn">
-                <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-                <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-                <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-                </df>
-                <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-                  <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-                  </df>
-                  <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-                  </df>
-                  <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-                  </df>
-                </df>
-                <in>all-wcprops</in>
-                <in>entries</in>
-              </df>
             </df>
           </df>
         </df>
         <df name="CompilerIdC" kind="SOURCE_LOGICAL_FOLDER">
-          <df name=".svn">
-            <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              <in>a.out.svn-base</in>
-            </df>
-            <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              <in>CMakeCCompilerId.c.svn-base</in>
-              <in>a.out.svn-base</in>
-            </df>
-            <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-              <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-            </df>
-            <in>all-wcprops</in>
-            <in>entries</in>
-          </df>
           <in>CMakeCCompilerId.c</in>
         </df>
         <df name="CompilerIdCXX" kind="SOURCE_LOGICAL_FOLDER">
-          <df name=".svn">
-            <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              <in>a.out.svn-base</in>
-            </df>
-            <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              <in>CMakeCXXCompilerId.cpp.svn-base</in>
-              <in>a.out.svn-base</in>
-            </df>
-            <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-              <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-            </df>
-            <in>all-wcprops</in>
-            <in>entries</in>
-          </df>
           <in>CMakeCXXCompilerId.cpp</in>
         </df>
         <df name="vision3d.dir" kind="SOURCE_LOGICAL_FOLDER">
-          <df name=".svn">
-            <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-            </df>
-            <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              <in>CXX.includecache.svn-base</in>
-              <in>DependInfo.cmake.svn-base</in>
-              <in>build.make.svn-base</in>
-              <in>cmake_clean.cmake.svn-base</in>
-              <in>depend.internal.svn-base</in>
-              <in>depend.make.svn-base</in>
-              <in>flags.make.svn-base</in>
-              <in>link.txt.svn-base</in>
-              <in>progress.make.svn-base</in>
-            </df>
-            <df name="tmp" kind="SOURCE_LOGICAL_FOLDER">
-              <df name="prop-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="props" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-              <df name="text-base" kind="SOURCE_LOGICAL_FOLDER">
-              </df>
-            </df>
-            <in>all-wcprops</in>
-            <in>entries</in>
-          </df>
         </df>
       </df>
+      <in>fast.cpp</in>
       <in>main.cpp</in>
+      <in>sift.cpp</in>
       <in>vision.cpp</in>
       <in>vision.h</in>
     </df>

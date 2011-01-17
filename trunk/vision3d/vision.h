@@ -10,7 +10,11 @@
 using namespace std;
 using namespace cv;
 
-class SurfVision3d {
+#define USE_SIFT  1
+#define USE_SURF  2
+#define STR_SIFT  "sift"
+#define STR_SURF  "surf"
+class FeatureVision3d {
 private:
     void findPairs(const vector<KeyPoint>& objectKeypoints, const vector<float>& objectDescriptors,
             const vector<KeyPoint>& imageKeypoints, const vector<float>& imageDescriptors, vector<int>& ptpairs, int size);
@@ -34,6 +38,7 @@ public:
     int range;
     bool isQuiet;
     int point_count;
+    int method;
     void matching(char* image1, char* image2, char* outimage = NULL);
 };
 

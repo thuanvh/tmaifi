@@ -1,7 +1,11 @@
 
 #include <stdlib.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -14,29 +18,58 @@
 #include <vector>
 
 
+
 #include "vision.h"
 
 using namespace std;
 using namespace cv;
 
-void SurfVision3d::matching(char* strimage1, char* strimage2, char* outimage) {
+void fromMat2Array(const Mat& mat,vector<float>& array){
+  for(int i=0; i<mat.rows; i++){
+    for(int j=0; j<mat.cols; j++){
+      array.push_back(mat.at<float>(i,j));
+    }
+  }
+}
+
+void FeatureVision3d::matching(char* strimage1, char* strimage2, char* outimage) {
+
   Mat image1 = imread(strimage1, 1);
   Mat image2 = imread(strimage2, 1);
 
-  SURF surf;
   vector<KeyPoint> keypoints1;
-  vector<float> descriptors1;
   vector<KeyPoint> keypoints2;
+  vector<float> descriptors1;
   vector<float> descriptors2;
-  surf.hessianThreshold = 0.05;
-  surf.nOctaveLayers = 4;
-  surf.nOctaves = 4;
-  surf.extended = 2;
   Mat imagegray1, imagegray2;
   cvtColor(image1, imagegray1, CV_RGB2GRAY);
   cvtColor(image2, imagegray2, CV_RGB2GRAY);
-  surf(imagegray1, Mat(), keypoints1, descriptors1);
-  surf(imagegray2, Mat(), keypoints2, descriptors2);
+  int size;
+  if (method == USE_SURF) {
+    SURF surf;
+    surf.hessianThreshold = 0.05;
+    surf.nOctaveLayers = 4;
+    surf.nOctaves = 4;
+    surf.extended = 2;
+    size = surf.descriptorSize();
+    surf(imagegray1, Mat(), keypoints1, descriptors1);
+    surf(imagegray2, Mat(), keypoints2, descriptors2);
+  } else if (method == USE_SIFT) {
+    SIFT sift;
+    Mat matdescriptors1;
+    Mat matdescriptors2;
+    size = sift.descriptorSize();
+    sift(imagegray1, Mat(), keypoints1, matdescriptors1);
+    sift(imagegray2, Mat(), keypoints2, matdescriptors2);
+//    cout << size << endl;
+//    cout << keypoints1.size() << endl;
+//    cout << matdescriptors1.rows << "*" << matdescriptors1.cols << endl;
+//    cout << "chanel:" << matdescriptors1.channels() << endl;
+//    cout << "type:" << matdescriptors1.type() << endl;
+//    getchar();
+    fromMat2Array(matdescriptors1,descriptors1);
+    fromMat2Array(matdescriptors2,descriptors2);
+  }
   if (!isQuiet) {
     Mat imagedraw1;
     Mat imagedraw2;
@@ -45,7 +78,7 @@ void SurfVision3d::matching(char* strimage1, char* strimage2, char* outimage) {
     imshow("image1", imagedraw1);
     imshow("image2", imagedraw2);
   }
-  int size = surf.descriptorSize();
+
   vector<int> ptpairs;
   //  cout<<"size:"<<size<<endl;
   findPairs(keypoints1, descriptors1, keypoints2, descriptors2, ptpairs, size);
@@ -77,9 +110,9 @@ void insertIntoMap(vector<double>& distanceArray, vector<int>& ptpairs, double d
 
   vector<double>::iterator pos = lower_bound(distanceArray.begin(), distanceArray.end(), distance);
 
-  if (pos < distanceArray.end()) {    
+  if (pos < distanceArray.end()) {
     int delta = pos - distanceArray.begin();
-//    cout << delta << endl;
+    //    cout << delta << endl;
     distanceArray.insert(pos, distance);
     ptpairs.insert(ptpairs.begin() + delta * 2, index1);
     ptpairs.insert(ptpairs.begin() + delta * 2 + 1, index2);
@@ -88,14 +121,14 @@ void insertIntoMap(vector<double>& distanceArray, vector<int>& ptpairs, double d
     ptpairs.push_back(index1);
     ptpairs.push_back(index2);
   }
-//  for (int i = 0; i < distanceArray.size(); i++) {
-//    cout << distanceArray[i] << " ";
-//  }
-//  cout << endl;
-//  getchar();
+  //  for (int i = 0; i < distanceArray.size(); i++) {
+  //    cout << distanceArray[i] << " ";
+  //  }
+  //  cout << endl;
+  //  getchar();
 }
 
-void SurfVision3d::findPairs(const vector<KeyPoint>& objectKeypoints, const vector<float>& objectDescriptors,
+void FeatureVision3d::findPairs(const vector<KeyPoint>& objectKeypoints, const vector<float>& objectDescriptors,
   const vector<KeyPoint>& imageKeypoints, const vector<float>& imageDescriptors, vector<int>& ptpairs, int size) {
   int i;
   ptpairs.clear();
@@ -113,7 +146,7 @@ void SurfVision3d::findPairs(const vector<KeyPoint>& objectKeypoints, const vect
   }
 }
 
-bool SurfVision3d::isNear(const KeyPoint& kp1, const KeyPoint& kp2) {
+bool FeatureVision3d::isNear(const KeyPoint& kp1, const KeyPoint& kp2) {
   //  int minX=kp1.pt.x<kp2.pt.x?kp1.pt.x:kp2.pt.x;
   //  int maxX=kp1.pt.x>kp2.pt.x?kp1.pt.x:kp2.pt.x;
   //  int minY=kp1.pt.y<kp2.pt.y?kp1.pt.y:kp2.pt.y;
@@ -122,7 +155,7 @@ bool SurfVision3d::isNear(const KeyPoint& kp1, const KeyPoint& kp2) {
   return distance<range;
 }
 
-int SurfVision3d::findMatchingOne(const KeyPoint& keypoint, const vector<float>& vec,
+int FeatureVision3d::findMatchingOne(const KeyPoint& keypoint, const vector<float>& vec,
   const vector<KeyPoint>& model_keypoints,
   const vector<float>& model_descriptors, int start, int length, double& distance) {
 
@@ -155,7 +188,7 @@ int SurfVision3d::findMatchingOne(const KeyPoint& keypoint, const vector<float>&
   return -1;
 }
 
-double SurfVision3d::compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, double best, int start1, int start2, int length) {
+double FeatureVision3d::compareSURFDescriptors(const vector<float>& d1, const vector<float>& d2, double best, int start1, int start2, int length) {
   double total_cost = 0;
   assert(length % 4 == 0);
   int i, j;
@@ -172,19 +205,20 @@ double SurfVision3d::compareSURFDescriptors(const vector<float>& d1, const vecto
   return total_cost;
 }
 
-double SurfVision3d::drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw) {
+double FeatureVision3d::drawPoint(const vector<KeyPoint>& objectKeypoints, Mat& image, Mat& imageDraw) {
   image.copyTo(imageDraw);
   for (int i = 0; i < objectKeypoints.size(); i++) {
     KeyPoint k = objectKeypoints[i];
-    circle(imageDraw, k.pt, 2, Scalar(0, 0, 255), 1, 8, 0);
+    
+    circle(imageDraw, k.pt, (int)k.size, Scalar(0, 0, 255), 1, 8, 0);
   }
 }
 
-double SurfVision3d::drawMatching2Image(const vector<int>& pointIndex,
+double FeatureVision3d::drawMatching2Image(const vector<int>& pointIndex,
   const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
   Mat& image1, Mat& image2, Mat& imageDraw) {
   int maxRow = image1.rows < image2.rows ? image2.rows : image1.rows;
-  imageDraw = Mat::zeros(maxRow, image1.cols + image2.cols, CV_8UC3);
+  imageDraw = Mat(maxRow, image1.cols + image2.cols, CV_8UC3);
   //  Mat imageLeft = imageDraw.adjustROI(0, maxRow - image1.rows, 0, image2.cols);
   //  Mat imageRight = imageDraw.adjustROI(0, maxRow - image2.rows, image1.cols, 0);
   Mat imageLeft = Mat(imageDraw, Rect(0, 0, image1.cols, image1.rows));
@@ -204,7 +238,7 @@ double SurfVision3d::drawMatching2Image(const vector<int>& pointIndex,
   }
 }
 
-double SurfVision3d::drawMatchingDeltaImage(const vector<int>& pointIndex,
+double FeatureVision3d::drawMatchingDeltaImage(const vector<int>& pointIndex,
   const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
   Mat& image1, Mat& imageDraw) {
   image1.copyTo(imageDraw);
@@ -219,15 +253,15 @@ double SurfVision3d::drawMatchingDeltaImage(const vector<int>& pointIndex,
   }
 }
 
-void SurfVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
+void FeatureVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
   const vector<KeyPoint>& objectKeypoints1, const vector<KeyPoint>& objectKeypoints2,
   const Mat& image1, const Mat& image2) {
 
   //create the output fundamental matrix
   int numPoints = point_count < pointIndex.size() ? point_count : pointIndex.size();
   Mat fundMatr = cvCreateMat(3, 3, CV_32F);
-  Mat points1 = Mat::zeros(1, numPoints, CV_32FC2);
-  Mat points2 = Mat::zeros(1, numPoints, CV_32FC2);
+  Mat points1 = Mat(1, numPoints, CV_32FC2);
+  Mat points2 = Mat(1, numPoints, CV_32FC2);
   //  Mat status = Mat::zeros(1,point_count,CV_8UC1);
 
   for (int i = 0; i < numPoints * 2; i += 2) {
@@ -243,7 +277,7 @@ void SurfVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
     //    cout << p1 << " " << objectKeypoints1[p1].pt.x << "," << objectKeypoints1[p1].pt.y << " ";
     //    cout << p2 << " " << objectKeypoints2[p2].pt.x << "," << objectKeypoints2[p2].pt.y << endl;
   }
-  fundMatr = findFundamentalMat(points1, points2, CV_FM_RANSAC, 1.0, 0.99);
+  fundMatr = findFundamentalMat(points1, points2, FM_RANSAC, 1.0, 0.99);
   cout << "Fundamental Matrix:" << endl;
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
@@ -256,7 +290,7 @@ void SurfVision3d::calculateFondamentalMatrix(const vector<int>& pointIndex,
   displayEpipoleLine(fundMatr, image2, points1, 1, numPoints, points2, "image epipole 2");
 }
 
-void SurfVision3d::displayEpipoleLine(const Mat& fundMatr, const Mat& image, const Mat& points,
+void FeatureVision3d::displayEpipoleLine(const Mat& fundMatr, const Mat& image, const Mat& points,
   int startImage, int numPoints, const Mat& pointsThisImage, const char* windowName) {
   //now visualize the fundamental matrix
 
