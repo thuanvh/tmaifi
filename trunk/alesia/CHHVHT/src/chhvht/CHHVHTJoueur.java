@@ -217,8 +217,8 @@ public class CHHVHTJoueur implements Joueur {
                 AlesiaItem olditem = getItem(oldMoneyA, oldstate, oldMoneyB);
                 double alpha = 1;
                 if (olditem != null) {
-                    //alpha = 1 / (double) (olditem.visitedNumber);
-                    alpha = 0.5;
+//                    alpha = 1 / (double) (olditem.visitedNumber);
+                    alpha = 0.2;
                 }
                 // update value V
                 double newvalue = NextMove(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (r + gamma * NextMove(currentMoneyA, newstate, currentMoneyB));

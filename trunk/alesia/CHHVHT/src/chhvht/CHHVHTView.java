@@ -605,8 +605,8 @@ public class CHHVHTView extends FrameView {
         jouer.setTextOutput(jTextArea1);
         int humanPlay = Integer.parseInt(txtHumanInput.getText());
         if (jouer.currentMoneyB > 0) {
-            if (humanPlay > jouer.currentMoneyB) {
-                javax.swing.JOptionPane.showMessageDialog(mainPanel, "Human Input has to be small than Human Money");
+            if (humanPlay > jouer.currentMoneyB || humanPlay==0) {
+                javax.swing.JOptionPane.showMessageDialog(mainPanel, "Human Input must be positive and small than Human Money");
                 return;
             }
         } else {
