@@ -120,7 +120,7 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jScrollPane1" pref="121" max="32767" attributes="1"/>
+                      <Component id="jScrollPane1" pref="123" max="32767" attributes="1"/>
                       <Component id="canvas1" alignment="0" min="-2" pref="121" max="-2" attributes="1"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
@@ -191,7 +191,7 @@
                           <Component id="btnResultReset" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <EmptySpace pref="53" max="32767" attributes="0"/>
+                  <EmptySpace pref="55" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
