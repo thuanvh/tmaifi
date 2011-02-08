@@ -28,11 +28,12 @@ public class CHHVHTJoueur implements Joueur {
     ArrayList stateList = new ArrayList();
     boolean isMatchHumanEnd = false;
 
-    public void resetResult(){
+    public void resetResult() {
         awin = 0;
         bwin = 0;
         nowin = 0;
     }
+
     public void reset() {
 //        currentStateA = 1;
 //        currentStateB = 2;
@@ -60,13 +61,13 @@ public class CHHVHTJoueur implements Joueur {
         int oldStateB = currentStateB;
         int oldstate = oldStateA * 3 + oldStateB;
         // Do action
-        int reward=0;
+        int reward = 0;
         if (ma > mb) {
             currentStateA++;
-            reward=1;
+            reward = 1;
         } else if (mb > ma) {
             currentStateB++;
-            reward=-1;
+            reward = -1;
         }
         int oldMoneyA = currentMoneyA;
         int oldMoneyB = currentMoneyB;
@@ -126,11 +127,19 @@ public class CHHVHTJoueur implements Joueur {
             double maxV = -1e6;
             ArrayList maxlist = new ArrayList();
 //            int nexta=0;
-            int currentState = currentStateA * 3 + currentStateB;
+//            int currentState = currentStateA * 3 + currentStateB;
             for (int ma = 1; ma <= currentMoneyA; ma++) {
                 double v = 0;
                 for (int mb = 1; mb <= currentMoneyB; mb++) {
-                    v += NextMove(ma, currentState, mb);
+                    int nextstateA = currentStateA;
+                    int nextstateB = currentStateB;
+                    if (ma < mb) {
+                        nextstateB++;
+                    } else if (ma > mb) {
+                        nextstateA++;
+                    }
+                    int nextstate = nextstateA * 3 + nextstateB;
+                    v += NextMove(currentMoneyA-ma, nextstate, currentMoneyB-mb);
 //                    if (maxV <= v) {
 //                        if (maxV < v) {
 //                            maxlist.clear();
@@ -139,6 +148,7 @@ public class CHHVHTJoueur implements Joueur {
 //                        maxV = v;
 //                    }
                 }
+                v = v / currentMoneyB;
                 if (maxV <= v) {
                     if (maxV < v) {
                         maxlist.clear();

@@ -605,7 +605,7 @@ public class CHHVHTView extends FrameView {
         jouer.setTextOutput(jTextArea1);
         int humanPlay = Integer.parseInt(txtHumanInput.getText());
         if (jouer.currentMoneyB > 0) {
-            if (humanPlay > jouer.currentMoneyB || humanPlay==0) {
+            if (humanPlay > jouer.currentMoneyB || humanPlay == 0) {
                 javax.swing.JOptionPane.showMessageDialog(mainPanel, "Human Input must be positive and small than Human Money");
                 return;
             }
@@ -622,6 +622,13 @@ public class CHHVHTView extends FrameView {
         drawCanvas(jouer.currentStateA, jouer.currentStateB);
         if (jouer.isMatchHumanEnd) {
             btnNext.setEnabled(false);
+            lblLost.setText(jouer.bwin + "");
+            lblWin.setText(jouer.awin + "");
+            lblNULL.setText(jouer.nowin + "");
+            double total = jouer.bwin + jouer.awin + jouer.nowin;
+            lblLostPercent.setText((int) (100 * jouer.bwin / total) + "%");
+            lblWinPercent.setText((int) (100 * jouer.awin / total) + "%");
+            lblNULLPercent.setText((int) (100 * jouer.nowin / total) + "%");
         }
     }//GEN-LAST:event_btnNextActionPerformed
 
@@ -644,7 +651,6 @@ public class CHHVHTView extends FrameView {
         drawCanvas(jouer.currentStateA, jouer.currentStateB);
         btnNext.setEnabled(true);
     }//GEN-LAST:event_btnResetActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLoadPlayer;
     private javax.swing.JButton btnNext;
