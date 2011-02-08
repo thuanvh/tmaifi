@@ -28,6 +28,11 @@ public class CHHVHTJoueur implements Joueur {
     ArrayList stateList = new ArrayList();
     boolean isMatchHumanEnd = false;
 
+    public void resetResult(){
+        awin = 0;
+        bwin = 0;
+        nowin = 0;
+    }
     public void reset() {
 //        currentStateA = 1;
 //        currentStateB = 2;
@@ -55,20 +60,23 @@ public class CHHVHTJoueur implements Joueur {
         int oldStateB = currentStateB;
         int oldstate = oldStateA * 3 + oldStateB;
         // Do action
+        int reward=0;
         if (ma > mb) {
             currentStateA++;
+            reward=1;
         } else if (mb > ma) {
             currentStateB++;
+            reward=-1;
         }
         int oldMoneyA = currentMoneyA;
         int oldMoneyB = currentMoneyB;
         currentMoneyA -= ma;
         currentMoneyB -= mb;
-        double r = valueEndState(currentStateA, currentStateB, currentMoneyA, currentMoneyB);
+        double endvalue = valueEndState(currentStateA, currentStateB, currentMoneyA, currentMoneyB);
         int newstate = currentStateA * 3 + currentStateB;
         //boolean endstate = false;
-        if (r == 2) {
-            r = NextMove(currentMoneyA, newstate, currentMoneyB);
+        if (endvalue == 2) {
+            endvalue = NextMove(currentMoneyA, newstate, currentMoneyB);
         } else {
             isMatchHumanEnd = true;
         }
@@ -80,17 +88,17 @@ public class CHHVHTJoueur implements Joueur {
             alpha = 0.5;
         }
         // update value V
-        double newvalue = NextMove(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (r + gamma * NextMove(currentMoneyA, newstate, currentMoneyB));
+        double newvalue = NextMove(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (reward + gamma * NextMove(currentMoneyA, newstate, currentMoneyB));
         setValue(oldMoneyA, oldMoneyB, oldstate, newvalue);
         // count the score
         if (isMatchHumanEnd) {
 //            if (textoutput != null) {
             textoutput.append("End:");
 //            }
-            if (r < 0) {
+            if (endvalue < 0) {
                 textoutput.append("Human Win");
                 bwin++;
-            } else if (r > 0) {
+            } else if (endvalue > 0) {
                 textoutput.append("Machine Win");
                 awin++;
             } else {
@@ -115,7 +123,7 @@ public class CHHVHTJoueur implements Joueur {
         if (prob < epsilon) {
             nextaction = ChooseRandomAction(currentMoneyA);
         } else {
-            double maxV = -1;
+            double maxV = -1e6;
             ArrayList maxlist = new ArrayList();
 //            int nexta=0;
             int currentState = currentStateA * 3 + currentStateB;

@@ -26,7 +26,7 @@ public class CHHVHTView extends FrameView {
     int state = 0;
     CHHVHTJoueur jouer;
 
-    public void drawCanvas(int stateA,int stateB) {
+    public void drawCanvas(int stateA, int stateB) {
         //canvas1.repaint();
         Graphics g = canvas1.getGraphics();
 
@@ -184,6 +184,10 @@ public class CHHVHTView extends FrameView {
         jLabel15 = new javax.swing.JLabel();
         lblMachinePos = new javax.swing.JLabel();
         lblCurrentMachineMoney = new javax.swing.JLabel();
+        lblWinPercent = new javax.swing.JLabel();
+        lblLostPercent = new javax.swing.JLabel();
+        lblNULLPercent = new javax.swing.JLabel();
+        btnResultReset = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
@@ -202,17 +206,17 @@ public class CHHVHTView extends FrameView {
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(chhvht.CHHVHTApp.class).getContext().getResourceMap(CHHVHTView.class);
         btnReset.setText(resourceMap.getString("btnReset.text")); // NOI18N
         btnReset.setName("btnReset"); // NOI18N
-        btnReset.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnResetMouseClicked(evt);
+        btnReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResetActionPerformed(evt);
             }
         });
 
         btnNext.setText(resourceMap.getString("btnNext.text")); // NOI18N
         btnNext.setName("btnNext"); // NOI18N
-        btnNext.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnNextMouseClicked(evt);
+        btnNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNextActionPerformed(evt);
             }
         });
 
@@ -258,25 +262,25 @@ public class CHHVHTView extends FrameView {
 
         btnLoadPlayer.setText(resourceMap.getString("btnLoadPlayer.text")); // NOI18N
         btnLoadPlayer.setName("btnLoadPlayer"); // NOI18N
-        btnLoadPlayer.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnLoadPlayerMouseClicked(evt);
+        btnLoadPlayer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoadPlayerActionPerformed(evt);
             }
         });
 
         btnSavePlayer.setLabel(resourceMap.getString("btnSavePlayer.label")); // NOI18N
         btnSavePlayer.setName("btnSavePlayer"); // NOI18N
-        btnSavePlayer.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnSavePlayerMouseClicked(evt);
+        btnSavePlayer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSavePlayerActionPerformed(evt);
             }
         });
 
         btnRun.setLabel(resourceMap.getString("btnRun.label")); // NOI18N
         btnRun.setName("btnRun"); // NOI18N
-        btnRun.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnRunMouseClicked(evt);
+        btnRun.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRunActionPerformed(evt);
             }
         });
 
@@ -319,6 +323,23 @@ public class CHHVHTView extends FrameView {
         lblCurrentMachineMoney.setText(resourceMap.getString("lblCurrentMachineMoney.text")); // NOI18N
         lblCurrentMachineMoney.setName("lblCurrentMachineMoney"); // NOI18N
 
+        lblWinPercent.setText(resourceMap.getString("lblWinPercent.text")); // NOI18N
+        lblWinPercent.setName("lblWinPercent"); // NOI18N
+
+        lblLostPercent.setText(resourceMap.getString("lblLostPercent.text")); // NOI18N
+        lblLostPercent.setName("lblLostPercent"); // NOI18N
+
+        lblNULLPercent.setText(resourceMap.getString("lblNULLPercent.text")); // NOI18N
+        lblNULLPercent.setName("lblNULLPercent"); // NOI18N
+
+        btnResultReset.setText(resourceMap.getString("btnResultReset.text")); // NOI18N
+        btnResultReset.setName("btnResultReset"); // NOI18N
+        btnResultReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResultResetActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
@@ -350,41 +371,48 @@ public class CHHVHTView extends FrameView {
                                 .addComponent(btnReset)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblCurrentHumanMoney)
                             .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGap(3, 3, 3)
+                                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lblCurrentMachineMoney)
+                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(39, 39, 39)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGap(12, 12, 12)
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblCurrentMachineMoney)
-                                    .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(109, 109, 109)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addGap(16, 16, 16)
-                                        .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel2)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtGamma)))
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txtGamma)
+                                    .addComponent(txtEpsilon))
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel3)
-                                        .addGap(32, 32, 32)
                                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel5)
-                                            .addComponent(jLabel4)))
-                                    .addComponent(jLabel6))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblNULL)
-                                    .addComponent(lblLost)
-                                    .addComponent(lblWin)))
+                                            .addComponent(jLabel4)
+                                            .addComponent(jLabel6))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                                .addComponent(lblNULL)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(lblNULLPercent))
+                                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                                .addComponent(lblWin)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(lblWinPercent))
+                                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                                .addComponent(lblLost)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(lblLostPercent))))
+                                    .addComponent(btnResultReset)))
                             .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblCurrentHumanMoney)
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addGap(3, 3, 3)
-                                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(39, 39, 39)
                                 .addComponent(btnLoadPlayer)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(btnSavePlayer)
@@ -393,7 +421,8 @@ public class CHHVHTView extends FrameView {
                                 .addGap(18, 18, 18)
                                 .addComponent(txtMatchNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnRun)))))
+                                .addComponent(btnRun)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 5, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
@@ -424,38 +453,40 @@ public class CHHVHTView extends FrameView {
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(lblWin)
-                            .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel2)
-                                .addComponent(txtGamma, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel5)
-                                    .addComponent(lblLost))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(lblNULL)
-                                    .addComponent(jLabel6)))))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel15)
                             .addComponent(lblMachinePos)
-                            .addComponent(lblCurrentMachineMoney))
+                            .addComponent(lblCurrentMachineMoney)
+                            .addComponent(jLabel1)
+                            .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel7)
-                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2)
+                            .addComponent(txtGamma, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(btnReset)
-                            .addComponent(btnNext))))
-                .addContainerGap(63, Short.MAX_VALUE))
+                            .addComponent(btnNext)))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4)
+                            .addComponent(lblWin)
+                            .addComponent(lblWinPercent))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel5)
+                            .addComponent(lblLost)
+                            .addComponent(lblLostPercent))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel6)
+                            .addComponent(lblNULL)
+                            .addComponent(lblNULLPercent))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnResultReset)))
+                .addContainerGap(53, Short.MAX_VALUE))
         );
 
         menuBar.setName("menuBar"); // NOI18N
@@ -521,7 +552,53 @@ public class CHHVHTView extends FrameView {
         setStatusBar(statusPanel);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnNextMouseClicked
+    private void btnResultResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResultResetActionPerformed
+        // TODO add your handling code here:
+        jouer.resetResult();
+        lblLost.setText(jouer.bwin + "");
+        lblWin.setText(jouer.awin + "");
+        lblNULL.setText(jouer.nowin + "");
+        lblLostPercent.setText(jouer.bwin + "%");
+        lblWinPercent.setText(jouer.awin + "%");
+        lblNULLPercent.setText(jouer.nowin + "%");
+    }//GEN-LAST:event_btnResultResetActionPerformed
+
+    private void btnLoadPlayerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadPlayerActionPerformed
+        // load file player
+        javax.swing.JFileChooser filedialog = new JFileChooser(".");
+        filedialog.showOpenDialog(this.mainPanel);
+        java.io.File file = filedialog.getSelectedFile();
+        String path = file.getAbsolutePath();
+        jouer.LoadPlayer(path);
+    }//GEN-LAST:event_btnLoadPlayerActionPerformed
+
+    private void btnSavePlayerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSavePlayerActionPerformed
+        // save file player
+        javax.swing.JFileChooser filedialog = new JFileChooser(".");
+        filedialog.showSaveDialog(this.mainPanel);
+        java.io.File file = filedialog.getSelectedFile();
+        String path = file.getAbsolutePath();
+        jouer.SaveMe(path);
+    }//GEN-LAST:event_btnSavePlayerActionPerformed
+
+    private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
+        // TODO add your handling code here:
+        // run 1000 times
+        int times = Integer.parseInt(this.txtMatchNumber.getText());
+        jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
+        jouer.gamma = Double.parseDouble(txtGamma.getText());
+        jouer.NewMatch(times);
+
+        lblLost.setText(jouer.bwin + "");
+        lblWin.setText(jouer.awin + "");
+        lblNULL.setText(jouer.nowin + "");
+        double total = jouer.bwin + jouer.awin + jouer.nowin;
+        lblLostPercent.setText((int) (100 * jouer.bwin / total) + "%");
+        lblWinPercent.setText((int) (100 * jouer.awin / total) + "%");
+        lblNULLPercent.setText((int) (100 * jouer.nowin / total) + "%");
+    }//GEN-LAST:event_btnRunActionPerformed
+
+    private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNextActionPerformed
         //drawCanvas((state++)%9);
         jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
         jouer.gamma = Double.parseDouble(txtGamma.getText());
@@ -532,9 +609,9 @@ public class CHHVHTView extends FrameView {
                 javax.swing.JOptionPane.showMessageDialog(mainPanel, "Human Input has to be small than Human Money");
                 return;
             }
-        }else{
+        } else {
             txtHumanInput.setText("0");
-            humanPlay=0;
+            humanPlay = 0;
         }
         jouer.playHuman(humanPlay);
         lblCurrentHumanMoney.setText(jouer.currentMoneyB + "");
@@ -542,65 +619,37 @@ public class CHHVHTView extends FrameView {
         lblHumanPos.setText(jouer.currentStateB + "");
         lblMachinePos.setText(jouer.currentStateA + "");
 //        int curstate = jouer.currentStateA * 3 + jouer.currentStateB;
-        drawCanvas(jouer.currentStateA,jouer.currentStateB);
+        drawCanvas(jouer.currentStateA, jouer.currentStateB);
         if (jouer.isMatchHumanEnd) {
             btnNext.setEnabled(false);
         }
-    }//GEN-LAST:event_btnNextMouseClicked
+    }//GEN-LAST:event_btnNextActionPerformed
 
-    private void btnLoadPlayerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnLoadPlayerMouseClicked
-        // load file player
-        javax.swing.JFileChooser filedialog = new JFileChooser(".");
-        filedialog.showOpenDialog(this.mainPanel);
-        java.io.File file = filedialog.getSelectedFile();
-        String path = file.getAbsolutePath();
-        jouer.LoadPlayer(path);
-    }//GEN-LAST:event_btnLoadPlayerMouseClicked
-
-    private void btnSavePlayerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnSavePlayerMouseClicked
-        // save file player
-        javax.swing.JFileChooser filedialog = new JFileChooser(".");
-        filedialog.showSaveDialog(this.mainPanel);
-        java.io.File file = filedialog.getSelectedFile();
-        String path = file.getAbsolutePath();
-        jouer.SaveMe(path);
-    }//GEN-LAST:event_btnSavePlayerMouseClicked
-
-    private void btnRunMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRunMouseClicked
-        // run 1000 times
-        int times = Integer.parseInt(this.txtMatchNumber.getText());
-        jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
-        jouer.gamma = Double.parseDouble(txtGamma.getText());
-        jouer.NewMatch(times);
-
-        lblLost.setText(jouer.bwin + "");
-        lblWin.setText(jouer.awin + "");
-        lblNULL.setText(jouer.nowin + "");
-    }//GEN-LAST:event_btnRunMouseClicked
-
-    private void btnResetMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnResetMouseClicked
+    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
         // TODO add your handling code here:
         jouer.reset();
         jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
         jouer.gamma = Double.parseDouble(txtGamma.getText());
         jouer.setTextOutput(jTextArea1);
-        int humanPlay = Integer.parseInt(txtHumanInput.getText());
+//        int humanPlay = Integer.parseInt(txtHumanInput.getText());
 
 
         lblCurrentHumanMoney.setText(jouer.currentMoneyB + "");
         lblCurrentMachineMoney.setText(jouer.currentMoneyA + "");
         lblHumanPos.setText(jouer.currentStateB + "");
         lblMachinePos.setText(jouer.currentStateA + "");
-        int curstate = jouer.currentStateA * 3 + jouer.currentStateB;
+//        int curstate = jouer.currentStateA * 3 + jouer.currentStateB;
         jouer.isMatchHumanEnd = false;
 //        drawCanvas(curstate);
-        drawCanvas(jouer.currentStateA,jouer.currentStateB);
+        drawCanvas(jouer.currentStateA, jouer.currentStateB);
         btnNext.setEnabled(true);
-    }//GEN-LAST:event_btnResetMouseClicked
+    }//GEN-LAST:event_btnResetActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLoadPlayer;
     private javax.swing.JButton btnNext;
     private javax.swing.JButton btnReset;
+    private javax.swing.JButton btnResultReset;
     private javax.swing.JButton btnRun;
     private javax.swing.JButton btnSavePlayer;
     private java.awt.Canvas canvas1;
@@ -623,9 +672,12 @@ public class CHHVHTView extends FrameView {
     private javax.swing.JLabel lblCurrentMachineMoney;
     private javax.swing.JLabel lblHumanPos;
     private javax.swing.JLabel lblLost;
+    private javax.swing.JLabel lblLostPercent;
     private javax.swing.JLabel lblMachinePos;
     private javax.swing.JLabel lblNULL;
+    private javax.swing.JLabel lblNULLPercent;
     private javax.swing.JLabel lblWin;
+    private javax.swing.JLabel lblWinPercent;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JProgressBar progressBar;
