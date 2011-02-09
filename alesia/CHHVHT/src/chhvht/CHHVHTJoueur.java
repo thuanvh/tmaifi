@@ -27,6 +27,8 @@ public class CHHVHTJoueur implements Joueur {
     Random random = new Random();
     ArrayList stateList = new ArrayList();
     boolean isMatchHumanEnd = false;
+    Joueur opponent = null;
+    boolean isLearning = false;
 
     public void resetResult() {
         awin = 0;
@@ -77,7 +79,7 @@ public class CHHVHTJoueur implements Joueur {
         int newstate = currentStateA * 3 + currentStateB;
         //boolean endstate = false;
         if (endvalue == 2) {
-            endvalue = NextMove(currentMoneyA, newstate, currentMoneyB);
+            endvalue = getValueOfState(currentMoneyA, newstate, currentMoneyB);
         } else {
             isMatchHumanEnd = true;
         }
@@ -89,7 +91,7 @@ public class CHHVHTJoueur implements Joueur {
             alpha = 0.5;
         }
         // update value V
-        double newvalue = NextMove(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (reward + gamma * NextMove(currentMoneyA, newstate, currentMoneyB));
+        double newvalue = getValueOfState(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (reward + gamma * getValueOfState(currentMoneyA, newstate, currentMoneyB));
         setValue(oldMoneyA, oldMoneyB, oldstate, newvalue);
         // count the score
         if (isMatchHumanEnd) {
@@ -109,6 +111,15 @@ public class CHHVHTJoueur implements Joueur {
             textoutput.append("\n===============\n");
         }
     }
+
+    public int NextMove(int moneyA, int p, int moneyB) {
+        currentMoneyA = moneyA;
+        currentMoneyB = moneyB;
+        currentStateA = p / 3;
+        currentStateB = p % 3;
+        return ChooseAction();
+    }
+    public void endMatch(int r){}
     /*
      * Choose action A
      */
@@ -139,7 +150,7 @@ public class CHHVHTJoueur implements Joueur {
                         nextstateA++;
                     }
                     int nextstate = nextstateA * 3 + nextstateB;
-                    v += NextMove(currentMoneyA-ma, nextstate, currentMoneyB-mb);
+                    v += getValueOfState(currentMoneyA - ma, nextstate, currentMoneyB - mb);
 //                    if (maxV <= v) {
 //                        if (maxV < v) {
 //                            maxlist.clear();
@@ -168,7 +179,7 @@ public class CHHVHTJoueur implements Joueur {
     }
 
     public int ChooseRandomAction(int currentMoney) {
-        if (currentMoney == 0) {
+        if (currentMoney <= 0) {
             return 0;
         }
         if (currentMoney == 1) {
@@ -191,25 +202,39 @@ public class CHHVHTJoueur implements Joueur {
         }
         return v;
     }
+
+
     /*
      * Run with a randomize jouer
      */
-
     public void NewMatch(int nbParties) {
+        int localawin = 0;
+        int localbwin = 0;
+        int localnowin = 0;
         for (int i = 0; i < nbParties; i++) {
             reset();
             //
             while (true) {
-                int ma = ChooseAction();
-                int mb = ChooseRandomAction(currentMoneyB);
                 int oldStateA = currentStateA;
                 int oldStateB = currentStateB;
                 int oldstate = oldStateA * 3 + oldStateB;
+
+//                System.out.println("A decide "+currentMoneyA+","+ oldstate+","+ currentMoneyB);
+                int ma = NextMove(currentMoneyA, oldstate, currentMoneyB);//ChooseAction();
+//                System.out.println(ma);
+                int stateB = oldStateB * 3 + oldStateA;
+//                System.out.println("B decide "+currentMoneyB+","+ stateB+","+ currentMoneyA);
+                int mb = opponent.NextMove(currentMoneyB, stateB, currentMoneyA);//ChooseRandomAction(currentMoneyB);
+//                System.out.println(mb);
+
                 // Do action
+                int reward = 0;
                 if (ma > mb) {
                     currentStateA++;
+                    reward = 1;
                 } else if (mb > ma) {
                     currentStateB++;
+                    reward = -1;
                 }
                 int oldMoneyA = currentMoneyA;
                 int oldMoneyB = currentMoneyB;
@@ -219,33 +244,50 @@ public class CHHVHTJoueur implements Joueur {
                 int newstate = currentStateA * 3 + currentStateB;
                 boolean endstate = false;
                 if (r == 2) {
-                    r = NextMove(currentMoneyA, newstate, currentMoneyB);
+                    r = getValueOfState(currentMoneyA, newstate, currentMoneyB);
                 } else {
                     endstate = true;
                 }
-                // update oldvalue
-                AlesiaItem olditem = getItem(oldMoneyA, oldstate, oldMoneyB);
-                double alpha = 1;
-                if (olditem != null) {
+                if (isLearning) {
+                    // update oldvalue
+                    AlesiaItem olditem = getItem(oldMoneyA, oldstate, oldMoneyB);
+                    double alpha = 1;
+                    if (olditem != null) {
 //                    alpha = 1 / (double) (olditem.visitedNumber);
-                    alpha = 0.2;
+                        alpha = 0.2;
+                    }
+                    // update value V
+                    double newvalue = getValueOfState(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (reward + gamma * getValueOfState(currentMoneyA, newstate, currentMoneyB));
+                    setValue(oldMoneyA, oldMoneyB, oldstate, newvalue);
                 }
-                // update value V
-                double newvalue = NextMove(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (r + gamma * NextMove(currentMoneyA, newstate, currentMoneyB));
-                setValue(oldMoneyA, oldMoneyB, oldstate, newvalue);
                 // count the score
                 if (endstate) {
+                    opponent.endMatch((int)-r);
                     if (r < 0) {
-                        bwin++;
+                        localbwin++;
                     } else if (r > 0) {
-                        awin++;
+                        localawin++;
                     } else {
-                        nowin++;
+                        localnowin++;
                     }
                     break;
                 }
             }
         }
+        awin += localawin;
+        bwin += localbwin;
+        nowin += localnowin;
+        textoutput.append("===============\n");
+        if (isLearning) {
+            textoutput.append("Learn: " + nbParties + " matches \n");
+        } else {
+            textoutput.append("Test: " + nbParties + " matches \n");
+        }
+        textoutput.append("CHHVHT (A) vs " + opponent.getAuteur() + "(B)\n");
+        textoutput.append("A Win:" + localawin + "\n");
+        textoutput.append("B Win:" + localbwin + "\n");
+        textoutput.append("Noone Win:" + localnowin + "\n");
+        textoutput.append("===============\n");
     }
 
     public AlesiaItem getItem(int moneyA, int moneyB, int state) {
@@ -280,7 +322,7 @@ public class CHHVHTJoueur implements Joueur {
      * Get value of state
      */
 
-    public double NextMove(int moneyA, int p, int moneyB) {
+    public double getValueOfState(int moneyA, int p, int moneyB) {
         //(p vaut 0, 1, 2, ... 8 correspondant aux positions 00 01 02 10 11 12 20 21 22) et player qui possede moneyA
         int stateA = p / 3;
         int stateB = p % 3;
