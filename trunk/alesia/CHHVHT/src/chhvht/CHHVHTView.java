@@ -153,7 +153,7 @@ public class CHHVHTView extends FrameView {
 
         mainPanel = new javax.swing.JPanel();
         canvas1 = new java.awt.Canvas();
-        btnReset = new javax.swing.JButton();
+        btnNewMatch = new javax.swing.JButton();
         btnNext = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
@@ -170,8 +170,8 @@ public class CHHVHTView extends FrameView {
         lblNULL = new javax.swing.JLabel();
         btnLoadPlayer = new javax.swing.JButton();
         btnSavePlayer = new javax.swing.JButton();
-        btnRun = new javax.swing.JButton();
-        txtMatchNumber = new javax.swing.JTextField();
+        btnLearnMatch = new javax.swing.JButton();
+        txtLearnMatch = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         txtHumanInput = new javax.swing.JTextField();
@@ -188,6 +188,11 @@ public class CHHVHTView extends FrameView {
         lblLostPercent = new javax.swing.JLabel();
         lblNULLPercent = new javax.swing.JLabel();
         btnResultReset = new javax.swing.JButton();
+        cboOpponent = new javax.swing.JComboBox();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        txtTestMatch = new javax.swing.JTextField();
+        btnTestMatch = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
@@ -204,11 +209,11 @@ public class CHHVHTView extends FrameView {
         canvas1.setName("cvsAlesia"); // NOI18N
 
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(chhvht.CHHVHTApp.class).getContext().getResourceMap(CHHVHTView.class);
-        btnReset.setText(resourceMap.getString("btnReset.text")); // NOI18N
-        btnReset.setName("btnReset"); // NOI18N
-        btnReset.addActionListener(new java.awt.event.ActionListener() {
+        btnNewMatch.setText(resourceMap.getString("btnNewMatch.text")); // NOI18N
+        btnNewMatch.setName("btnNewMatch"); // NOI18N
+        btnNewMatch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnResetActionPerformed(evt);
+                btnNewMatchActionPerformed(evt);
             }
         });
 
@@ -276,16 +281,16 @@ public class CHHVHTView extends FrameView {
             }
         });
 
-        btnRun.setLabel(resourceMap.getString("btnRun.label")); // NOI18N
-        btnRun.setName("btnRun"); // NOI18N
-        btnRun.addActionListener(new java.awt.event.ActionListener() {
+        btnLearnMatch.setText(resourceMap.getString("btnLearnMatch.text")); // NOI18N
+        btnLearnMatch.setName("btnLearnMatch"); // NOI18N
+        btnLearnMatch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRunActionPerformed(evt);
+                btnLearnMatchActionPerformed(evt);
             }
         });
 
-        txtMatchNumber.setText(resourceMap.getString("txtMatchNumber.text")); // NOI18N
-        txtMatchNumber.setName("txtMatchNumber"); // NOI18N
+        txtLearnMatch.setText(resourceMap.getString("txtLearnMatch.text")); // NOI18N
+        txtLearnMatch.setName("txtLearnMatch"); // NOI18N
 
         jLabel10.setText(resourceMap.getString("jLabel10.text")); // NOI18N
         jLabel10.setName("jLabel10"); // NOI18N
@@ -340,55 +345,99 @@ public class CHHVHTView extends FrameView {
             }
         });
 
+        cboOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RandomActionPlayer", "TTCGMR", "NDTDTL", "BTMABQT", "LEVMLS" }));
+        cboOpponent.setName("cboOpponent"); // NOI18N
+
+        jLabel13.setText(resourceMap.getString("jLabel13.text")); // NOI18N
+        jLabel13.setName("jLabel13"); // NOI18N
+
+        jLabel14.setText(resourceMap.getString("jLabel14.text")); // NOI18N
+        jLabel14.setName("jLabel14"); // NOI18N
+
+        txtTestMatch.setText(resourceMap.getString("txtTestMatch.text")); // NOI18N
+        txtTestMatch.setName("txtTestMatch"); // NOI18N
+
+        btnTestMatch.setText(resourceMap.getString("btnTestMatch.text")); // NOI18N
+        btnTestMatch.setName("btnTestMatch"); // NOI18N
+        btnTestMatch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTestMatchActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addGap(22, 22, 22)
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1))
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGap(6, 6, 6)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
-                            .addGroup(mainPanelLayout.createSequentialGroup()
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel9)
-                                    .addComponent(jLabel15))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(jLabel7)
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel9)
+                                            .addComponent(jLabel15))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(lblMachinePos)
+                                            .addComponent(jLabel8)
+                                            .addComponent(lblHumanPos))))
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblMachinePos)
-                                    .addComponent(jLabel8)
-                                    .addComponent(lblHumanPos)))
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGap(12, 12, 12)
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(lblCurrentMachineMoney)
+                                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(lblCurrentHumanMoney)))
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
                                 .addComponent(btnNext)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnNewMatch)))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(btnLoadPlayer)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(btnReset)))
+                                .addComponent(btnSavePlayer)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel11))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel13)
+                                    .addComponent(jLabel1))
+                                .addGap(22, 22, 22)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel2)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtGamma, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(btnTestMatch)
+                                        .addComponent(cboOpponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(jLabel14)
+                                .addGap(18, 18, 18)
+                                .addComponent(txtTestMatch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblCurrentHumanMoney)
                             .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGap(3, 3, 3)
-                                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(lblCurrentMachineMoney)
-                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(39, 39, 39)
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGap(12, 12, 12)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1)
-                                    .addComponent(jLabel2))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtGamma)
-                                    .addComponent(txtEpsilon))
+                                .addComponent(txtLearnMatch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
+                                .addComponent(btnLearnMatch))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -411,18 +460,8 @@ public class CHHVHTView extends FrameView {
                                                 .addComponent(lblLost)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(lblLostPercent))))
-                                    .addComponent(btnResultReset)))
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addComponent(btnLoadPlayer)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(btnSavePlayer)
-                                .addGap(18, 18, 18)
-                                .addComponent(jLabel11)
-                                .addGap(18, 18, 18)
-                                .addComponent(txtMatchNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnRun)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 5, Short.MAX_VALUE)))
+                                    .addComponent(btnResultReset)))))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
@@ -430,16 +469,10 @@ public class CHHVHTView extends FrameView {
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 124, Short.MAX_VALUE)
                     .addComponent(canvas1, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(btnRun)
-                        .addComponent(txtMatchNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel11)
-                        .addComponent(btnSavePlayer)
-                        .addComponent(btnLoadPlayer))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel8)
@@ -448,45 +481,63 @@ public class CHHVHTView extends FrameView {
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel9)
                             .addComponent(lblHumanPos)
-                            .addComponent(lblCurrentHumanMoney))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(mainPanelLayout.createSequentialGroup()
+                            .addComponent(lblCurrentHumanMoney))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel15)
                             .addComponent(lblMachinePos)
-                            .addComponent(lblCurrentMachineMoney)
-                            .addComponent(jLabel1)
-                            .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lblCurrentMachineMoney))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel7)
-                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel2)
-                            .addComponent(txtGamma, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(txtHumanInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(btnReset)
-                            .addComponent(btnNext)))
+                            .addComponent(btnNext)
+                            .addComponent(btnNewMatch)))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(lblWin)
-                            .addComponent(lblWinPercent))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5)
-                            .addComponent(lblLost)
-                            .addComponent(lblLostPercent))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel6)
-                            .addComponent(lblNULL)
-                            .addComponent(lblNULLPercent))
+                            .addComponent(btnSavePlayer)
+                            .addComponent(btnLoadPlayer)
+                            .addComponent(jLabel11)
+                            .addComponent(txtLearnMatch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnLearnMatch))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnResultReset)))
-                .addContainerGap(53, Short.MAX_VALUE))
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(txtEpsilon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtGamma, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel1))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel13)
+                                    .addComponent(cboOpponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel14)
+                                    .addComponent(txtTestMatch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(btnTestMatch)))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel4)
+                                    .addComponent(lblWin)
+                                    .addComponent(lblWinPercent))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel5)
+                                    .addComponent(lblLost)
+                                    .addComponent(lblLostPercent))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel6)
+                                    .addComponent(lblNULL)
+                                    .addComponent(lblNULLPercent))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(btnResultReset)))))
+                .addContainerGap(55, Short.MAX_VALUE))
         );
 
         menuBar.setName("menuBar"); // NOI18N
@@ -525,11 +576,11 @@ public class CHHVHTView extends FrameView {
         statusPanel.setLayout(statusPanelLayout);
         statusPanelLayout.setHorizontalGroup(
             statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(statusPanelSeparator, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
+            .addComponent(statusPanelSeparator, javax.swing.GroupLayout.DEFAULT_SIZE, 764, Short.MAX_VALUE)
             .addGroup(statusPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(statusMessageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 413, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 578, Short.MAX_VALUE)
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(statusAnimationLabel)
@@ -581,12 +632,13 @@ public class CHHVHTView extends FrameView {
         jouer.SaveMe(path);
     }//GEN-LAST:event_btnSavePlayerActionPerformed
 
-    private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
-        // TODO add your handling code here:
-        // run 1000 times
-        int times = Integer.parseInt(this.txtMatchNumber.getText());
+    private void btnLearnMatchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLearnMatchActionPerformed
+        int times = Integer.parseInt(this.txtLearnMatch.getText());
         jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
         jouer.gamma = Double.parseDouble(txtGamma.getText());
+        jouer.opponent = JoueurLoader.load("RandomActionJoueur");
+        jouer.isLearning=true;
+        jouer.setTextOutput(jTextArea1);
         jouer.NewMatch(times);
 
         lblLost.setText(jouer.bwin + "");
@@ -596,7 +648,7 @@ public class CHHVHTView extends FrameView {
         lblLostPercent.setText((int) (100 * jouer.bwin / total) + "%");
         lblWinPercent.setText((int) (100 * jouer.awin / total) + "%");
         lblNULLPercent.setText((int) (100 * jouer.nowin / total) + "%");
-    }//GEN-LAST:event_btnRunActionPerformed
+    }//GEN-LAST:event_btnLearnMatchActionPerformed
 
     private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNextActionPerformed
         //drawCanvas((state++)%9);
@@ -632,7 +684,7 @@ public class CHHVHTView extends FrameView {
         }
     }//GEN-LAST:event_btnNextActionPerformed
 
-    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
+    private void btnNewMatchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewMatchActionPerformed
         // TODO add your handling code here:
         jouer.reset();
         jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
@@ -650,19 +702,41 @@ public class CHHVHTView extends FrameView {
 //        drawCanvas(curstate);
         drawCanvas(jouer.currentStateA, jouer.currentStateB);
         btnNext.setEnabled(true);
-    }//GEN-LAST:event_btnResetActionPerformed
+    }//GEN-LAST:event_btnNewMatchActionPerformed
+
+    private void btnTestMatchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestMatchActionPerformed
+        int times = Integer.parseInt(this.txtTestMatch.getText());
+//        jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
+//        jouer.gamma = Double.parseDouble(txtGamma.getText());
+        jouer.opponent = JoueurLoader.load(cboOpponent.getSelectedItem().toString());
+        jouer.isLearning = false;
+        jouer.setTextOutput(jTextArea1);
+        jouer.NewMatch(times);
+
+        lblLost.setText(jouer.bwin + "");
+        lblWin.setText(jouer.awin + "");
+        lblNULL.setText(jouer.nowin + "");
+        double total = jouer.bwin + jouer.awin + jouer.nowin;
+        lblLostPercent.setText((int) (100 * jouer.bwin / total) + "%");
+        lblWinPercent.setText((int) (100 * jouer.awin / total) + "%");
+        lblNULLPercent.setText((int) (100 * jouer.nowin / total) + "%");
+    }//GEN-LAST:event_btnTestMatchActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnLearnMatch;
     private javax.swing.JButton btnLoadPlayer;
+    private javax.swing.JButton btnNewMatch;
     private javax.swing.JButton btnNext;
-    private javax.swing.JButton btnReset;
     private javax.swing.JButton btnResultReset;
-    private javax.swing.JButton btnRun;
     private javax.swing.JButton btnSavePlayer;
+    private javax.swing.JButton btnTestMatch;
     private java.awt.Canvas canvas1;
+    private javax.swing.JComboBox cboOpponent;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -693,7 +767,8 @@ public class CHHVHTView extends FrameView {
     private javax.swing.JTextField txtEpsilon;
     private javax.swing.JTextField txtGamma;
     private javax.swing.JTextField txtHumanInput;
-    private javax.swing.JTextField txtMatchNumber;
+    private javax.swing.JTextField txtLearnMatch;
+    private javax.swing.JTextField txtTestMatch;
     // End of variables declaration//GEN-END:variables
     private final Timer messageTimer;
     private final Timer busyIconTimer;
