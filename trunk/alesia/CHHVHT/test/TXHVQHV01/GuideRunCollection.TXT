@@ -1,0 +1,9 @@
++ Run Notre Programme:
+	java -jar "TXHVQHV01.jar" 
+
++ Test Connection:	
+	- Code de collection est ecrite dans le fichier Main.java
+	- Import librarie TXHVQHV01.jar 
+	- Copy le fichier TXHVQHV01.txt au repertoire de votre programme
+	
+
