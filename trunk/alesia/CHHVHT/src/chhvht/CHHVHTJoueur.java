@@ -30,6 +30,9 @@ public class CHHVHTJoueur implements Joueur {
     Joueur opponent = null;
     boolean isLearning = false;
 
+    public void resetPlayer(){
+        stateList.clear();
+    }
     public void resetResult() {
         awin = 0;
         bwin = 0;
@@ -213,6 +216,10 @@ public class CHHVHTJoueur implements Joueur {
         int localawin = 0;
         int localbwin = 0;
         int localnowin = 0;
+        long timeADecision=0;
+        long timeBDecision=0;
+        long timeAllMatch=0;
+        long startMatch=System.currentTimeMillis();
         for (int i = 0; i < nbParties; i++) {
             reset();
             //
@@ -222,11 +229,17 @@ public class CHHVHTJoueur implements Joueur {
                 int oldstate = oldStateA * 3 + oldStateB;
 
 //                System.out.println("A decide "+currentMoneyA+","+ oldstate+","+ currentMoneyB);
+                long startA=System.currentTimeMillis();
                 int ma = NextMove(currentMoneyA, oldstate, currentMoneyB);//ChooseAction();
+                long endA=System.currentTimeMillis();
+                timeADecision+=endA-startA;
 //                System.out.println(ma);
                 int stateB = oldStateB * 3 + oldStateA;
 //                System.out.println("B decide "+currentMoneyB+","+ stateB+","+ currentMoneyA);
+                long startB=System.currentTimeMillis();
                 int mb = opponent.NextMove(currentMoneyB, stateB, currentMoneyA);//ChooseRandomAction(currentMoneyB);
+                long endB=System.currentTimeMillis();
+                timeBDecision+=endB-startB;
 //                System.out.println(mb);
                 if(mb>currentMoneyB || ma>currentMoneyA){
                     int a=0;
@@ -278,6 +291,8 @@ public class CHHVHTJoueur implements Joueur {
                 }
             }
         }
+        long endMatch=System.currentTimeMillis();
+        timeAllMatch=endMatch-startMatch;
         awin += localawin;
         bwin += localbwin;
         nowin += localnowin;
@@ -291,6 +306,9 @@ public class CHHVHTJoueur implements Joueur {
         textoutput.append("A Win:" + localawin + "\n");
         textoutput.append("B Win:" + localbwin + "\n");
         textoutput.append("Noone Win:" + localnowin + "\n");
+        textoutput.append("Time all matches:" + timeAllMatch + "\n");
+        textoutput.append("Time decision A:" + timeADecision/(double)nbParties + "\n");
+        textoutput.append("Time decision B:" + timeBDecision/(double)nbParties + "\n");
         textoutput.append("===============\n");
     }
 

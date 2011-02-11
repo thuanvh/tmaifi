@@ -21,7 +21,18 @@ public class JoueurLoader {
             return new chhvht.test.LEVMLSJoueur();
         } else if (joueurName.compareTo("TXHVQH") == 0) {
             return new chhvht.test.TXHVQHJoueur();
+        }else if (joueurName.compareTo("PVDLVMHTN.Weka") == 0) {
+            return new chhvht.test.PVDLVMHTNJoueurWeka();
+        }else if (joueurName.compareTo("PVDLVMHTN.5") == 0) {
+            return new chhvht.test.PVDLVMHTNJoueur5();
+        }else if (joueurName.compareTo("PVDLVMHTN.Adaptif") == 0) {
+            return new chhvht.test.PVDLVMHTNJoueurAdaptif();
+        }else if (joueurName.compareTo("PVDLVMHTN.TDSimplest") == 0) {
+            return new chhvht.test.PVDLVMHTNJoueurTDSimplest();
         }
+
+
+
         return new RandomActionJoueur();
     }
 }

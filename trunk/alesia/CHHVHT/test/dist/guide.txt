@@ -1,0 +1,13 @@
+Load fichier PVDLVMHTN.jar dans votre programme.
+Import paquet player : import player.*
+Creer un Main class comme dans la classe d'exemple jointe pour tester avec votre programme.
+
+
+------------------------------
+// NOTRE PROGRAMME SE COMPOSE 5 TYPES DE JOUEUR. VOUS POUVEZ TESTER
+// EN CHANGEANT LE NOM DE TYPE JOUEUR COMME LES SUIVANTES:
+//String myProgram = "player.PlayerRandomWekaTree";
+//String myProgram = "player.Player5";
+//String myProgram = "player.PlayerAdaptif",;
+//String myProgram = "player.PlayerSimplestTDMethod";
+//String myProgram = "player.Ramdom",
