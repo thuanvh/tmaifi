@@ -1,0 +1,70 @@
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:866
+B Win:44
+Noone Win:90
+Time all matches:157
+Time decision A:0.05
+Time decision B:0.094
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:869
+B Win:29
+Noone Win:102
+Time all matches:103
+Time decision A:0.046
+Time decision B:0.039
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:880
+B Win:28
+Noone Win:92
+Time all matches:90
+Time decision A:0.044
+Time decision B:0.029
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:868
+B Win:43
+Noone Win:89
+Time all matches:91
+Time decision A:0.041
+Time decision B:0.039
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:863
+B Win:37
+Noone Win:100
+Time all matches:96
+Time decision A:0.049
+Time decision B:0.032
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:857
+B Win:41
+Noone Win:102
+Time all matches:95
+Time decision A:0.042
+Time decision B:0.031
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs TTCGMR(B)
+A Win:881
+B Win:31
+Noone Win:88
+Time all matches:96
+Time decision A:0.055
+Time decision B:0.029
+===============
+

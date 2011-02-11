@@ -346,7 +346,7 @@ public class CHHVHTView extends FrameView {
             }
         });
 
-        cboOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RandomActionPlayer", "TTCGMR", "NDTDTL", "BTMABQT", "LEVMLS", "TXHVQH", "PVDLVMHTN.Weka", "PVDLVMHTN.5", "PVDLVMHTN.Adaptif", "PVDLVMHTN.TDSimplest" }));
+        cboOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RandomActionPlayer", "TTCGMR", "BTMABQT", "LEVMLS", "TXHVQH", "PVDLVMHTN.Weka", "PVDLVMHTN.5", "PVDLVMHTN.Adaptif", "PVDLVMHTN.TDSimplest", "NDTDTL", "KVCDVD", "NTTNTN" }));
         cboOpponent.setName("cboOpponent"); // NOI18N
 
         jLabel13.setText(resourceMap.getString("jLabel13.text")); // NOI18N
@@ -719,8 +719,8 @@ public class CHHVHTView extends FrameView {
 
     private void btnTestMatchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestMatchActionPerformed
         int times = Integer.parseInt(this.txtTestMatch.getText());
-//        jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
-//        jouer.gamma = Double.parseDouble(txtGamma.getText());
+        jouer.epsilon = Double.parseDouble(txtEpsilon.getText());
+        jouer.gamma = Double.parseDouble(txtGamma.getText());
         jouer.opponent = JoueurLoader.load(cboOpponent.getSelectedItem().toString());
         jouer.isLearning = false;
         jouer.setTextOutput(jTextArea1);

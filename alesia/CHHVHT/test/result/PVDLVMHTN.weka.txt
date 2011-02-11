@@ -1,0 +1,59 @@
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:630
+B Win:158
+Noone Win:212
+Time all matches:86
+Time decision A:0.065
+Time decision B:0.007
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:610
+B Win:155
+Noone Win:235
+Time all matches:86
+Time decision A:0.061
+Time decision B:0.007
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:625
+B Win:163
+Noone Win:212
+Time all matches:85
+Time decision A:0.057
+Time decision B:0.011
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:611
+B Win:146
+Noone Win:243
+Time all matches:86
+Time decision A:0.062
+Time decision B:0.007
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:619
+B Win:150
+Noone Win:231
+Time all matches:90
+Time decision A:0.073
+Time decision B:0.005
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Weka(B)
+A Win:652
+B Win:166
+Noone Win:182
+Time all matches:87
+Time decision A:0.059
+Time decision B:0.011
