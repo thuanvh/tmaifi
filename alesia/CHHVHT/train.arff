@@ -1,0 +1,15 @@
+@RELATION RandomTRee
+@ATTRIBUTE character1 REAL
+@ATTRIBUTE character2 REAL
+@ATTRIBUTE character3 REAL
+@ATTRIBUTE character4 REAL
+@ATTRIBUTE character5 REAL
+@ATTRIBUTE character6 REAL
+@ATTRIBUTE character7 REAL
+@ATTRIBUTE character8 REAL
+@ATTRIBUTE character9 REAL
+@ATTRIBUTE character10 REAL
+@ATTRIBUTE class {0,1,2,3,4,5,6,7,8,9} 
+
+
+@data
