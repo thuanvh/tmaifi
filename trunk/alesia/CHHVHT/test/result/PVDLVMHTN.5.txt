@@ -1,0 +1,61 @@
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:805
+B Win:105
+Noone Win:90
+Time all matches:91
+Time decision A:0.065
+Time decision B:0.017
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:808
+B Win:114
+Noone Win:78
+Time all matches:85
+Time decision A:0.054
+Time decision B:0.017
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:812
+B Win:113
+Noone Win:75
+Time all matches:83
+Time decision A:0.056
+Time decision B:0.01
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:836
+B Win:95
+Noone Win:69
+Time all matches:88
+Time decision A:0.057
+Time decision B:0.012
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:801
+B Win:110
+Noone Win:89
+Time all matches:83
+Time decision A:0.055
+Time decision B:0.016
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.5(B)
+A Win:811
+B Win:112
+Noone Win:77
+Time all matches:84
+Time decision A:0.05
+Time decision B:0.013
+===============
+

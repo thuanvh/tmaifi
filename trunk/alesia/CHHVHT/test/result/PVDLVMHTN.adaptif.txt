@@ -1,0 +1,111 @@
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:639
+B Win:158
+Noone Win:203
+Time all matches:87
+Time decision A:0.06
+Time decision B:0.004
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:621
+B Win:146
+Noone Win:233
+Time all matches:87
+Time decision A:0.059
+Time decision B:0.013
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:598
+B Win:179
+Noone Win:223
+Time all matches:86
+Time decision A:0.068
+Time decision B:0.006
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:608
+B Win:156
+Noone Win:236
+Time all matches:92
+Time decision A:0.076
+Time decision B:0.004
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:628
+B Win:179
+Noone Win:193
+Time all matches:86
+Time decision A:0.063
+Time decision B:0.008
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:615
+B Win:165
+Noone Win:220
+Time all matches:87
+Time decision A:0.07
+Time decision B:0.004
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:605
+B Win:173
+Noone Win:222
+Time all matches:89
+Time decision A:0.066
+Time decision B:0.006
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:613
+B Win:164
+Noone Win:223
+Time all matches:85
+Time decision A:0.055
+Time decision B:0.007
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:621
+B Win:177
+Noone Win:202
+Time all matches:84
+Time decision A:0.074
+Time decision B:0.001
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:663
+B Win:157
+Noone Win:180
+Time all matches:86
+Time decision A:0.063
+Time decision B:0.007
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs PVDLVMHTN.Adaptif(B)
+A Win:615
+B Win:162
+Noone Win:223
+Time all matches:86
+Time decision A:0.062
+Time decision B:0.009
+===============
+

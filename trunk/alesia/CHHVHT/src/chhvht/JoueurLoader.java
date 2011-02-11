@@ -30,6 +30,14 @@ public class JoueurLoader {
         }else if (joueurName.compareTo("PVDLVMHTN.TDSimplest") == 0) {
             return new chhvht.test.PVDLVMHTNJoueurTDSimplest();
         }
+        else if (joueurName.compareTo("NDTDTL") == 0) {
+            return new chhvht.test.NDTDTLJoueur();
+        }
+        else if (joueurName.compareTo("KVCDVD") == 0) {
+            return new chhvht.test.KVCDVDJoueur();
+        }else if (joueurName.compareTo("NTTNTN") == 0) {
+            return new chhvht.test.NTTNTNJoueur();
+        }
 
 
 
