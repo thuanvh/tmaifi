@@ -22,14 +22,14 @@ public class NDTDTLJoueur implements chhvht.Joueur{
 
     public int NextMove(int moneyA, int p, int moneyB) {
 //        int point_P=moneyB;
-//        int etat_P=p/3+(p%3)*4;
+//        int etat_P=p;//p/3+(p%3)*4;
 //        return player.next_move(learning, point_P, etat_P);
-        //
+        
         return 0;
     }
 
     public String getAuteur() {
-        return "TTCGMR";
+        return "NDTDTL";
     }
     public void endMatch(int r){}
 

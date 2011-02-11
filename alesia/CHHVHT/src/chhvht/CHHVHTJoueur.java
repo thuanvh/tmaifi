@@ -119,7 +119,9 @@ public class CHHVHTJoueur implements Joueur {
         currentStateB = p % 3;
         return ChooseAction();
     }
-    public void endMatch(int r){}
+
+    public void endMatch(int r) {
+    }
     /*
      * Choose action A
      */
@@ -179,7 +181,7 @@ public class CHHVHTJoueur implements Joueur {
     }
 
     public int ChooseRandomAction(int currentMoney) {
-        if (currentMoney <= 0) {
+        if (currentMoney == 0) {
             return 0;
         }
         if (currentMoney == 1) {
@@ -226,7 +228,9 @@ public class CHHVHTJoueur implements Joueur {
 //                System.out.println("B decide "+currentMoneyB+","+ stateB+","+ currentMoneyA);
                 int mb = opponent.NextMove(currentMoneyB, stateB, currentMoneyA);//ChooseRandomAction(currentMoneyB);
 //                System.out.println(mb);
-
+                if(mb>currentMoneyB || ma>currentMoneyA){
+                    int a=0;
+                }
                 // Do action
                 int reward = 0;
                 if (ma > mb) {
@@ -240,11 +244,11 @@ public class CHHVHTJoueur implements Joueur {
                 int oldMoneyB = currentMoneyB;
                 currentMoneyA -= ma;
                 currentMoneyB -= mb;
-                double r = valueEndState(currentStateA, currentStateB, currentMoneyA, currentMoneyB);
+                double endvalue = valueEndState(currentStateA, currentStateB, currentMoneyA, currentMoneyB);
                 int newstate = currentStateA * 3 + currentStateB;
                 boolean endstate = false;
-                if (r == 2) {
-                    r = getValueOfState(currentMoneyA, newstate, currentMoneyB);
+                if (endvalue == 2) {
+                    endvalue = getValueOfState(currentMoneyA, newstate, currentMoneyB);
                 } else {
                     endstate = true;
                 }
@@ -253,8 +257,8 @@ public class CHHVHTJoueur implements Joueur {
                     AlesiaItem olditem = getItem(oldMoneyA, oldstate, oldMoneyB);
                     double alpha = 1;
                     if (olditem != null) {
-//                    alpha = 1 / (double) (olditem.visitedNumber);
-                        alpha = 0.2;
+                        alpha = 1 / (double) (olditem.visitedNumber);
+//                        alpha = 0.2;
                     }
                     // update value V
                     double newvalue = getValueOfState(oldMoneyA, oldstate, oldMoneyB) * (1 - alpha) + alpha * (reward + gamma * getValueOfState(currentMoneyA, newstate, currentMoneyB));
@@ -262,10 +266,10 @@ public class CHHVHTJoueur implements Joueur {
                 }
                 // count the score
                 if (endstate) {
-                    opponent.endMatch((int)-r);
-                    if (r < 0) {
+                    opponent.endMatch((int) -endvalue);
+                    if (endvalue < 0) {
                         localbwin++;
-                    } else if (r > 0) {
+                    } else if (endvalue > 0) {
                         localawin++;
                     } else {
                         localnowin++;

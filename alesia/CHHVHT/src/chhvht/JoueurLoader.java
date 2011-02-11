@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package chhvht;
 
 /**
@@ -10,16 +9,18 @@ package chhvht;
  * @author thuanvh
  */
 public class JoueurLoader {
-    public static Joueur load(String joueurName){
-        if(joueurName.compareTo("RadomActionJoueur")==0){
+
+    public static Joueur load(String joueurName) {
+        if (joueurName.compareTo("RadomActionJoueur") == 0) {
             return new RandomActionJoueur();
-        }
-        else if(joueurName.compareTo("TTCGMR")==0){
+        } else if (joueurName.compareTo("TTCGMR") == 0) {
             return new chhvht.test.TTCGMRJoueur();
-        }else if(joueurName.compareTo("BTMABQT")==0){
+        } else if (joueurName.compareTo("BTMABQT") == 0) {
             return new chhvht.test.BTMABQTJoueur();
-        }else if(joueurName.compareTo("LEVMLS")==0){
+        } else if (joueurName.compareTo("LEVMLS") == 0) {
             return new chhvht.test.LEVMLSJoueur();
+        } else if (joueurName.compareTo("TXHVQH") == 0) {
+            return new chhvht.test.TXHVQHJoueur();
         }
         return new RandomActionJoueur();
     }

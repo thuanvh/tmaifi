@@ -23,7 +23,7 @@ public class LEVMLSJoueur implements chhvht.Joueur {
         }
     }
 
-    public void endMatch(int r){
+    public void endMatch(int r) {
         joueur.endMatch(r);
     }
 
@@ -36,7 +36,19 @@ public class LEVMLSJoueur implements chhvht.Joueur {
         } else if (moneyB == 0) {
             return 1;
         }
-        int a = joueur.nextMove(moneyA, p, moneyB);
+        int a = 0;
+        try {
+            a = joueur.nextMove(moneyA, p, moneyB);
+            if (a > moneyA) {
+                a = moneyA;
+            }
+            if (a < 1) {
+                a = 1;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println(moneyA + "," + p + "," + moneyB);
+        }
         return a;
     }
 

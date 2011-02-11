@@ -345,7 +345,7 @@ public class CHHVHTView extends FrameView {
             }
         });
 
-        cboOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RandomActionPlayer", "TTCGMR", "NDTDTL", "BTMABQT", "LEVMLS" }));
+        cboOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "RandomActionPlayer", "TTCGMR", "NDTDTL", "BTMABQT", "LEVMLS", "TXHVQH" }));
         cboOpponent.setName("cboOpponent"); // NOI18N
 
         jLabel13.setText(resourceMap.getString("jLabel13.text")); // NOI18N

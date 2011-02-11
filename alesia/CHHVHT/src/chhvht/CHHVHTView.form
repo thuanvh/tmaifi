@@ -481,12 +481,13 @@
         <Component class="javax.swing.JComboBox" name="cboOpponent">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="5">
+              <StringArray count="6">
                 <StringItem index="0" value="RandomActionPlayer"/>
                 <StringItem index="1" value="TTCGMR"/>
                 <StringItem index="2" value="NDTDTL"/>
                 <StringItem index="3" value="BTMABQT"/>
                 <StringItem index="4" value="LEVMLS"/>
+                <StringItem index="5" value="TXHVQH"/>
               </StringArray>
             </Property>
             <Property name="name" type="java.lang.String" value="cboOpponent" noResource="true"/>
