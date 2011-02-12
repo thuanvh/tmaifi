@@ -1,0 +1,41 @@
+===============
+Test: 1000 matches 
+CHHVHT (A) vs NTTNTN(B)
+A Win:720
+B Win:81
+Noone Win:199
+Time all matches:38666
+Time decision A:0.136
+Time decision B:38.488
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs NTTNTN(B)
+A Win:731
+B Win:76
+Noone Win:193
+Time all matches:39316
+Time decision A:0.144
+Time decision B:39.125
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs NTTNTN(B)
+A Win:720
+B Win:79
+Noone Win:201
+Time all matches:38951
+Time decision A:0.141
+Time decision B:38.764
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs NTTNTN(B)
+A Win:731
+B Win:78
+Noone Win:191
+Time all matches:40843
+Time decision A:0.142
+Time decision B:40.667
+===============
+

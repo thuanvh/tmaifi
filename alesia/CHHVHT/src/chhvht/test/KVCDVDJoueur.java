@@ -28,7 +28,7 @@ public class KVCDVDJoueur implements chhvht.Joueur {
         } else if (moneyB == 0) {
             return 1;
         }
-        return joueur.nextMove(moneyA, p, moneyB);
+        return moneyA-joueur.nextMove(moneyA, p, moneyB);
     }
 
     public String getAuteur() {
