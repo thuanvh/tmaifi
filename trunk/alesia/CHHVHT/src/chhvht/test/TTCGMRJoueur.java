@@ -12,13 +12,19 @@ import Joueur.JoueurExperience;
 public class TTCGMRJoueur implements chhvht.Joueur{
     JoueurExperience joueur;
     public TTCGMRJoueur(){
-        joueur= (JoueurExperience)new Joueur.Interface().loadPlayer(new JoueurExperience());
+        joueur= new JoueurExperience();//)new Joueur.Interface().loadPlayer(new JoueurExperience());
+        joueur.loadPlayer("test/MRTTCGV02.txt");
     }
     public void NewMatch(int nbParties) {
     }
 
     public int NextMove(int moneyA, int p, int moneyB) {
-        return joueur.NextMove(moneyA, p, moneyB);
+        if (moneyA == 0) {
+            return 0;
+        } else if (moneyB == 0) {
+            return 1;
+        }
+        return joueur.nextMove(moneyA, p, moneyB);
     }
 
     public String getAuteur() {

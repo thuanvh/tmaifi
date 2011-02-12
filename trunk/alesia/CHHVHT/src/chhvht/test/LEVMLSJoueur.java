@@ -17,7 +17,7 @@ public class LEVMLSJoueur implements chhvht.Joueur {
     public LEVMLSJoueur() {
         joueur = new Lvminhsdrludovic();
         try {
-            joueur.loadPlayer("LEVMLSV02.txt");
+            joueur.loadPlayer("test/LEVMLSV02.txt");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

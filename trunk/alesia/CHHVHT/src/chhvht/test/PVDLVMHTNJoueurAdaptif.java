@@ -30,6 +30,11 @@ public class PVDLVMHTNJoueurAdaptif implements chhvht.Joueur{
     }
 
     public int NextMove(int moneyA, int p, int moneyB) {
+        if (moneyA == 0) {
+            return 0;
+        } else if (moneyB == 0) {
+            return 1;
+        }
         return joueur.nextMove(moneyA, p, moneyB);
     }
 

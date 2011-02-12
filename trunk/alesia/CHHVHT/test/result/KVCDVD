@@ -1,0 +1,51 @@
+===============
+Test: 1000 matches 
+CHHVHT (A) vs KVCDVD(B)
+A Win:0
+B Win:874
+Noone Win:126
+Time all matches:10258
+Time decision A:0.092
+Time decision B:10.144
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs KVCDVD(B)
+A Win:1
+B Win:881
+Noone Win:118
+Time all matches:9734
+Time decision A:0.109
+Time decision B:9.601
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs KVCDVD(B)
+A Win:2
+B Win:885
+Noone Win:113
+Time all matches:10608
+Time decision A:0.091
+Time decision B:10.503
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs KVCDVD(B)
+A Win:2
+B Win:879
+Noone Win:119
+Time all matches:9627
+Time decision A:0.17
+Time decision B:9.435
+===============
+===============
+Test: 1000 matches 
+CHHVHT (A) vs KVCDVD(B)
+A Win:0
+B Win:876
+Noone Win:124
+Time all matches:9106
+Time decision A:0.108
+Time decision B:8.98
+===============
+
